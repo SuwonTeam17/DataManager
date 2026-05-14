@@ -31,9 +31,7 @@
             btnChgTubForm = new Button();
             btnChgTrainerForm = new Button();
             btnChgPilotForm = new Button();
-            btnChgCarForm = new Button();
             pnlChgForm = new Panel();
-            btnDataCollectForm = new Button();
             pnlLog = new Panel();
             lvwLogBox = new ListView();
             시간 = new ColumnHeader();
@@ -77,23 +75,10 @@
             btnChgPilotForm.UseVisualStyleBackColor = true;
             btnChgPilotForm.Click += btnChgPilotForm_Click;
             // 
-            // btnChgCarForm
-            // 
-            btnChgCarForm.Location = new Point(400, 0);
-            btnChgCarForm.Margin = new Padding(0);
-            btnChgCarForm.Name = "btnChgCarForm";
-            btnChgCarForm.Size = new Size(101, 25);
-            btnChgCarForm.TabIndex = 3;
-            btnChgCarForm.Text = "Car Connection";
-            btnChgCarForm.UseVisualStyleBackColor = true;
-            btnChgCarForm.Click += btnChgCarForm_Click;
-            // 
             // pnlChgForm
             // 
-            pnlChgForm.Controls.Add(btnDataCollectForm);
             pnlChgForm.Controls.Add(btnChgTrainerForm);
             pnlChgForm.Controls.Add(btnChgTubForm);
-            pnlChgForm.Controls.Add(btnChgCarForm);
             pnlChgForm.Controls.Add(btnChgPilotForm);
             pnlChgForm.Dock = DockStyle.Top;
             pnlChgForm.Location = new Point(0, 0);
@@ -101,17 +86,6 @@
             pnlChgForm.Name = "pnlChgForm";
             pnlChgForm.Size = new Size(750, 25);
             pnlChgForm.TabIndex = 4;
-            // 
-            // btnDataCollectForm
-            // 
-            btnDataCollectForm.Location = new Point(0, 0);
-            btnDataCollectForm.Margin = new Padding(0);
-            btnDataCollectForm.Name = "btnDataCollectForm";
-            btnDataCollectForm.Size = new Size(100, 25);
-            btnDataCollectForm.TabIndex = 4;
-            btnDataCollectForm.Text = "Data Collection";
-            btnDataCollectForm.UseVisualStyleBackColor = true;
-            btnDataCollectForm.Click += btnDataCollectForm_Click;
             // 
             // pnlLog
             // 
@@ -178,7 +152,6 @@
         private Button btnChgTubForm;
         private Button btnChgTrainerForm;
         private Button btnChgPilotForm;
-        private Button btnChgCarForm;
         private Panel pnlChgForm;
         private Panel pnlLog;
         private Panel pnlMain;
@@ -186,6 +159,5 @@
         private ColumnHeader 시간;
         private ColumnHeader 타입;
         private ColumnHeader 메시지;
-        private Button btnDataCollectForm;
     }
 }
