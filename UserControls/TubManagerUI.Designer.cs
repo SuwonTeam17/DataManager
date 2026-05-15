@@ -28,10 +28,10 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea2 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend2 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series3 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series4 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
             pnlChart = new Panel();
             chtData = new System.Windows.Forms.DataVisualization.Charting.Chart();
             btnFileLoad = new Button();
@@ -106,22 +106,22 @@
             // chtData
             // 
             chtData.BackColor = SystemColors.Control;
-            chartArea2.Name = "ChartArea1";
-            chtData.ChartAreas.Add(chartArea2);
-            legend2.Name = "Legend1";
-            chtData.Legends.Add(legend2);
+            chartArea1.Name = "ChartArea1";
+            chtData.ChartAreas.Add(chartArea1);
+            legend1.Name = "Legend1";
+            chtData.Legends.Add(legend1);
             chtData.Location = new Point(0, 0);
             chtData.Name = "chtData";
-            series3.ChartArea = "ChartArea1";
-            series3.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
-            series3.Legend = "Legend1";
-            series3.Name = "각도";
-            series4.ChartArea = "ChartArea1";
-            series4.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Spline;
-            series4.Legend = "Legend1";
-            series4.Name = "속도";
-            chtData.Series.Add(series3);
-            chtData.Series.Add(series4);
+            series1.ChartArea = "ChartArea1";
+            series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series1.Legend = "Legend1";
+            series1.Name = "각도";
+            series2.ChartArea = "ChartArea1";
+            series2.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Spline;
+            series2.Legend = "Legend1";
+            series2.Name = "속도";
+            chtData.Series.Add(series1);
+            chtData.Series.Add(series2);
             chtData.Size = new Size(693, 130);
             chtData.TabIndex = 0;
             chtData.Text = "chart1";
@@ -261,7 +261,6 @@
             lblSelectedRange.TabIndex = 2;
             lblSelectedRange.Text = "선택된 범위 (0, 0)";
             lblSelectedRange.TextAlign = ContentAlignment.MiddleLeft;
-            lblSelectedRange.Click += lblSelectedRange_Click;
             // 
             // btnAllRange
             // 
