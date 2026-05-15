@@ -1,4 +1,4 @@
-﻿namespace DonkeyUI.UserControls
+﻿namespace DataManager.UserControls
 {
     partial class InitUI
     {
@@ -34,7 +34,7 @@
             // txtTemp
             // 
             txtTemp.Font = new Font("맑은 고딕", 20F);
-            txtTemp.Location = new Point(183, 238);
+            txtTemp.Location = new Point(185, 208);
             txtTemp.Multiline = true;
             txtTemp.Name = "txtTemp";
             txtTemp.Size = new Size(377, 92);
@@ -48,7 +48,7 @@
             AutoScaleMode = AutoScaleMode.Font;
             Controls.Add(txtTemp);
             Name = "InitUI";
-            Size = new Size(750, 600);
+            Size = new Size(750, 520);
             ResumeLayout(false);
             PerformLayout();
         }
