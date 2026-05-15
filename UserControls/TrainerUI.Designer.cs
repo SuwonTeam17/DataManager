@@ -1,4 +1,4 @@
-﻿namespace DonkeyUI.UserControls
+﻿namespace DataManager.UserControls
 {
     partial class TrainerUI
     {
