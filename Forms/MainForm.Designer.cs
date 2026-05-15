@@ -47,7 +47,7 @@
             btnChgTubForm.Location = new Point(0, 0);
             btnChgTubForm.Margin = new Padding(0);
             btnChgTubForm.Name = "btnChgTubForm";
-            btnChgTubForm.Size = new Size(129, 33);
+            btnChgTubForm.Size = new Size(100, 25);
             btnChgTubForm.TabIndex = 0;
             btnChgTubForm.Text = "Tub Manager";
             btnChgTubForm.UseVisualStyleBackColor = true;
@@ -55,10 +55,10 @@
             // 
             // btnChgTrainerForm
             // 
-            btnChgTrainerForm.Location = new Point(128, 0);
+            btnChgTrainerForm.Location = new Point(100, 0);
             btnChgTrainerForm.Margin = new Padding(0);
             btnChgTrainerForm.Name = "btnChgTrainerForm";
-            btnChgTrainerForm.Size = new Size(129, 33);
+            btnChgTrainerForm.Size = new Size(100, 25);
             btnChgTrainerForm.TabIndex = 1;
             btnChgTrainerForm.Text = "Trainer";
             btnChgTrainerForm.UseVisualStyleBackColor = true;
@@ -66,10 +66,10 @@
             // 
             // btnChgPilotForm
             // 
-            btnChgPilotForm.Location = new Point(257, 0);
+            btnChgPilotForm.Location = new Point(200, 0);
             btnChgPilotForm.Margin = new Padding(0);
             btnChgPilotForm.Name = "btnChgPilotForm";
-            btnChgPilotForm.Size = new Size(129, 33);
+            btnChgPilotForm.Size = new Size(100, 25);
             btnChgPilotForm.TabIndex = 2;
             btnChgPilotForm.Text = "Pilot Arena";
             btnChgPilotForm.UseVisualStyleBackColor = true;
@@ -84,17 +84,17 @@
             pnlChgForm.Location = new Point(0, 0);
             pnlChgForm.Margin = new Padding(0);
             pnlChgForm.Name = "pnlChgForm";
-            pnlChgForm.Size = new Size(964, 33);
+            pnlChgForm.Size = new Size(750, 25);
             pnlChgForm.TabIndex = 4;
             // 
             // pnlLog
             // 
             pnlLog.Controls.Add(lvwLogBox);
             pnlLog.Dock = DockStyle.Bottom;
-            pnlLog.Location = new Point(0, 726);
+            pnlLog.Location = new Point(0, 585);
             pnlLog.Margin = new Padding(0);
             pnlLog.Name = "pnlLog";
-            pnlLog.Size = new Size(964, 107);
+            pnlLog.Size = new Size(750, 80);
             pnlLog.TabIndex = 6;
             // 
             // lvwLogBox
@@ -104,9 +104,8 @@
             lvwLogBox.FullRowSelect = true;
             lvwLogBox.GridLines = true;
             lvwLogBox.Location = new Point(0, 0);
-            lvwLogBox.Margin = new Padding(4, 4, 4, 4);
             lvwLogBox.Name = "lvwLogBox";
-            lvwLogBox.Size = new Size(964, 107);
+            lvwLogBox.Size = new Size(750, 80);
             lvwLogBox.TabIndex = 0;
             lvwLogBox.UseCompatibleStateImageBehavior = false;
             lvwLogBox.View = View.Details;
@@ -128,21 +127,20 @@
             // pnlMain
             // 
             pnlMain.Dock = DockStyle.Fill;
-            pnlMain.Location = new Point(0, 33);
+            pnlMain.Location = new Point(0, 25);
             pnlMain.Margin = new Padding(0);
             pnlMain.Name = "pnlMain";
-            pnlMain.Size = new Size(964, 693);
+            pnlMain.Size = new Size(750, 560);
             pnlMain.TabIndex = 7;
             // 
             // MainForm
             // 
-            AutoScaleDimensions = new SizeF(9F, 20F);
+            AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(964, 833);
+            ClientSize = new Size(750, 665);
             Controls.Add(pnlMain);
             Controls.Add(pnlLog);
             Controls.Add(pnlChgForm);
-            Margin = new Padding(4, 4, 4, 4);
             Name = "MainForm";
             Text = "Donkey UI";
             pnlChgForm.ResumeLayout(false);

@@ -6,5 +6,10 @@
         {
             InitializeComponent();
         }
+
+        private void lblSelectedRange_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }
