@@ -28,10 +28,10 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea3 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend3 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series5 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series6 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
             pnlChart = new Panel();
             chtData = new System.Windows.Forms.DataVisualization.Charting.Chart();
             btnFileLoad = new Button();
@@ -62,6 +62,8 @@
             lblFillter = new Label();
             pnlSub = new Panel();
             pnlControl = new Panel();
+            lblSpeed = new Label();
+            comboBox1 = new ComboBox();
             lblAllImageNumRange = new Label();
             btnStop = new Button();
             btnPlay = new Button();
@@ -77,9 +79,6 @@
             pnlImage = new Panel();
             picImage = new PictureBox();
             trkProgress = new TrackBar();
-            button1 = new Button();
-            comboBox1 = new ComboBox();
-            lblSpeed = new Label();
             pnlChart.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)chtData).BeginInit();
             pnlFile.SuspendLayout();
@@ -99,7 +98,6 @@
             // pnlChart
             // 
             pnlChart.BorderStyle = BorderStyle.FixedSingle;
-            pnlChart.Controls.Add(button1);
             pnlChart.Controls.Add(chtData);
             pnlChart.Dock = DockStyle.Bottom;
             pnlChart.Location = new Point(0, 428);
@@ -110,23 +108,24 @@
             // chtData
             // 
             chtData.BackColor = SystemColors.Control;
-            chartArea3.Name = "ChartArea1";
-            chtData.ChartAreas.Add(chartArea3);
-            legend3.Name = "Legend1";
-            chtData.Legends.Add(legend3);
+            chartArea1.Name = "ChartArea1";
+            chtData.ChartAreas.Add(chartArea1);
+            chtData.Dock = DockStyle.Fill;
+            legend1.Name = "Legend1";
+            chtData.Legends.Add(legend1);
             chtData.Location = new Point(0, 0);
             chtData.Name = "chtData";
-            series5.ChartArea = "ChartArea1";
-            series5.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
-            series5.Legend = "Legend1";
-            series5.Name = "각도";
-            series6.ChartArea = "ChartArea1";
-            series6.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Spline;
-            series6.Legend = "Legend1";
-            series6.Name = "속도";
-            chtData.Series.Add(series5);
-            chtData.Series.Add(series6);
-            chtData.Size = new Size(693, 130);
+            series1.ChartArea = "ChartArea1";
+            series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series1.Legend = "Legend1";
+            series1.Name = "각도";
+            series2.ChartArea = "ChartArea1";
+            series2.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Spline;
+            series2.Legend = "Legend1";
+            series2.Name = "속도";
+            chtData.Series.Add(series1);
+            chtData.Series.Add(series2);
+            chtData.Size = new Size(748, 130);
             chtData.TabIndex = 0;
             chtData.Text = "chart1";
             // 
@@ -435,6 +434,25 @@
             pnlControl.Size = new Size(220, 219);
             pnlControl.TabIndex = 3;
             // 
+            // lblSpeed
+            // 
+            lblSpeed.Location = new Point(3, 58);
+            lblSpeed.Name = "lblSpeed";
+            lblSpeed.Size = new Size(102, 23);
+            lblSpeed.TabIndex = 9;
+            lblSpeed.Text = "Speed";
+            lblSpeed.TextAlign = ContentAlignment.MiddleRight;
+            // 
+            // comboBox1
+            // 
+            comboBox1.FormattingEnabled = true;
+            comboBox1.Items.AddRange(new object[] { "0.25", "0.50", "1.00", "1.50", "2.00", "3.00", "4.00" });
+            comboBox1.Location = new Point(111, 58);
+            comboBox1.Name = "comboBox1";
+            comboBox1.Size = new Size(104, 23);
+            comboBox1.TabIndex = 8;
+            comboBox1.Text = "1.00";
+            // 
             // lblAllImageNumRange
             // 
             lblAllImageNumRange.Font = new Font("맑은 고딕", 9F);
@@ -576,34 +594,6 @@
             trkProgress.TabIndex = 1;
             trkProgress.TickStyle = TickStyle.None;
             // 
-            // button1
-            // 
-            button1.Location = new Point(0, 0);
-            button1.Name = "button1";
-            button1.Size = new Size(75, 23);
-            button1.TabIndex = 1;
-            button1.Text = "button1";
-            button1.UseVisualStyleBackColor = true;
-            // 
-            // comboBox1
-            // 
-            comboBox1.FormattingEnabled = true;
-            comboBox1.Items.AddRange(new object[] { "0.25", "0.50", "1.00", "1.50", "2.00", "3.00", "4.00" });
-            comboBox1.Location = new Point(111, 58);
-            comboBox1.Name = "comboBox1";
-            comboBox1.Size = new Size(104, 23);
-            comboBox1.TabIndex = 8;
-            comboBox1.Text = "1.00";
-            // 
-            // lblSpeed
-            // 
-            lblSpeed.Location = new Point(3, 58);
-            lblSpeed.Name = "lblSpeed";
-            lblSpeed.Size = new Size(102, 23);
-            lblSpeed.TabIndex = 9;
-            lblSpeed.Text = "Speed";
-            lblSpeed.TextAlign = ContentAlignment.MiddleRight;
-            // 
             // TubManagerUI
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -678,7 +668,6 @@
         private Button btnCancelFillter;
         private Button btnInitFillterSet;
         private Label lblAllImageNumRange;
-        private Button button1;
         private Label lblSpeed;
         private ComboBox comboBox1;
     }
