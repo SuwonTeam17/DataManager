@@ -36,10 +36,4 @@
 	</Compile>
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Services\PilotArena\" />
-    <Folder Include="Services\Trainer\" />
-    <Folder Include="Services\TubManager\" />
-  </ItemGroup>
-
 </Project>
