@@ -1,4 +1,4 @@
-namespace DonkeyUI
+namespace DataManager
 {
     internal static class Program
     {
