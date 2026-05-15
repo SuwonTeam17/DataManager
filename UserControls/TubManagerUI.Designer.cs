@@ -62,6 +62,7 @@
             lblFillter = new Label();
             pnlSub = new Panel();
             pnlControl = new Panel();
+            lblAllImageNumRange = new Label();
             btnStop = new Button();
             btnPlay = new Button();
             btn5FrameRight = new Button();
@@ -76,7 +77,6 @@
             pnlImage = new Panel();
             picImage = new PictureBox();
             trkProgress = new TrackBar();
-            lblAllImageNumRange = new Label();
             pnlChart.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)chtData).BeginInit();
             pnlFile.SuspendLayout();
@@ -95,6 +95,7 @@
             // 
             // pnlChart
             // 
+            pnlChart.BorderStyle = BorderStyle.FixedSingle;
             pnlChart.Controls.Add(chtData);
             pnlChart.Dock = DockStyle.Bottom;
             pnlChart.Location = new Point(0, 428);
@@ -107,7 +108,6 @@
             chtData.BackColor = SystemColors.Control;
             chartArea2.Name = "ChartArea1";
             chtData.ChartAreas.Add(chartArea2);
-            chtData.Dock = DockStyle.Fill;
             legend2.Name = "Legend1";
             chtData.Legends.Add(legend2);
             chtData.Location = new Point(0, 0);
@@ -122,7 +122,7 @@
             series4.Name = "속도";
             chtData.Series.Add(series3);
             chtData.Series.Add(series4);
-            chtData.Size = new Size(750, 132);
+            chtData.Size = new Size(693, 130);
             chtData.TabIndex = 0;
             chtData.Text = "chart1";
             // 
@@ -156,7 +156,7 @@
             // btnSaveData
             // 
             btnSaveData.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            btnSaveData.Location = new Point(641, 3);
+            btnSaveData.Location = new Point(639, 3);
             btnSaveData.Name = "btnSaveData";
             btnSaveData.Size = new Size(106, 48);
             btnSaveData.TabIndex = 5;
@@ -177,12 +177,13 @@
             lblSaveRoute.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             lblSaveRoute.Location = new Point(451, 3);
             lblSaveRoute.Name = "lblSaveRoute";
-            lblSaveRoute.Size = new Size(184, 48);
+            lblSaveRoute.Size = new Size(182, 48);
             lblSaveRoute.TabIndex = 4;
             lblSaveRoute.Text = "(현재 경로)";
             // 
             // pnlFile
             // 
+            pnlFile.BorderStyle = BorderStyle.FixedSingle;
             pnlFile.Controls.Add(btnFileLoad);
             pnlFile.Controls.Add(btnDelFolder);
             pnlFile.Controls.Add(lblSaveRoute);
@@ -200,13 +201,14 @@
             pnlSetting.Controls.Add(pnlSet);
             pnlSetting.Controls.Add(pnlFillter);
             pnlSetting.Dock = DockStyle.Bottom;
-            pnlSetting.Location = new Point(0, 346);
+            pnlSetting.Location = new Point(0, 338);
             pnlSetting.Name = "pnlSetting";
-            pnlSetting.Size = new Size(750, 82);
+            pnlSetting.Size = new Size(750, 90);
             pnlSetting.TabIndex = 4;
             // 
             // pnlSet
             // 
+            pnlSet.BorderStyle = BorderStyle.FixedSingle;
             pnlSet.Controls.Add(btnInitFillterSet);
             pnlSet.Controls.Add(btnCancelFillter);
             pnlSet.Controls.Add(btnApplyFillter);
@@ -217,7 +219,7 @@
             pnlSet.Dock = DockStyle.Fill;
             pnlSet.Location = new Point(0, 0);
             pnlSet.Name = "pnlSet";
-            pnlSet.Size = new Size(750, 32);
+            pnlSet.Size = new Size(750, 40);
             pnlSet.TabIndex = 6;
             // 
             // btnInitFillterSet
@@ -225,7 +227,7 @@
             btnInitFillterSet.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             btnInitFillterSet.Location = new Point(613, 5);
             btnInitFillterSet.Name = "btnInitFillterSet";
-            btnInitFillterSet.Size = new Size(135, 22);
+            btnInitFillterSet.Size = new Size(135, 28);
             btnInitFillterSet.TabIndex = 8;
             btnInitFillterSet.Text = "변경 사항 설정 초기화";
             btnInitFillterSet.UseVisualStyleBackColor = true;
@@ -235,7 +237,7 @@
             btnCancelFillter.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             btnCancelFillter.Location = new Point(517, 5);
             btnCancelFillter.Name = "btnCancelFillter";
-            btnCancelFillter.Size = new Size(95, 22);
+            btnCancelFillter.Size = new Size(95, 28);
             btnCancelFillter.TabIndex = 7;
             btnCancelFillter.Text = "변경 사항 취소";
             btnCancelFillter.UseVisualStyleBackColor = true;
@@ -245,7 +247,7 @@
             btnApplyFillter.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             btnApplyFillter.Location = new Point(421, 5);
             btnApplyFillter.Name = "btnApplyFillter";
-            btnApplyFillter.Size = new Size(95, 22);
+            btnApplyFillter.Size = new Size(95, 28);
             btnApplyFillter.TabIndex = 6;
             btnApplyFillter.Text = "변경 사항 적용";
             btnApplyFillter.UseVisualStyleBackColor = true;
@@ -255,7 +257,7 @@
             lblSelectedRange.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             lblSelectedRange.Location = new Point(275, 5);
             lblSelectedRange.Name = "lblSelectedRange";
-            lblSelectedRange.Size = new Size(160, 22);
+            lblSelectedRange.Size = new Size(160, 28);
             lblSelectedRange.TabIndex = 2;
             lblSelectedRange.Text = "선택된 범위 (0, 0)";
             lblSelectedRange.TextAlign = ContentAlignment.MiddleLeft;
@@ -266,7 +268,7 @@
             btnAllRange.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             btnAllRange.Location = new Point(206, 5);
             btnAllRange.Name = "btnAllRange";
-            btnAllRange.Size = new Size(67, 22);
+            btnAllRange.Size = new Size(67, 28);
             btnAllRange.TabIndex = 5;
             btnAllRange.Text = "전체 선택";
             btnAllRange.UseVisualStyleBackColor = true;
@@ -276,7 +278,7 @@
             btnRightRange.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             btnRightRange.Location = new Point(98, 5);
             btnRightRange.Name = "btnRightRange";
-            btnRightRange.Size = new Size(107, 22);
+            btnRightRange.Size = new Size(107, 28);
             btnRightRange.TabIndex = 1;
             btnRightRange.Text = "오른쪽 범위 선택";
             btnRightRange.UseVisualStyleBackColor = true;
@@ -286,7 +288,7 @@
             btnLeftRange.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             btnLeftRange.Location = new Point(2, 5);
             btnLeftRange.Name = "btnLeftRange";
-            btnLeftRange.Size = new Size(95, 22);
+            btnLeftRange.Size = new Size(95, 28);
             btnLeftRange.TabIndex = 0;
             btnLeftRange.Text = "왼쪽 범위 선택";
             btnLeftRange.UseVisualStyleBackColor = true;
@@ -294,6 +296,7 @@
             // pnlFillter
             // 
             pnlFillter.BackColor = Color.White;
+            pnlFillter.BorderStyle = BorderStyle.FixedSingle;
             pnlFillter.Controls.Add(chkSetBlur);
             pnlFillter.Controls.Add(trkSetBlur);
             pnlFillter.Controls.Add(chkSetBright);
@@ -304,7 +307,7 @@
             pnlFillter.Controls.Add(chkDelThrottle);
             pnlFillter.Controls.Add(lblFillter);
             pnlFillter.Dock = DockStyle.Bottom;
-            pnlFillter.Location = new Point(0, 32);
+            pnlFillter.Location = new Point(0, 40);
             pnlFillter.Name = "pnlFillter";
             pnlFillter.Size = new Size(750, 50);
             pnlFillter.TabIndex = 4;
@@ -408,11 +411,12 @@
             pnlSub.Dock = DockStyle.Right;
             pnlSub.Location = new Point(530, 55);
             pnlSub.Name = "pnlSub";
-            pnlSub.Size = new Size(220, 291);
+            pnlSub.Size = new Size(220, 283);
             pnlSub.TabIndex = 6;
             // 
             // pnlControl
             // 
+            pnlControl.BorderStyle = BorderStyle.FixedSingle;
             pnlControl.Controls.Add(lblAllImageNumRange);
             pnlControl.Controls.Add(btnStop);
             pnlControl.Controls.Add(btnPlay);
@@ -423,8 +427,18 @@
             pnlControl.Dock = DockStyle.Fill;
             pnlControl.Location = new Point(0, 64);
             pnlControl.Name = "pnlControl";
-            pnlControl.Size = new Size(220, 227);
+            pnlControl.Size = new Size(220, 219);
             pnlControl.TabIndex = 3;
+            // 
+            // lblAllImageNumRange
+            // 
+            lblAllImageNumRange.Font = new Font("맑은 고딕", 9F);
+            lblAllImageNumRange.Location = new Point(6, 9);
+            lblAllImageNumRange.Name = "lblAllImageNumRange";
+            lblAllImageNumRange.Size = new Size(209, 43);
+            lblAllImageNumRange.TabIndex = 7;
+            lblAllImageNumRange.Text = "(이미지 첫 번호, 현재 이미지 번호, 이미지 끝 번호 표시)";
+            lblAllImageNumRange.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // btnStop
             // 
@@ -482,6 +496,7 @@
             // 
             // pnlData
             // 
+            pnlData.BorderStyle = BorderStyle.FixedSingle;
             pnlData.Controls.Add(lblThrottle);
             pnlData.Controls.Add(lblAngle);
             pnlData.Controls.Add(prgAngle);
@@ -526,12 +541,13 @@
             // 
             // pnlImage
             // 
+            pnlImage.BorderStyle = BorderStyle.FixedSingle;
             pnlImage.Controls.Add(picImage);
             pnlImage.Controls.Add(trkProgress);
             pnlImage.Dock = DockStyle.Fill;
             pnlImage.Location = new Point(0, 55);
             pnlImage.Name = "pnlImage";
-            pnlImage.Size = new Size(530, 291);
+            pnlImage.Size = new Size(530, 283);
             pnlImage.TabIndex = 7;
             // 
             // picImage
@@ -540,7 +556,7 @@
             picImage.Dock = DockStyle.Fill;
             picImage.Location = new Point(0, 0);
             picImage.Name = "picImage";
-            picImage.Size = new Size(530, 270);
+            picImage.Size = new Size(528, 260);
             picImage.TabIndex = 2;
             picImage.TabStop = false;
             // 
@@ -549,21 +565,11 @@
             trkProgress.AutoSize = false;
             trkProgress.Dock = DockStyle.Bottom;
             trkProgress.LargeChange = 1;
-            trkProgress.Location = new Point(0, 270);
+            trkProgress.Location = new Point(0, 260);
             trkProgress.Name = "trkProgress";
-            trkProgress.Size = new Size(530, 21);
+            trkProgress.Size = new Size(528, 21);
             trkProgress.TabIndex = 1;
             trkProgress.TickStyle = TickStyle.None;
-            // 
-            // lblAllImageNumRange
-            // 
-            lblAllImageNumRange.Font = new Font("맑은 고딕", 9F);
-            lblAllImageNumRange.Location = new Point(6, 9);
-            lblAllImageNumRange.Name = "lblAllImageNumRange";
-            lblAllImageNumRange.Size = new Size(209, 43);
-            lblAllImageNumRange.TabIndex = 7;
-            lblAllImageNumRange.Text = "(이미지 첫 번호, 현재 이미지 번호, 이미지 끝 번호 표시)";
-            lblAllImageNumRange.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // TubManagerUI
             // 
