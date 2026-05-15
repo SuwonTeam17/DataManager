@@ -1,4 +1,4 @@
-﻿namespace DonkeyUI.UserControls
+﻿namespace DataManager.UserControls
 {
     public partial class InitUI : UserControl
     {
