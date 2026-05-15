@@ -1,4 +1,4 @@
-﻿namespace DonkeyUI
+﻿namespace DataManager
 {
     partial class MainForm
     {
@@ -91,7 +91,7 @@
             // 
             pnlLog.Controls.Add(lvwLogBox);
             pnlLog.Dock = DockStyle.Bottom;
-            pnlLog.Location = new Point(0, 585);
+            pnlLog.Location = new Point(0, 625);
             pnlLog.Margin = new Padding(0);
             pnlLog.Name = "pnlLog";
             pnlLog.Size = new Size(750, 80);
@@ -130,14 +130,14 @@
             pnlMain.Location = new Point(0, 25);
             pnlMain.Margin = new Padding(0);
             pnlMain.Name = "pnlMain";
-            pnlMain.Size = new Size(750, 560);
+            pnlMain.Size = new Size(750, 600);
             pnlMain.TabIndex = 7;
             // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(750, 665);
+            ClientSize = new Size(750, 705);
             Controls.Add(pnlMain);
             Controls.Add(pnlLog);
             Controls.Add(pnlChgForm);

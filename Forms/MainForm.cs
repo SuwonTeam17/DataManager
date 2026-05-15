@@ -1,6 +1,6 @@
-using DonkeyUI.UserControls;
+using DataManager.UserControls;
 
-namespace DonkeyUI
+namespace DataManager
 {
     public partial class MainForm : Form
     {
