@@ -36,6 +36,7 @@
             btnFrameRight = new Button();
             btnFrameLeft = new Button();
             pnlSetting = new Panel();
+            btnLoadTub = new Button();
             comboBox1 = new ComboBox();
             btnModelAdd = new Button();
             trkBlur = new TrackBar();
@@ -115,9 +116,20 @@
             btnFrameLeft.Text = "<";
             btnFrameLeft.UseVisualStyleBackColor = true;
             // 
+            // btnLoadTub
+            // 
+            btnLoadTub.Location = new Point(81, 38);
+            btnLoadTub.Name = "btnLoadTub";
+            btnLoadTub.Size = new Size(68, 23);
+            btnLoadTub.TabIndex = 21;
+            btnLoadTub.Text = "Tub 열기";
+            btnLoadTub.UseVisualStyleBackColor = true;
+            btnLoadTub.Click += btnLoadTub_Click;
+            // 
             // pnlSetting
             // 
             pnlSetting.BorderStyle = BorderStyle.FixedSingle;
+            pnlSetting.Controls.Add(btnLoadTub);
             pnlSetting.Controls.Add(comboBox1);
             pnlSetting.Controls.Add(btnModelAdd);
             pnlSetting.Controls.Add(trkBlur);
@@ -261,5 +273,6 @@
         private Button btnModelAdd;
         private Label lblSpeed;
         private ComboBox comboBox1;
+            private Button btnLoadTub;
+        }
     }
-}
