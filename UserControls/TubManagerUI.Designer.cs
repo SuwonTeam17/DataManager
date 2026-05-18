@@ -28,10 +28,10 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea2 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend2 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series3 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series4 = new System.Windows.Forms.DataVisualization.Charting.Series();
             pnlChart = new Panel();
             chtData = new System.Windows.Forms.DataVisualization.Charting.Chart();
             btnFileLoad = new Button();
@@ -108,23 +108,23 @@
             // chtData
             // 
             chtData.BackColor = SystemColors.Control;
-            chartArea1.Name = "ChartArea1";
-            chtData.ChartAreas.Add(chartArea1);
+            chartArea2.Name = "ChartArea1";
+            chtData.ChartAreas.Add(chartArea2);
             chtData.Dock = DockStyle.Fill;
-            legend1.Name = "Legend1";
-            chtData.Legends.Add(legend1);
+            legend2.Name = "Legend1";
+            chtData.Legends.Add(legend2);
             chtData.Location = new Point(0, 0);
             chtData.Name = "chtData";
-            series1.ChartArea = "ChartArea1";
-            series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
-            series1.Legend = "Legend1";
-            series1.Name = "각도";
-            series2.ChartArea = "ChartArea1";
-            series2.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Spline;
-            series2.Legend = "Legend1";
-            series2.Name = "속도";
-            chtData.Series.Add(series1);
-            chtData.Series.Add(series2);
+            series3.ChartArea = "ChartArea1";
+            series3.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series3.Legend = "Legend1";
+            series3.Name = "각도";
+            series4.ChartArea = "ChartArea1";
+            series4.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Spline;
+            series4.Legend = "Legend1";
+            series4.Name = "속도";
+            chtData.Series.Add(series3);
+            chtData.Series.Add(series4);
             chtData.Size = new Size(748, 130);
             chtData.TabIndex = 0;
             chtData.Text = "chart1";
@@ -137,6 +137,7 @@
             btnFileLoad.TabIndex = 0;
             btnFileLoad.Text = "파일 가져오기";
             btnFileLoad.UseVisualStyleBackColor = true;
+            btnFileLoad.Click += btnFileLoad_Click;
             // 
             // btnNewFolder
             // 
@@ -146,6 +147,7 @@
             btnNewFolder.TabIndex = 1;
             btnNewFolder.Text = "새 폴더 생성";
             btnNewFolder.UseVisualStyleBackColor = true;
+            btnNewFolder.Click += btnNewFolder_Click;
             // 
             // btnSaveRoute
             // 
@@ -155,6 +157,7 @@
             btnSaveRoute.TabIndex = 3;
             btnSaveRoute.Text = "저장 경로 지정";
             btnSaveRoute.UseVisualStyleBackColor = true;
+            btnSaveRoute.Click += btnSaveRoute_Click;
             // 
             // btnSaveData
             // 
@@ -165,6 +168,7 @@
             btnSaveData.TabIndex = 5;
             btnSaveData.Text = "데이터 저장";
             btnSaveData.UseVisualStyleBackColor = true;
+            btnSaveData.Click += btnSaveData_Click;
             // 
             // btnDelFolder
             // 
@@ -174,6 +178,7 @@
             btnDelFolder.TabIndex = 2;
             btnDelFolder.Text = "폴더 삭제";
             btnDelFolder.UseVisualStyleBackColor = true;
+            btnDelFolder.Click += btnDelFolder_Click;
             // 
             // lblSaveRoute
             // 
@@ -234,6 +239,7 @@
             btnInitFillterSet.TabIndex = 8;
             btnInitFillterSet.Text = "변경 사항 설정 초기화";
             btnInitFillterSet.UseVisualStyleBackColor = true;
+            btnInitFillterSet.Click += btnInitFillterSet_Click;
             // 
             // btnCancelFillter
             // 
@@ -244,6 +250,7 @@
             btnCancelFillter.TabIndex = 7;
             btnCancelFillter.Text = "변경 사항 취소";
             btnCancelFillter.UseVisualStyleBackColor = true;
+            btnCancelFillter.Click += btnCancelFillter_Click;
             // 
             // btnApplyFillter
             // 
@@ -254,6 +261,7 @@
             btnApplyFillter.TabIndex = 6;
             btnApplyFillter.Text = "변경 사항 적용";
             btnApplyFillter.UseVisualStyleBackColor = true;
+            btnApplyFillter.Click += btnApplyFillter_Click;
             // 
             // lblSelectedRange
             // 
@@ -274,6 +282,7 @@
             btnAllRange.TabIndex = 5;
             btnAllRange.Text = "전체 선택";
             btnAllRange.UseVisualStyleBackColor = true;
+            btnAllRange.Click += btnAllRange_Click;
             // 
             // btnRightRange
             // 
@@ -284,6 +293,7 @@
             btnRightRange.TabIndex = 1;
             btnRightRange.Text = "오른쪽 범위 선택";
             btnRightRange.UseVisualStyleBackColor = true;
+            btnRightRange.Click += btnRightRange_Click;
             // 
             // btnLeftRange
             // 
@@ -294,6 +304,7 @@
             btnLeftRange.TabIndex = 0;
             btnLeftRange.Text = "왼쪽 범위 선택";
             btnLeftRange.UseVisualStyleBackColor = true;
+            btnLeftRange.Click += btnLeftRange_Click;
             // 
             // pnlFillter
             // 
@@ -471,6 +482,7 @@
             btnStop.TabIndex = 6;
             btnStop.Text = "중지";
             btnStop.UseVisualStyleBackColor = true;
+            btnStop.Click += btnStop_Click;
             // 
             // btnPlay
             // 
@@ -480,6 +492,7 @@
             btnPlay.TabIndex = 5;
             btnPlay.Text = "재생";
             btnPlay.UseVisualStyleBackColor = true;
+            btnPlay.Click += btnPlay_Click;
             // 
             // btn5FrameRight
             // 
@@ -489,6 +502,7 @@
             btn5FrameRight.TabIndex = 4;
             btn5FrameRight.Text = ">>>";
             btn5FrameRight.UseVisualStyleBackColor = true;
+            btn5FrameRight.Click += btn5FrameRight_Click;
             // 
             // btn5FrameLeft
             // 
@@ -498,6 +512,7 @@
             btn5FrameLeft.TabIndex = 3;
             btn5FrameLeft.Text = "<<<";
             btn5FrameLeft.UseVisualStyleBackColor = true;
+            btn5FrameLeft.Click += btn5FrameLeft_Click;
             // 
             // btnFrameRight
             // 
@@ -507,6 +522,7 @@
             btnFrameRight.TabIndex = 2;
             btnFrameRight.Text = ">";
             btnFrameRight.UseVisualStyleBackColor = true;
+            btnFrameRight.Click += btnFrameRight_Click;
             // 
             // btnFrameLeft
             // 
@@ -516,6 +532,7 @@
             btnFrameLeft.TabIndex = 1;
             btnFrameLeft.Text = "<";
             btnFrameLeft.UseVisualStyleBackColor = true;
+            btnFrameLeft.Click += btnFrameLeft_Click;
             // 
             // pnlData
             // 
@@ -580,6 +597,7 @@
             picImage.Location = new Point(0, 0);
             picImage.Name = "picImage";
             picImage.Size = new Size(528, 260);
+            picImage.SizeMode = PictureBoxSizeMode.StretchImage;
             picImage.TabIndex = 2;
             picImage.TabStop = false;
             // 
