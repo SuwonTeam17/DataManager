@@ -76,6 +76,7 @@
             btnLoadModel.TabIndex = 4;
             btnLoadModel.Text = "모델 가져오기";
             btnLoadModel.UseVisualStyleBackColor = true;
+            btnLoadModel.Click += btnLoadModel_Click;
             // 
             // pnlSetting
             // 
