@@ -105,7 +105,7 @@ namespace DataManager.UserControls
             {
                 try
                 {
-                    // 파일의 모든 줄을 읽어옵니다 (한 줄이 데이터 1개 프레임)
+                   
                     string[] lines = File.ReadAllLines(catalogPath);
 
                     foreach (var line in lines)
@@ -249,7 +249,7 @@ namespace DataManager.UserControls
         private void btn5FrameRight_Click(object sender, EventArgs e) => DisplayFrame(_currentFrameIndex + 5);
 
 
-        //  범위 선택 및 데이터 변형 필터 기능 (Fillter)
+        //  범위 선택 및 데이터 변형 필터 기능 
 
         private void btnLeftRange_Click(object sender, EventArgs e)
         {
