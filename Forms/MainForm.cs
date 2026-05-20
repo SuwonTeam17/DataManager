@@ -10,7 +10,7 @@ namespace DataManager
         {
             InitializeComponent();
 
-            // ì‹œìž‘ í™”ë©´
+            // ?œìž‘ ?”ë©´
             ShowUI(new InitUI());
         }
 
@@ -68,6 +68,36 @@ namespace DataManager
         private void btnChgPilotForm_Click(object sender, EventArgs e)
         {
             ShowUI(new PilotArenaUI());
+        }
+
+        /// <summary>
+        /// TrainerUI µî ´Ù¸¥ È­¸é¿¡¼­ ¿ø°ÝÀ¸·Î È£ÃâÇÏ¿© ¸ÞÀÎ ·Î±×¹Ú½º¿¡ ÁÙÀ» Ãß°¡ÇÏ´Â ¸Þ¼­µå
+        /// </summary>
+        public void AddLog(string type, string message)
+        {
+            // 1. ÇöÀç ½Ã°£À» "HH:mm:ss" ÇüÅÂ·Î Æ÷¸ËÆÃ (¿¹: 22:42:05)
+            string currentTime = DateTime.Now.ToString("HH:mm:ss");
+
+            // 2. ¸®½ºÆ®ºä¿¡ µé¾î°¥ ÇÑ ÁÙ(Row) Ç×¸ñ »ý¼º ¹× ¼­ºê¾ÆÀÌÅÛ Ãß°¡
+            ListViewItem lvi = new ListViewItem(currentTime); // Ã¹ ¹øÂ° ÄÃ·³: ½Ã°£
+            lvi.SubItems.Add(type);                           // µÎ ¹øÂ° ÄÃ·³: Å¸ÀÔ (INFO, ERROR µî)
+            lvi.SubItems.Add(message);                        // ¼¼ ¹øÂ° ÄÃ·³: ³»¿ë
+
+            // 3. [Áß¿ä] Å©·Î½º ½º·¹µå ¹æÁö ¹× ½Ç½Ã°£ UI ¾÷µ¥ÀÌÆ® Ã³¸®
+            if (lvwLogBox.InvokeRequired)
+            {
+                // ¹é±×¶ó¿îµå(´Ù¸¥ ½º·¹µå)¿¡¼­ È£ÃâµÈ °æ¿ì, ¸ÞÀÎ UI ½º·¹µå¿¡°Ô ¾ÈÀüÇÏ°Ô ´ë¸® Åä½º
+                lvwLogBox.Invoke(new Action(() => {
+                    lvwLogBox.Items.Add(lvi);
+                    lvwLogBox.EnsureVisible(lvwLogBox.Items.Count - 1); // ½ºÅ©·ÑÀ» ¸Ç ¾Æ·¡(ÃÖ½Å ·Î±×)·Î ÀÚµ¿ °íÁ¤
+                }));
+            }
+            else
+            {
+                // ¸ÞÀÎ UI ½º·¹µå¿¡¼­ Á÷Á¢ È£ÃâµÈ °æ¿ì ¹Ù·Î Ãß°¡
+                lvwLogBox.Items.Add(lvi);
+                lvwLogBox.EnsureVisible(lvwLogBox.Items.Count - 1);
+            }
         }
     }
 }
