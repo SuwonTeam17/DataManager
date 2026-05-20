@@ -28,10 +28,10 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea2 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend2 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series3 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series4 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
             pnlChart = new Panel();
             chtData = new System.Windows.Forms.DataVisualization.Charting.Chart();
             btnFileLoad = new Button();
@@ -72,6 +72,8 @@
             btnFrameRight = new Button();
             btnFrameLeft = new Button();
             pnlData = new Panel();
+            lblThrottleDetail = new Label();
+            lblAngleDetail = new Label();
             lblThrottle = new Label();
             lblAngle = new Label();
             prgAngle = new ProgressBar();
@@ -108,23 +110,23 @@
             // chtData
             // 
             chtData.BackColor = SystemColors.Control;
-            chartArea2.Name = "ChartArea1";
-            chtData.ChartAreas.Add(chartArea2);
+            chartArea1.Name = "ChartArea1";
+            chtData.ChartAreas.Add(chartArea1);
             chtData.Dock = DockStyle.Fill;
-            legend2.Name = "Legend1";
-            chtData.Legends.Add(legend2);
+            legend1.Name = "Legend1";
+            chtData.Legends.Add(legend1);
             chtData.Location = new Point(0, 0);
             chtData.Name = "chtData";
-            series3.ChartArea = "ChartArea1";
-            series3.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
-            series3.Legend = "Legend1";
-            series3.Name = "각도";
-            series4.ChartArea = "ChartArea1";
-            series4.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Spline;
-            series4.Legend = "Legend1";
-            series4.Name = "속도";
-            chtData.Series.Add(series3);
-            chtData.Series.Add(series4);
+            series1.ChartArea = "ChartArea1";
+            series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series1.Legend = "Legend1";
+            series1.Name = "각도";
+            series2.ChartArea = "ChartArea1";
+            series2.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Spline;
+            series2.Legend = "Legend1";
+            series2.Name = "속도";
+            chtData.Series.Add(series1);
+            chtData.Series.Add(series2);
             chtData.Size = new Size(748, 130);
             chtData.TabIndex = 0;
             chtData.Text = "chart1";
@@ -537,6 +539,8 @@
             // pnlData
             // 
             pnlData.BorderStyle = BorderStyle.FixedSingle;
+            pnlData.Controls.Add(lblThrottleDetail);
+            pnlData.Controls.Add(lblAngleDetail);
             pnlData.Controls.Add(lblThrottle);
             pnlData.Controls.Add(lblAngle);
             pnlData.Controls.Add(prgAngle);
@@ -547,9 +551,29 @@
             pnlData.Size = new Size(220, 64);
             pnlData.TabIndex = 2;
             // 
+            // lblThrottleDetail
+            // 
+            lblThrottleDetail.ImageAlign = ContentAlignment.MiddleRight;
+            lblThrottleDetail.Location = new Point(57, 39);
+            lblThrottleDetail.Name = "lblThrottleDetail";
+            lblThrottleDetail.Size = new Size(46, 15);
+            lblThrottleDetail.TabIndex = 5;
+            lblThrottleDetail.Text = "수치";
+            lblThrottleDetail.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // lblAngleDetail
+            // 
+            lblAngleDetail.ImageAlign = ContentAlignment.MiddleRight;
+            lblAngleDetail.Location = new Point(57, 10);
+            lblAngleDetail.Name = "lblAngleDetail";
+            lblAngleDetail.Size = new Size(46, 15);
+            lblAngleDetail.TabIndex = 4;
+            lblAngleDetail.Text = "수치";
+            lblAngleDetail.TextAlign = ContentAlignment.MiddleCenter;
+            // 
             // lblThrottle
             // 
-            lblThrottle.Location = new Point(26, 38);
+            lblThrottle.Location = new Point(6, 35);
             lblThrottle.Name = "lblThrottle";
             lblThrottle.Size = new Size(45, 23);
             lblThrottle.TabIndex = 3;
@@ -558,7 +582,7 @@
             // 
             // lblAngle
             // 
-            lblAngle.Location = new Point(26, 6);
+            lblAngle.Location = new Point(6, 6);
             lblAngle.Name = "lblAngle";
             lblAngle.Size = new Size(45, 23);
             lblAngle.TabIndex = 2;
@@ -567,16 +591,16 @@
             // 
             // prgAngle
             // 
-            prgAngle.Location = new Point(97, 6);
+            prgAngle.Location = new Point(109, 6);
             prgAngle.Name = "prgAngle";
-            prgAngle.Size = new Size(120, 23);
+            prgAngle.Size = new Size(108, 23);
             prgAngle.TabIndex = 0;
             // 
             // prgThrottle
             // 
-            prgThrottle.Location = new Point(97, 35);
+            prgThrottle.Location = new Point(109, 35);
             prgThrottle.Name = "prgThrottle";
-            prgThrottle.Size = new Size(120, 23);
+            prgThrottle.Size = new Size(108, 23);
             prgThrottle.TabIndex = 1;
             // 
             // pnlImage
@@ -688,5 +712,7 @@
         private Label lblAllImageNumRange;
         private Label lblSpeed;
         private ComboBox comboBox1;
+        private Label lblThrottleDetail;
+        private Label lblAngleDetail;
     }
 }

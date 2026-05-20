@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 using System.Text.Json;
+
 
 namespace DataManager.UserControls
 {
@@ -21,147 +23,195 @@ namespace DataManager.UserControls
             public double OriginalThrottle { get; set; }
         }
 
-        private List<DrivingFrame> _drivingData = new List<DrivingFrame>();
-        private int _currentFrameIndex = 0;
-        private bool _isPlaying = false;
-        private System.Windows.Forms.Timer _playTimer;
-        private Tuple<int, int> _selectedRange = new Tuple<int, int>(0, 0);
+        public event Action<string, string, string> OnLogReported;
 
+        private List<DrivingFrame> drivingData = new List<DrivingFrame>();
+        private int currentFrameIndex = 0;
+        private bool isPlaying = false;
+        private System.Windows.Forms.Timer playTimer;
+        private Tuple<int, int> selectedRange = new Tuple<int, int>(0, 0);
 
         public TubManagerUI()
         {
             InitializeComponent();
-            InitializeCustomLogic(); // 커스텀 초기화 로직 호출
+            InitializeCustomLogic();
+        }
+
+        private void ReportLog(string type, string message)
+        {
+            string currentTime = DateTime.Now.ToString("HH:mm:ss");
+            OnLogReported?.Invoke(currentTime, type, message);
         }
 
         private void InitializeCustomLogic()
         {
-            //  재생 타이머 생성 및 이벤트 연결
-            _playTimer = new System.Windows.Forms.Timer();
-            _playTimer.Tick += PlayTimer_Tick;
+            playTimer = new System.Windows.Forms.Timer();
+            playTimer.Tick += PlayTimer_Tick;
 
-            //  배속 설정 초기화 
             comboBox1.Items.Clear();
             comboBox1.Items.AddRange(new object[] { "0.50", "1.00", "1.50", "2.00" });
-
-
             comboBox1.SelectedIndex = 1;
 
+            int _baseInterval = 60;
+            playTimer.Interval = (int)(_baseInterval / 1.00);
 
-            int baseInterval = 60;
-            _playTimer.Interval = (int)(baseInterval / 1.00);
-
-            // 배속이 바뀌었을 때 타이머 속도도 같이 바뀌도록 이벤트 연결
             comboBox1.SelectedIndexChanged += ComboBox1_SelectedIndexChanged;
-
-            // 슬라이더 변경 이벤트 연결
             trkProgress.Scroll += TrkProgress_Scroll;
         }
 
-
-        //  파일 및 폴더 관리 
-
         private void btnFileLoad_Click(object sender, EventArgs e)
         {
-            using (FolderBrowserDialog fbd = new FolderBrowserDialog())
+            
+            using (FolderBrowserDialog _dialog = new FolderBrowserDialog())
             {
-                if (fbd.ShowDialog() == DialogResult.OK)
+                
+                _dialog.AutoUpgradeEnabled = true;
+
+                // 창 상단에 노출될 안내 메시지 설정
+                _dialog.Description = "Donkey Car 주행 데이터를 선택하세요.";
+
+                // 타이틀바 대신 위의 안내 메시지를 제목으로 사용하도록 설정
+                _dialog.UseDescriptionForTitle = true;
+
+                // 처음 창이 열릴 때 기준이 되는 루트 경로 설정 (내 PC)
+                _dialog.RootFolder = Environment.SpecialFolder.MyComputer;
+
+                // 사용자가 폴더를 정상적으로 선택하고 [폴더 선택]을 눌렀을 때만 작동
+                if (_dialog.ShowDialog() == DialogResult.OK)
                 {
-                    lblSaveRoute.Text = fbd.SelectedPath;
-                    LoadDonkeyCarData(fbd.SelectedPath);
+                    
+                    string _selectedFolderPath = _dialog.SelectedPath;
+                                        
+                    lblSaveRoute.Text = _selectedFolderPath;
+
+                    LoadDonkeyCarData(_selectedFolderPath);
                 }
             }
         }
 
+        //  지정된 상위 폴더 경로 내부에서 images와 catalog 파일을 정확히 매핑하여 로드
         private void LoadDonkeyCarData(string path)
         {
-            _drivingData.Clear();
+            drivingData.Clear();
 
             if (!Directory.Exists(path)) return;
 
-            //  images 폴더 경로와 catalog 파일들이 있는지 확인
-            string imagesFolderPath = Path.Combine(path, "images");
-            string[] catalogFiles = Directory.GetFiles(path, "catalog_*.catalog");
-
-            if (catalogFiles.Length == 0)
+            //  내부의 images 폴더 경로 설정 및 검증
+            string _imagesFolderPath = Path.Combine(path, "images");
+            if (!Directory.Exists(_imagesFolderPath))
             {
-                MessageBox.Show("해당 폴더에 catalog_*.catalog 파일이 없습니다.", "알림");
+                // 만약 사용자가 하위 images 폴더를 한 번 더 타고 들어와 선택했을 경우를 위한 방어 코드
+                if (Path.GetFileName(path).ToLower() == "images")
+                {
+                    _imagesFolderPath = path;
+                    path = Path.GetDirectoryName(path); // 상위 폴더를 데이터 부모 폴더로 격상
+                }
+                else
+                {
+                    ReportLog("오류", "선택한 폴더 내부에 'images' 폴더가 존재하지 않습니다.");
+                    MessageBox.Show("선택한 폴더 내부에 'images' 폴더가 없습니다. 올바른 상위 폴더를 선택해 주세요.", "알림");
+                    return;
+                }
+            }
+
+            //  카탈로그 파일들 수집
+            string[] _catalogFiles = Directory.GetFiles(path, "catalog_*.catalog");
+            if (_catalogFiles.Length == 0)
+            {
+                // 간혹 접두사 없이 숫자만 붙는 경우를 위해 2차 검색 시도
+                _catalogFiles = Directory.GetFiles(path, "*.catalog");
+            }
+
+            if (_catalogFiles.Length == 0)
+            {
+                ReportLog("경고", "해당 폴더에 .catalog 파일이 존재하지 않습니다.");
+                MessageBox.Show("해당 폴더 경로에 catalog 파일이 없습니다.", "알림");
                 return;
             }
 
-            //  catalog_0, catalog_1 순서대로 파일 정렬
-            var sortedCatalogFiles = catalogFiles.OrderBy(f =>
+            //  카탈로그 파일 정렬 (숫자 순서대로 정확하게 데이터가 정렬되도록 처리)
+            var _sortedCatalogFiles = _catalogFiles.OrderBy(_f =>
             {
-                string filename = Path.GetFileNameWithoutExtension(f); // "catalog_0.catalog" -> "catalog_0"
-                string numStr = filename.Replace("catalog_", "");
-                int.TryParse(numStr, out int num);
-                return num;
+                string _filename = Path.GetFileNameWithoutExtension(_f);
+                
+                // 숫자만 남기기 위해 숫자 이외의 문자 제거 시도
+                string _numStr = new string(_filename.Where(char.IsDigit).ToArray());
+
+                if (int.TryParse(_numStr, out int _num))
+                    return _num;
+                return 0;
             }).ToList();
 
-            int globalIndex = 1;
+            int _globalIndex = 1;
 
-            // 각 catalog 파일을 순차적으로 읽기
-            foreach (var catalogPath in sortedCatalogFiles)
+            //  각 catalog 파일을 순차적으로 읽기
+            foreach (var _catalogPath in _sortedCatalogFiles)
             {
                 try
                 {
-                   
-                    string[] lines = File.ReadAllLines(catalogPath);
+                    string[] _lines = File.ReadAllLines(_catalogPath);
 
-                    foreach (var line in lines)
+                    foreach (var _line in _lines)
                     {
-                        if (string.IsNullOrWhiteSpace(line)) continue;
+                        if (string.IsNullOrWhiteSpace(_line)) continue;
 
-                        // 한 줄(JSON) 파싱
-                        using (JsonDocument doc = JsonDocument.Parse(line))
+                        using (JsonDocument _doc = JsonDocument.Parse(_line))
                         {
-                            JsonElement root = doc.RootElement;
-
-                            // 키값 추출 (Donkey Car 표준 포맷)
-                            string imageName = root.GetProperty("cam/image_array").GetString();
-                            double angle = root.GetProperty("user/angle").GetDouble();
-                            double throttle = root.GetProperty("user/throttle").GetDouble();
+                            JsonElement _root = _doc.RootElement;
 
 
-                            string fullImagePath = Path.Combine(imagesFolderPath, imageName);
+                            string _imageName = string.Empty;
+                            if (_root.TryGetProperty("cam/image_array", out JsonElement _imgProp))
+                                _imageName = _imgProp.GetString();
+                            else
+                                continue;
 
-                            // 리스트에 데이터 추가
-                            _drivingData.Add(new DrivingFrame
+                            double _angle = 0.0;
+                            if (_root.TryGetProperty("user/angle", out JsonElement _angProp))
+                                _angle = _angProp.GetDouble();
+
+                            double _throttle = 0.0;
+                            if (_root.TryGetProperty("user/throttle", out JsonElement _thrProp))
+                                _throttle = _thrProp.GetDouble();
+
+                            string _fullImagePath = Path.Combine(_imagesFolderPath, _imageName);
+
+                            drivingData.Add(new DrivingFrame
                             {
-                                Index = globalIndex++,
-                                ImagePath = fullImagePath,
-                                Angle = angle,
-                                Throttle = throttle,
-                                OriginalAngle = angle,
-                                OriginalThrottle = throttle
+                                Index = _globalIndex++,
+                                ImagePath = _fullImagePath,
+                                Angle = _angle,
+                                Throttle = _throttle,
+                                OriginalAngle = _angle,
+                                OriginalThrottle = _throttle
                             });
                         }
                     }
                 }
-                catch (Exception ex)
+                catch (Exception _ex)
                 {
-                    Console.WriteLine($"Catalog 파일 파싱 실패: {catalogPath}, 에러: {ex.Message}");
+                    ReportLog("오류", $"파일 파싱 실패: {Path.GetFileName(_catalogPath)} - {_ex.Message}");
                 }
             }
 
-            if (_drivingData.Count == 0)
+            if (drivingData.Count == 0)
             {
-                MessageBox.Show("유효한 자율주행 데이터를 읽어오지 못했습니다.", "알림");
+                ReportLog("오류", "유효한 자율주행 주행 프레임 데이터를 읽어오지 못했습니다.");
+                MessageBox.Show("유효한 자율주행 데이터를 읽어오지 못했습니다. 파일 구조나 JSON 형식을 확인하세요.", "알림");
                 return;
             }
 
-
-            //  UI 및 차트 새로고침
-
+            // UI 및 차트 새로고침
             trkProgress.Minimum = 0;
-            trkProgress.Maximum = _drivingData.Count - 1;
+            trkProgress.Maximum = drivingData.Count - 1;
             trkProgress.Value = 0;
 
-            // 하단 그래프에 실제 주행 내역 전체 시각화
-            UpdateChart();
 
-            // 첫 번째 프레임 이미지 및 데이터 로드
+            UpdateChart();
             DisplayFrame(0);
+
+            ReportLog("정보", $"데이터 로드 완료 (총 {drivingData.Count} 프레임)");
+
         }
 
         private void btnNewFolder_Click(object sender, EventArgs e) { }
@@ -169,131 +219,129 @@ namespace DataManager.UserControls
         private void btnSaveRoute_Click(object sender, EventArgs e) { }
         private void btnSaveData_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("데이터가 성공적으로 저장되었습니다.", "알림");
+
+            ReportLog("정보", "데이터가 성공적으로 저장되었습니다.");
+
         }
 
 
-        //  이미지 표시 및 재생 제어
-
         private void DisplayFrame(int index)
         {
-            if (_drivingData == null || _drivingData.Count == 0 || index < 0 || index >= _drivingData.Count) return;
+            if (drivingData == null || drivingData.Count == 0 || index < 0 || index >= drivingData.Count) return;
 
-            _currentFrameIndex = index;
-            var frame = _drivingData[index];
+            currentFrameIndex = index;
+            var _frame = drivingData[index];
 
-            //  각도(Angle): 범위가 -1.0(최좌측) ~ 1.0(최우측) 일 때 -> 0 ~ 100으로 변환
+            //  프로그레스 바(게이지) 값 계산 및 적용
+            double _anglePercentage = (_frame.Angle + 1.0) / 2.0 * 100.0;
+            int _finalAngleVal = Math.Max(0, Math.Min(100, (int)_anglePercentage));
+            prgAngle.Value = _finalAngleVal;
 
-            double anglePercentage = (frame.Angle + 1.0) / 2.0 * 100.0;
+            double _throttlePercentage = (_frame.Throttle + 1.0) / 2.0 * 100.0;
+            int _finalThrottleVal = Math.Max(0, Math.Min(100, (int)_throttlePercentage));
+            prgThrottle.Value = _finalThrottleVal;
 
+            
+            // "F2" 소수점 아래 둘째 자리까지만 표현 (예: -0.15, 0.50)
+            lblAngleDetail.Text = _frame.Angle.ToString("F2");
+            lblThrottleDetail.Text = _frame.Throttle.ToString("F2");
 
-            int finalAngleVal = Math.Max(0, Math.Min(100, (int)anglePercentage));
-            prgAngle.Value = finalAngleVal;
-
-
-            // 속도(Throttle): 범위가 0.0(정지) ~ 1.0(최고속도) 일 때 -> 0 ~ 100으로 변환
-
-            double throttlePercentage = (frame.Throttle + 1.0) / 2.0 * 100.0;
-
-            int finalThrottleVal = Math.Max(0, Math.Min(100, (int)throttlePercentage));
-            prgThrottle.Value = finalThrottleVal;
-
-
-
-
-            lblAllImageNumRange.Text = $"({_drivingData[0].Index}, {frame.Index}, {_drivingData[_drivingData.Count - 1].Index})";
+            //  텍스트 정보 및 트랙바 동기화
+            lblAllImageNumRange.Text = $"({drivingData[0].Index}, {_frame.Index}, {drivingData[drivingData.Count - 1].Index})";
             trkProgress.Value = index;
 
-            if (!string.IsNullOrEmpty(frame.ImagePath) && File.Exists(frame.ImagePath))
+            //  이미지 출력 및 필터 적용
+            if (!string.IsNullOrEmpty(_frame.ImagePath) && File.Exists(_frame.ImagePath))
             {
-                picImage.Image = Image.FromFile(frame.ImagePath);
+                picImage.Image = Image.FromFile(_frame.ImagePath);
                 ApplyImageFiltersOnView();
             }
         }
 
         private void PlayTimer_Tick(object sender, EventArgs e)
         {
-            if (_currentFrameIndex < _drivingData.Count - 1)
-                DisplayFrame(_currentFrameIndex + 1);
+            if (currentFrameIndex < drivingData.Count - 1)
+                DisplayFrame(currentFrameIndex + 1);
             else
                 btnStop_Click(null, null);
         }
 
         private void btnPlay_Click(object sender, EventArgs e)
         {
-            if (_drivingData.Count == 0) return;
-            _isPlaying = true;
-            _playTimer.Start();
+            if (drivingData.Count == 0) return;
+            isPlaying = true;
+            playTimer.Start();
+            ReportLog("정보", "데이터 재생을 시작합니다.");
         }
 
         private void btnStop_Click(object sender, EventArgs e)
         {
-            _isPlaying = false;
-            _playTimer.Stop();
+            isPlaying = false;
+            playTimer.Stop();
+            ReportLog("정보", "데이터 재생을 일시 정지합니다.");
         }
 
         private void ComboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (comboBox1.SelectedItem != null && double.TryParse(comboBox1.SelectedItem.ToString(), out double speed))
+            if (comboBox1.SelectedItem != null && double.TryParse(comboBox1.SelectedItem.ToString(), out double _speed))
             {
-
-                int baseInterval = 60;
-                _playTimer.Interval = (int)(baseInterval / speed);
+                int _baseInterval = 60;
+                playTimer.Interval = (int)(_baseInterval / _speed);
             }
         }
 
         private void TrkProgress_Scroll(object sender, EventArgs e) => DisplayFrame(trkProgress.Value);
-        private void btnFrameLeft_Click(object sender, EventArgs e) => DisplayFrame(_currentFrameIndex - 1);
-        private void btnFrameRight_Click(object sender, EventArgs e) => DisplayFrame(_currentFrameIndex + 1);
-        private void btn5FrameLeft_Click(object sender, EventArgs e) => DisplayFrame(_currentFrameIndex - 5);
-        private void btn5FrameRight_Click(object sender, EventArgs e) => DisplayFrame(_currentFrameIndex + 5);
-
-
-        //  범위 선택 및 데이터 변형 필터 기능 
+        private void btnFrameLeft_Click(object sender, EventArgs e) => DisplayFrame(currentFrameIndex - 1);
+        private void btnFrameRight_Click(object sender, EventArgs e) => DisplayFrame(currentFrameIndex + 1);
+        private void btn5FrameLeft_Click(object sender, EventArgs e) => DisplayFrame(currentFrameIndex - 5);
+        private void btn5FrameRight_Click(object sender, EventArgs e) => DisplayFrame(currentFrameIndex + 5);
 
         private void btnLeftRange_Click(object sender, EventArgs e)
         {
-            _selectedRange = new Tuple<int, int>(_currentFrameIndex, _selectedRange.Item2);
+            selectedRange = new Tuple<int, int>(currentFrameIndex, selectedRange.Item2);
             UpdateRangeLabel();
+            ReportLog("정보", $"시작 범위 지정: {drivingData[currentFrameIndex].Index}번 프레임");
         }
 
         private void btnRightRange_Click(object sender, EventArgs e)
         {
-            if (_currentFrameIndex >= _selectedRange.Item1)
+            if (currentFrameIndex >= selectedRange.Item1)
             {
-                _selectedRange = new Tuple<int, int>(_selectedRange.Item1, _currentFrameIndex);
+                selectedRange = new Tuple<int, int>(selectedRange.Item1, currentFrameIndex);
                 UpdateRangeLabel();
+                ReportLog("정보", $"종료 범위 지정: {drivingData[currentFrameIndex].Index}번 프레임");
             }
         }
 
         private void btnAllRange_Click(object sender, EventArgs e)
         {
-            if (_drivingData.Count > 0)
+            if (drivingData.Count > 0)
             {
-                _selectedRange = new Tuple<int, int>(0, _drivingData.Count - 1);
+                selectedRange = new Tuple<int, int>(0, drivingData.Count - 1);
                 UpdateRangeLabel();
+                ReportLog("정보", "전체 범위가 선택되었습니다.");
             }
         }
 
         private void UpdateRangeLabel()
         {
-            lblSelectedRange.Text = $"선택된 범위 ({_drivingData[_selectedRange.Item1].Index}, {_drivingData[_selectedRange.Item2].Index})";
+            lblSelectedRange.Text = $"선택된 범위 ({drivingData[selectedRange.Item1].Index}, {drivingData[selectedRange.Item2].Index})";
         }
 
         private void btnApplyFillter_Click(object sender, EventArgs e)
         {
-            int start = _selectedRange.Item1;
-            int end = _selectedRange.Item2;
+            int _start = selectedRange.Item1;
+            int _end = selectedRange.Item2;
 
-            for (int i = start; i <= end; i++)
+            for (int _i = _start; _i <= _end; _i++)
             {
-                if (chkDelThrottle.Checked && _drivingData[i].Throttle == 0) { }
-                if (chkDelAngle.Checked && _drivingData[i].Angle == 0) { }
+                if (chkDelThrottle.Checked && drivingData[_i].Throttle == 0) { }
+                if (chkDelAngle.Checked && drivingData[_i].Angle == 0) { }
             }
 
             UpdateChart();
-            DisplayFrame(_currentFrameIndex);
-            MessageBox.Show("선택 범위 내 데이터 필터가 적용되었습니다.", "알림");
+            DisplayFrame(currentFrameIndex);
+            ReportLog("정보", $"필터 적용 완료 (범위: {drivingData[_start].Index} ~ {drivingData[_end].Index})");
         }
 
         private void btnCancelFillter_Click(object sender, EventArgs e) { }
@@ -307,6 +355,7 @@ namespace DataManager.UserControls
             chkSetBlur.Checked = false;
             trkSetBright.Value = trkSetBright.Minimum;
             trkSetBlur.Value = trkSetBlur.Minimum;
+            ReportLog("정보", "필터 설정이 초기화되었습니다.");
         }
 
         private void ApplyImageFiltersOnView()
@@ -317,27 +366,28 @@ namespace DataManager.UserControls
         }
 
 
-        //  차트 업데이트 로직
-
         private void UpdateChart()
         {
             chtData.Series.Clear();
 
-            Series angleSeries = new Series("각도") { ChartType = SeriesChartType.Line, BorderWidth = 2 };
-            Series throttleSeries = new Series("속도") { ChartType = SeriesChartType.Line, BorderWidth = 2 };
+            Series _angleSeries = new Series("각도") { ChartType = SeriesChartType.Line, BorderWidth = 2 };
+            Series _throttleSeries = new Series("속도") { ChartType = SeriesChartType.Line, BorderWidth = 2 };
 
-            foreach (var frame in _drivingData)
+            foreach (var _frame in drivingData)
             {
-                angleSeries.Points.AddXY(frame.Index, frame.Angle);
-                throttleSeries.Points.AddXY(frame.Index, frame.Throttle);
+                _angleSeries.Points.AddXY(_frame.Index, _frame.Angle);
+                _throttleSeries.Points.AddXY(_frame.Index, _frame.Throttle);
             }
 
-            chtData.Series.Add(angleSeries);
-            chtData.Series.Add(throttleSeries);
+            chtData.Series.Add(_angleSeries);
+            chtData.Series.Add(_throttleSeries);
 
             chtData.ChartAreas[0].AxisX.MajorGrid.LineColor = Color.LightGray;
             chtData.ChartAreas[0].AxisY.MajorGrid.LineColor = Color.LightGray;
+
         }
+
     }
+
 }
 
