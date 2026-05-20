@@ -12,7 +12,7 @@ namespace DataManager.UserControls
 {
     public partial class TubManagerUI : UserControl
     {
-
+        
         public class DrivingFrame
         {
             public int Index { get; set; }
@@ -31,10 +31,24 @@ namespace DataManager.UserControls
         private System.Windows.Forms.Timer playTimer;
         private Tuple<int, int> selectedRange = new Tuple<int, int>(0, 0);
 
+        
+        private readonly string baseEditedPath = Path.Combine(
+        Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).Parent.Parent.Parent.FullName,
+        "EditedData"
+        );
+        private string targetSavePath = string.Empty;
+
+
         public TubManagerUI()
         {
             InitializeComponent();
             InitializeCustomLogic();
+
+            
+            if (!Directory.Exists(baseEditedPath))
+            {
+                Directory.CreateDirectory(baseEditedPath);
+            }
         }
 
         private void ReportLog(string type, string message)
@@ -64,93 +78,71 @@ namespace DataManager.UserControls
             
             using (FolderBrowserDialog _dialog = new FolderBrowserDialog())
             {
-                
+            
                 _dialog.AutoUpgradeEnabled = true;
-
-                // 창 상단에 노출될 안내 메시지 설정
                 _dialog.Description = "Donkey Car 주행 데이터를 선택하세요.";
-
-                // 타이틀바 대신 위의 안내 메시지를 제목으로 사용하도록 설정
+            
                 _dialog.UseDescriptionForTitle = true;
-
-                // 처음 창이 열릴 때 기준이 되는 루트 경로 설정 (내 PC)
                 _dialog.RootFolder = Environment.SpecialFolder.MyComputer;
 
-                // 사용자가 폴더를 정상적으로 선택하고 [폴더 선택]을 눌렀을 때만 작동
+                
                 if (_dialog.ShowDialog() == DialogResult.OK)
                 {
-                    
+                
                     string _selectedFolderPath = _dialog.SelectedPath;
-                                        
                     lblSaveRoute.Text = _selectedFolderPath;
-
                     LoadDonkeyCarData(_selectedFolderPath);
+                
                 }
             }
         }
 
-        //  지정된 상위 폴더 경로 내부에서 images와 catalog 파일을 정확히 매핑하여 로드
+        
         private void LoadDonkeyCarData(string path)
         {
+        
             drivingData.Clear();
-
+            
             if (!Directory.Exists(path)) return;
 
-            //  내부의 images 폴더 경로 설정 및 검증
+            
             string _imagesFolderPath = Path.Combine(path, "images");
-            if (!Directory.Exists(_imagesFolderPath))
-            {
-                // 만약 사용자가 하위 images 폴더를 한 번 더 타고 들어와 선택했을 경우를 위한 방어 코드
-                if (Path.GetFileName(path).ToLower() == "images")
-                {
-                    _imagesFolderPath = path;
-                    path = Path.GetDirectoryName(path); // 상위 폴더를 데이터 부모 폴더로 격상
-                }
-                else
-                {
-                    ReportLog("오류", "선택한 폴더 내부에 'images' 폴더가 존재하지 않습니다.");
-                    MessageBox.Show("선택한 폴더 내부에 'images' 폴더가 없습니다. 올바른 상위 폴더를 선택해 주세요.", "알림");
-                    return;
-                }
-            }
-
-            //  카탈로그 파일들 수집
             string[] _catalogFiles = Directory.GetFiles(path, "catalog_*.catalog");
+
             if (_catalogFiles.Length == 0)
             {
-                // 간혹 접두사 없이 숫자만 붙는 경우를 위해 2차 검색 시도
+            
                 _catalogFiles = Directory.GetFiles(path, "*.catalog");
+            
             }
 
             if (_catalogFiles.Length == 0)
             {
+            
                 ReportLog("경고", "해당 폴더에 .catalog 파일이 존재하지 않습니다.");
                 MessageBox.Show("해당 폴더 경로에 catalog 파일이 없습니다.", "알림");
+                
                 return;
             }
 
-            //  카탈로그 파일 정렬 (숫자 순서대로 정확하게 데이터가 정렬되도록 처리)
             var _sortedCatalogFiles = _catalogFiles.OrderBy(_f =>
             {
+           
                 string _filename = Path.GetFileNameWithoutExtension(_f);
-                
-                // 숫자만 남기기 위해 숫자 이외의 문자 제거 시도
                 string _numStr = new string(_filename.Where(char.IsDigit).ToArray());
-
-                if (int.TryParse(_numStr, out int _num))
-                    return _num;
+                
+                if (int.TryParse(_numStr, out int _num)) return _num;
+                
                 return 0;
             }).ToList();
 
             int _globalIndex = 1;
 
-            //  각 catalog 파일을 순차적으로 읽기
             foreach (var _catalogPath in _sortedCatalogFiles)
             {
                 try
                 {
                     string[] _lines = File.ReadAllLines(_catalogPath);
-
                     foreach (var _line in _lines)
                     {
                         if (string.IsNullOrWhiteSpace(_line)) continue;
@@ -158,8 +150,6 @@ namespace DataManager.UserControls
                         using (JsonDocument _doc = JsonDocument.Parse(_line))
                         {
                             JsonElement _root = _doc.RootElement;
-
-
                             string _imageName = string.Empty;
                             if (_root.TryGetProperty("cam/image_array", out JsonElement _imgProp))
                                 _imageName = _imgProp.GetString();
@@ -197,33 +187,237 @@ namespace DataManager.UserControls
             if (drivingData.Count == 0)
             {
                 ReportLog("오류", "유효한 자율주행 주행 프레임 데이터를 읽어오지 못했습니다.");
-                MessageBox.Show("유효한 자율주행 데이터를 읽어오지 못했습니다. 파일 구조나 JSON 형식을 확인하세요.", "알림");
+                MessageBox.Show("유효한 자율주행 데이터를 읽어오지 못했습니다.", "알림");
                 return;
             }
 
-            // UI 및 차트 새로고침
             trkProgress.Minimum = 0;
             trkProgress.Maximum = drivingData.Count - 1;
             trkProgress.Value = 0;
 
-
             UpdateChart();
             DisplayFrame(0);
-
             ReportLog("정보", $"데이터 로드 완료 (총 {drivingData.Count} 프레임)");
-
         }
 
-        private void btnNewFolder_Click(object sender, EventArgs e) { }
-        private void btnDelFolder_Click(object sender, EventArgs e) { }
-        private void btnSaveRoute_Click(object sender, EventArgs e) { }
+        
+        private void btnNewFolder_Click(object sender, EventArgs e)
+        {
+            
+            if (!Directory.Exists(baseEditedPath))
+            {
+                Directory.CreateDirectory(baseEditedPath);
+            }
+
+            
+            Form _inputForm = new Form();
+            _inputForm.Width = 400;
+            _inputForm.Height = 150;
+            _inputForm.FormBorderStyle = FormBorderStyle.FixedDialog;
+            _inputForm.Text = "새 폴더 생성";
+            _inputForm.StartPosition = FormStartPosition.CenterParent;
+            _inputForm.MaximizeBox = false;
+            _inputForm.MinimizeBox = false;
+
+            Label _lblText = new Label() { Left = 20, Top = 20, Width = 350, Text = "생성할 폴더 이름을 입력하세요 (EditedData 폴더 내부에 생성):" };
+
+            
+            TextBox _txtInput = new TextBox() { Left = 20, Top = 45, Width = 340, Text = "" };
+
+            Button _btnOk = new Button() { Text = "확인", Left = 180, Width = 80, Top = 80, DialogResult = DialogResult.OK };
+            Button _btnCancel = new Button() { Text = "취성", Left = 280, Width = 80, Top = 80, DialogResult = DialogResult.Cancel };
+
+            _inputForm.Controls.Add(_lblText);
+            _inputForm.Controls.Add(_txtInput);
+            _inputForm.Controls.Add(_btnOk);
+            _inputForm.Controls.Add(_btnCancel);
+            _inputForm.AcceptButton = _btnOk; 
+            _inputForm.CancelButton = _btnCancel;
+
+            
+            if (_inputForm.ShowDialog() == DialogResult.OK)
+            {
+                string _folderName = _txtInput.Text.Trim();
+
+                
+                if (string.IsNullOrEmpty(_folderName))
+                {
+                    MessageBox.Show("폴더 이름을 입력해야 합니다.", "알림");
+                    return;
+                }
+
+                
+                foreach (char _c in Path.GetInvalidFileNameChars())
+                {
+                    _folderName = _folderName.Replace(_c, '_');
+                }
+
+                
+                string _finalNewFolderPath = Path.Combine(baseEditedPath, _folderName);
+
+                try
+                {
+                    if (!Directory.Exists(_finalNewFolderPath))
+                    {
+                        
+                        Directory.CreateDirectory(_finalNewFolderPath);
+
+                        
+                        targetSavePath = _finalNewFolderPath;
+                        lblSaveRoute.Text = $"[저장지정] {_folderName}";
+
+                        ReportLog("정보", $"새 폴더 생성 및 지정 완료: {_folderName}");
+                        MessageBox.Show($"[{_folderName}] 폴더가 성공적으로 생성되고 저장 경로로 지정되었습니다.", "성공");
+                    }
+                    else
+                    {
+                        MessageBox.Show("이미 존재하는 폴더 이름입니다. 다른 이름을 사용해 주세요.", "알림");
+                    }
+                }
+                catch (Exception _ex)
+                {
+                    ReportLog("오류", $"폴더 생성 실패: {_ex.Message}");
+                    MessageBox.Show($"폴더 생성 중 오류 발생: {_ex.Message}", "에러");
+                }
+            }
+        }
+
+        
+        private void btnDelFolder_Click(object sender, EventArgs e)
+        {
+            using (FolderBrowserDialog _dialog = new FolderBrowserDialog())
+            {
+                _dialog.AutoUpgradeEnabled = true;
+                _dialog.Description = "삭제할 가공 폴더를 선택하세요 (EditedData 내부 폴더)";
+                _dialog.SelectedPath = baseEditedPath;
+
+                if (_dialog.ShowDialog() == DialogResult.OK)
+                {
+                    string _targetDelPath = _dialog.SelectedPath;
+
+                    
+                    if (!_targetDelPath.Contains(baseEditedPath) || _targetDelPath == baseEditedPath)
+                    {
+                        MessageBox.Show("EditedData 내부에 생성된 하위 가공 폴더만 삭제할 수 있습니다.", "보안 경고");
+                        return;
+                    }
+
+                    string _folderName = Path.GetFileName(_targetDelPath);
+                    DialogResult _confirm = MessageBox.Show($"[{_folderName}] 폴더와 내부 데이터 파일들을 정말 영구 삭제하시겠습니까?", "폴더 삭제 확인", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
+                    if (_confirm == DialogResult.Yes)
+                    {
+                        try
+                        {
+                            Directory.Delete(_targetDelPath, true);
+                            ReportLog("정보", $"편집 폴더 삭제 완료: {_folderName}");
+
+                            if (targetSavePath == _targetDelPath)
+                            {
+                                targetSavePath = string.Empty;
+                                lblSaveRoute.Text = "선택된 저장 경로 없음";
+                            }
+                            MessageBox.Show("폴더가 삭제되었습니다.", "성공");
+                        }
+                        catch (Exception _ex)
+                        {
+                            ReportLog("오류", $"폴더 삭제 실패: {_ex.Message}");
+                        }
+                    }
+                }
+            }
+        }
+
+        
+        private void btnSaveRoute_Click(object sender, EventArgs e)
+        {
+            using (FolderBrowserDialog _dialog = new FolderBrowserDialog())
+            {
+                _dialog.AutoUpgradeEnabled = true;
+                _dialog.Description = "편집된 데이터를 저장할 하위 폴더를 지정해 주세요.";
+                _dialog.SelectedPath = baseEditedPath;
+
+                if (_dialog.ShowDialog() == DialogResult.OK)
+                {
+                    string _chosenPath = _dialog.SelectedPath;
+
+                    if (!_chosenPath.Contains(baseEditedPath) || _chosenPath == baseEditedPath)
+                    {
+                        MessageBox.Show("반드시 EditedData 안에 존재하는 생성된 하위 폴더를 선택해야 합니다.", "알림");
+                        return;
+                    }
+
+                    targetSavePath = _chosenPath;
+                    lblSaveRoute.Text = $"[저장지정] {Path.GetFileName(targetSavePath)}";
+                    ReportLog("정보", $"데이터 저장 경로 지정됨: {targetSavePath}");
+                }
+            }
+        }
+
+        
         private void btnSaveData_Click(object sender, EventArgs e)
         {
+            if (drivingData.Count == 0)
+            {
+                MessageBox.Show("저장할 주행 데이터가 존재하지 않습니다. 먼저 데이터를 로드하세요.", "알림");
+                return;
+            }
 
-            ReportLog("정보", "데이터가 성공적으로 저장되었습니다.");
+            if (string.IsNullOrEmpty(targetSavePath) || !Directory.Exists(targetSavePath))
+            {
+                MessageBox.Show("저장 경로가 지정되지 않았거나 올바르지 않습니다.\n'저장 경로 지정' 버튼을 먼저 눌러주세요.", "알림");
+                return;
+            }
 
+            try
+            {
+                string _saveImagesDir = Path.Combine(targetSavePath, "images");
+                if (!Directory.Exists(_saveImagesDir)) Directory.CreateDirectory(_saveImagesDir);
+
+                string _catalogPath = Path.Combine(targetSavePath, "catalog_0.catalog");
+                string _catalogManifestPath = Path.Combine(targetSavePath, "catalog_0.catalog_manifest");
+                string _manifestJsonPath = Path.Combine(targetSavePath, "manifest.json");
+
+                List<string> _catalogLines = new List<string>();
+
+                foreach (var _frame in drivingData)
+                {
+                    string _fileNameOnly = Path.GetFileName(_frame.ImagePath);
+                    string _destImagePath = Path.Combine(_saveImagesDir, _fileNameOnly);
+
+                    if (File.Exists(_frame.ImagePath) && _frame.ImagePath != _destImagePath)
+                    {
+                        File.Copy(_frame.ImagePath, _destImagePath, true);
+                    }
+
+                    var _dataObj = new
+                    {
+                        @cam_image_array = _fileNameOnly,
+                        @user_angle = _frame.Angle,
+                        @user_throttle = _frame.Throttle
+                    };
+
+                    string _jsonLine = JsonSerializer.Serialize(_dataObj)
+                        .Replace("cam_image_array", "cam/image_array")
+                        .Replace("user_angle", "user/angle")
+                        .Replace("user_throttle", "user/throttle");
+
+                    _catalogLines.Add(_jsonLine);
+                }
+
+                File.WriteAllLines(_catalogPath, _catalogLines);
+                File.WriteAllText(_catalogManifestPath, "{\"path\": \"catalog_0.catalog\", \"idx\": 0}");
+                File.WriteAllText(_manifestJsonPath, "{\"format\": \"donkey_car\", \"version\": \"4.3.0\"}");
+
+                ReportLog("정보", $"가공 완료 데이터 최종 저장 성공: {Path.GetFileName(targetSavePath)} (총 {drivingData.Count} 프레임)");
+                MessageBox.Show("가공 및 편집된 주행 데이터 세트 저장이 완전히 끝났습니다!", "저장 완료");
+            }
+            catch (Exception _ex)
+            {
+                ReportLog("오류", $"데이터 저장 실패: {_ex.Message}");
+                MessageBox.Show($"저장 중 오류 발생: {_ex.Message}", "에러");
+            }
         }
-
 
         private void DisplayFrame(int index)
         {
@@ -232,7 +426,6 @@ namespace DataManager.UserControls
             currentFrameIndex = index;
             var _frame = drivingData[index];
 
-            //  프로그레스 바(게이지) 값 계산 및 적용
             double _anglePercentage = (_frame.Angle + 1.0) / 2.0 * 100.0;
             int _finalAngleVal = Math.Max(0, Math.Min(100, (int)_anglePercentage));
             prgAngle.Value = _finalAngleVal;
@@ -241,16 +434,12 @@ namespace DataManager.UserControls
             int _finalThrottleVal = Math.Max(0, Math.Min(100, (int)_throttlePercentage));
             prgThrottle.Value = _finalThrottleVal;
 
-            
-            // "F2" 소수점 아래 둘째 자리까지만 표현 (예: -0.15, 0.50)
             lblAngleDetail.Text = _frame.Angle.ToString("F2");
             lblThrottleDetail.Text = _frame.Throttle.ToString("F2");
 
-            //  텍스트 정보 및 트랙바 동기화
             lblAllImageNumRange.Text = $"({drivingData[0].Index}, {_frame.Index}, {drivingData[drivingData.Count - 1].Index})";
             trkProgress.Value = index;
 
-            //  이미지 출력 및 필터 적용
             if (!string.IsNullOrEmpty(_frame.ImagePath) && File.Exists(_frame.ImagePath))
             {
                 picImage.Image = Image.FromFile(_frame.ImagePath);
@@ -365,7 +554,6 @@ namespace DataManager.UserControls
             if (chkInverseColor.Checked) { }
         }
 
-
         private void UpdateChart()
         {
             chtData.Series.Clear();
@@ -384,10 +572,6 @@ namespace DataManager.UserControls
 
             chtData.ChartAreas[0].AxisX.MajorGrid.LineColor = Color.LightGray;
             chtData.ChartAreas[0].AxisY.MajorGrid.LineColor = Color.LightGray;
-
         }
-
     }
-
 }
-

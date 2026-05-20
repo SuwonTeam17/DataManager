@@ -39,19 +39,19 @@ namespace DataManager
                 return;
             }
 
-            // 1. 첫 번째 컬럼에 배치될 '시간' 생성
+                        
             ListViewItem _item = new ListViewItem(_time);
-
-            // 2. 두 번째 컬럼에 배치될 '타입' 추가
+                     
+            
             _item.SubItems.Add(_type);
-
-            // 3. 세 번째 컬럼에 배치될 '메시지' 추가
+              
+            
             _item.SubItems.Add(_message);
-
-            // 4. ListView에 최종 행(Row) 추가
+                    
+            
             lvwLogBox.Items.Add(_item);
 
-            // 스크롤 자동 다운
+            
             lvwLogBox.EnsureVisible(lvwLogBox.Items.Count - 1);
         }
 
