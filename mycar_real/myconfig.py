@@ -818,3 +818,4 @@
 # # 'local_angle': AI Steering, Human Throttle
 # # 'local': AI Steering and Throttle
 # WEB_INIT_MODE = "user"
+# --- GUI User Settings ---

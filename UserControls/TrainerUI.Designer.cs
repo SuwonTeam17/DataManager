@@ -106,7 +106,7 @@
             btnSaveMyConf.TabIndex = 4;
             btnSaveMyConf.Text = "내 구성 저장";
             btnSaveMyConf.UseVisualStyleBackColor = true;
-            btnSaveMyConf.Click += btnSaveMConf_Click;
+            btnSaveMyConf.Click += btnSaveMyConf_Click;
             // 
             // cboAddConfCount
             // 
