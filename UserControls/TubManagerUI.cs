@@ -100,9 +100,9 @@ namespace DataManager.UserControls
 
                 if (_dialog.ShowDialog() == DialogResult.OK)
                 {
-
+                
                     string _selectedFolderPath = _dialog.SelectedPath;
-                    lblSaveRoute.Text = _selectedFolderPath;
+                //    lblSaveRoute.Text = _selectedFolderPath;
                     LoadDonkeyCarData(_selectedFolderPath);
 
                 }
@@ -257,7 +257,7 @@ namespace DataManager.UserControls
             TextBox _txtInput = new TextBox() { Left = 20, Top = 45, Width = 340, Text = "" };
 
             Button _btnOk = new Button() { Text = "확인", Left = 180, Width = 80, Top = 80, DialogResult = DialogResult.OK };
-            Button _btnCancel = new Button() { Text = "취성", Left = 280, Width = 80, Top = 80, DialogResult = DialogResult.Cancel };
+            Button _btnCancel = new Button() { Text = "취소", Left = 280, Width = 80, Top = 80, DialogResult = DialogResult.Cancel };
 
             _inputForm.Controls.Add(_lblText);
             _inputForm.Controls.Add(_txtInput);
@@ -296,7 +296,7 @@ namespace DataManager.UserControls
 
 
                         targetSavePath = _finalNewFolderPath;
-                        lblSaveRoute.Text = $"[저장지정] {_folderName}";
+                        lblSaveRoute.Text = $"[저장 경로] {_folderName}";
 
                         ReportLog("정보", $"새 폴더 생성 및 지정 완료: {_folderName}");
                         MessageBox.Show($"[{_folderName}] 폴더가 성공적으로 생성되고 저장 경로로 지정되었습니다.", "성공");
@@ -380,7 +380,7 @@ namespace DataManager.UserControls
                     }
 
                     targetSavePath = _chosenPath;
-                    lblSaveRoute.Text = $"[저장지정] {Path.GetFileName(targetSavePath)}";
+                    lblSaveRoute.Text = $"[저장 경로] {Path.GetFileName(targetSavePath)}";
                     ReportLog("정보", $"데이터 저장 경로 지정됨: {targetSavePath}");
                 }
             }
