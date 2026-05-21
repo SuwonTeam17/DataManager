@@ -4,6 +4,8 @@ namespace DataManager.UserControls
 {
     public partial class TrainerUI : UserControl
     {
+        public event Action<string, string, string> OnLogReported;
+
         public TrainerUI()
         {
             InitializeComponent();
@@ -25,35 +27,24 @@ namespace DataManager.UserControls
         // ====================================================================
         private void btnSaveMyConf_Click(object sender, EventArgs e)
         {
-            // ★ [치트키] 현재 프로그램에서 열려있는 모든 폼 중 "MainForm"이라는 이름의 진짜 주소를 직접 찾아옵니다.
-            MainForm mainForm = null;
-            foreach (Form openForm in Application.OpenForms)
-            {
-                if (openForm is MainForm)
-                {
-                    mainForm = (MainForm)openForm;
-                    break;
-                }
-            }
-
             string filePath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\mycar_real\myconfig.py"));
 
             // 1. 파일이 없을 때 메인 폼의 로그박스 원격 호출
             if (!File.Exists(filePath))
             {
-                mainForm?.AddLog("오류", $"myconfig.py 파일을 찾을 수 없습니다. 경로: {filePath}");
+                ReportLog("오류", $"myconfig.py 파일을 찾을 수 없습니다. 경로: {filePath}");
                 return;
             }
 
             Dictionary<string, string> configMapping = new Dictionary<string, string>()
-    {
-        { "상단 자르기", "ROI_CROP_TOP" },
-        { "하단 자르기", "ROI_CROP_BOTTOM" },
-        { "우측 자르기", "ROI_CROP_RIGHT" },
-        { "좌측 자르기", "ROI_CROP_LEFT" },
-        { "반복 횟수", "MAX_EPOCHS" },
-        { "학습 한번에 쓸 사진 수", "BATCH_SIZE" }
-    };
+            {
+                { "상단 자르기", "ROI_CROP_TOP" },
+                { "하단 자르기", "ROI_CROP_BOTTOM" },
+                { "우측 자르기", "ROI_CROP_RIGHT" },
+                { "좌측 자르기", "ROI_CROP_LEFT" },
+                { "반복 횟수", "MAX_EPOCHS" },
+                { "학습 한번에 쓸 사진 수", "BATCH_SIZE" }
+            };
 
             Dictionary<string, string> userSettings = new Dictionary<string, string>();
 
@@ -97,12 +88,12 @@ namespace DataManager.UserControls
                 File.WriteAllLines(filePath, lines);
 
                 // 2. 저장 성공 시 메인 폼의 로그박스 원격 호출
-                mainForm?.AddLog("알림", "myconfig.py 파일에 새로운 설정값을 성공적으로 저장했습니다.");
+                ReportLog("알림", "myconfig.py 파일에 새로운 설정값을 성공적으로 저장했습니다.");
             }
             catch (Exception ex)
             {
                 // 3. 예외 발생 시 메인 폼의 로그박스 원격 호출
-                mainForm?.AddLog("오류", $"파일 저장 중 시스템 오류 발생: {ex.Message}");
+                ReportLog("오류", $"파일 저장 중 시스템 오류 발생: {ex.Message}");
             }
         }
 
@@ -163,8 +154,8 @@ namespace DataManager.UserControls
             cboSelConf_New.Location = new Point(5, 13);
             cboSelConf_New.DropDownStyle = ComboBoxStyle.DropDownList;
             cboSelConf_New.Items.AddRange(new string[] {
-        "상단 자르기", "하단 자르기", "우측 자르기", "좌측 자르기", "반복 횟수", "학습 한번에 쓸 사진 수"
-    });
+                "상단 자르기", "하단 자르기", "우측 자르기", "좌측 자르기", "반복 횟수", "학습 한번에 쓸 사진 수"
+            });
             cboSelConf_New.SelectedIndex = 0;
 
             Button btnDelete = new Button();
@@ -206,6 +197,12 @@ namespace DataManager.UserControls
 
             // 콤보박스 값이 바뀔 때도 전체 동기화 메서드 한방으로 끝!
             SyncAllPanelSizes();
+        }
+
+        private void ReportLog(string type, string message)
+        {
+            string currentTime = DateTime.Now.ToString("HH:mm:ss");
+            OnLogReported?.Invoke(currentTime, type, message);
         }
     }
 }

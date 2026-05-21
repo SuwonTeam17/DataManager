@@ -16,6 +16,8 @@ namespace DataManager.UserControls
             public double Throttle { get; set; }
         }
 
+        public event Action<string, string, string> OnLogReported;
+
         private List<FrameData> frames = new List<FrameData>();
         private string tubFolderPath = string.Empty;
         private int currentFrameIndex = 0;
@@ -157,16 +159,16 @@ namespace DataManager.UserControls
 
             if (!File.Exists(catalogPath))
             {
-                LogRequested?.Invoke("ERROR", $"catalog_0.catalog 파일을 찾을 수 없습니다. 경로: {folderPath}");
+                ReportLog("ERROR", $"catalog_0.catalog 파일을 찾을 수 없습니다. 경로: {folderPath}");
             }
             if (!Directory.Exists(imagesPath))
             {
-                LogRequested?.Invoke("ERROR", $"images 폴더를 찾을 수 없습니다. 경로: {folderPath}");
+                ReportLog("ERROR", $"images 폴더를 찾을 수 없습니다. 경로: {folderPath}");
             }
 
             if (File.Exists(catalogPath))
             {
-                LogRequested?.Invoke("INFO", $"Tub 카탈로그 로드 시도 중: {catalogPath}");
+                ReportLog("INFO", $"Tub 카탈로그 로드 시도 중: {catalogPath}");
                 var lines = File.ReadAllLines(catalogPath);
                 foreach (var line in lines)
                 {
@@ -199,14 +201,14 @@ namespace DataManager.UserControls
 
             if (frames.Count > 0)
             {
-                LogRequested?.Invoke("INFO", $"총 {frames.Count} 프레임의 Tub 데이터가 성공적으로 로드되었습니다.");
+                ReportLog("INFO", $"총 {frames.Count} 프레임의 Tub 데이터가 성공적으로 로드되었습니다.");
                 trkProgress.Minimum = 0;
                 trkProgress.Maximum = frames.Count - 1;
                 trkProgress.Value = 0;
             }
             else
             {
-                LogRequested?.Invoke("WARN", "유효한 Tub 프레임 데이터가 없습니다.");
+                ReportLog("WARN", "유효한 Tub 프레임 데이터가 없습니다.");
                 trkProgress.Minimum = 0;
                 trkProgress.Maximum = 0;
                 trkProgress.Value = 0;
@@ -382,8 +384,6 @@ namespace DataManager.UserControls
             }
         }
 
-        public event Action<string, string> LogRequested;
-
         private void btnModelAdd_Click(object sender, EventArgs e)
         {
             var modules = flpModule.Controls.OfType<ModelTestModule>().ToList();
@@ -391,8 +391,7 @@ namespace DataManager.UserControls
 
             var module = new ModelTestModule();
             module.CloseRequested += Module_CloseRequested;
-            // 모듈에서 발생한 로그 요청을 PilotArenaUI의 LogRequested를 통해 MainForm으로 릴레이
-            module.LogRequested += (level, msg) => LogRequested?.Invoke(level, msg);
+
             flpModule.Controls.Add(module);
 
             FlpModule_SizeChanged(this, EventArgs.Empty);
@@ -442,6 +441,12 @@ namespace DataManager.UserControls
                     }
                 }
             }
+        }
+
+        private void ReportLog(string type, string message)
+        {
+            string currentTime = DateTime.Now.ToString("HH:mm:ss");
+            OnLogReported?.Invoke(currentTime, type, message);
         }
     }
 }

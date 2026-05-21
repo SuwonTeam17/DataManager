@@ -15,6 +15,8 @@ namespace DataManager.UserControls
 {
     public partial class ModelTestModule : UserControl
     {
+        public event Action<string, string, string> OnLogReported;
+
         private string selectedModelFolderPath = string.Empty;
         private string selectedModelFilePath = string.Empty;
         private string selectedModelType = string.Empty;
@@ -86,7 +88,6 @@ namespace DataManager.UserControls
         }
 
         public event EventHandler CloseRequested;
-        public event Action<string, string> LogRequested;
 
         private void btnDelModel_Click(object sender, EventArgs e)
         {
@@ -150,7 +151,7 @@ namespace DataManager.UserControls
             }
             else
             {
-                LogRequested?.Invoke("ERROR", "지원하지 않는 모델 폴더입니다.");
+                ReportLog("ERROR", "지원하지 않는 모델 폴더입니다.");
                 isModelLoaded = false;
                 selectedModelType = string.Empty;
                 selectedModelFolderPath = string.Empty;
@@ -276,7 +277,7 @@ namespace DataManager.UserControls
 
                 if (!File.Exists(pythonExePath))
                 {
-                    LogRequested?.Invoke("ERROR", $"Python 실행 파일을 찾을 수 없습니다: {pythonExePath}");
+                    ReportLog("ERROR", $"Python 실행 파일을 찾을 수 없습니다: {pythonExePath}");
                     Debug.WriteLine($"[RunPredictionAsync] Error: Python executable not found at {pythonExePath}");
                     return;
                 }
@@ -310,13 +311,13 @@ namespace DataManager.UserControls
                     Debug.WriteLine($"[RunPredictionAsync] Python stdout: {output}");
                     if (!string.IsNullOrWhiteSpace(error))
                     {
-                        LogRequested?.Invoke("WARN", $"Python stderr: {error}");
+                        ReportLog("WARN", $"Python stderr: {error}");
                         Debug.WriteLine($"[RunPredictionAsync] Python stderr: {error}");
                     }
 
                     if (process.ExitCode != 0)
                     {
-                        LogRequested?.Invoke("ERROR", $"Python 실행이 종료 코드 {process.ExitCode}로 실패했습니다.");
+                        ReportLog("ERROR", $"Python 실행이 종료 코드 {process.ExitCode}로 실패했습니다.");
                         Debug.WriteLine($"[RunPredictionAsync] Python execution failed with exit code: {process.ExitCode}");
                         return;
                     }
@@ -353,7 +354,7 @@ namespace DataManager.UserControls
             }
             catch (Exception ex)
             {
-                LogRequested?.Invoke("ERROR", $"Python 예측 중 예외 발생: {ex.Message}");
+                ReportLog("ERROR", $"Python 예측 중 예외 발생: {ex.Message}");
                 Debug.WriteLine($"[RunPredictionAsync] Exception: {ex.Message}");
             }
             finally
@@ -365,6 +366,12 @@ namespace DataManager.UserControls
         private void ModelTestModule_Load(object sender, EventArgs e)
         {
 
+        }
+
+        private void ReportLog(string type, string message)
+        {
+            string currentTime = DateTime.Now.ToString("HH:mm:ss");
+            OnLogReported?.Invoke(currentTime, type, message);
         }
     }
 }

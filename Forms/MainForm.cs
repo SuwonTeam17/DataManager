@@ -24,6 +24,18 @@ namespace DataManager
             {
                 tubUI.OnLogReported += AppendLogToListView;
             }
+            else if (ui is TrainerUI trainerUI)
+            {
+                trainerUI.OnLogReported += AppendLogToListView;
+            }
+            else if (ui is PilotArenaUI pilotArenaUI)
+            {
+                pilotArenaUI.OnLogReported += AppendLogToListView;
+            }
+            else if (ui is ModelTestModule modelTestModule)
+            {
+                modelTestModule.OnLogReported += AppendLogToListView;
+            }
 
             pnlMain.Controls.Add(ui);
         }
