@@ -43,4 +43,10 @@
     <Folder Include="Services\ModelTest\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="PythonScripts\predict_model.py">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

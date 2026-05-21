@@ -93,6 +93,7 @@
             // 
             // btnDelModel
             // 
+            btnDelModel.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             btnDelModel.Location = new Point(311, 4);
             btnDelModel.Name = "btnDelModel";
             btnDelModel.Size = new Size(61, 24);
@@ -103,6 +104,7 @@
             // 
             // lblModelRoute
             // 
+            lblModelRoute.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             lblModelRoute.Location = new Point(3, 30);
             lblModelRoute.Margin = new Padding(3);
             lblModelRoute.Name = "lblModelRoute";
@@ -195,6 +197,7 @@
             // 
             // progressBar2
             // 
+            progressBar2.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             progressBar2.Location = new Point(225, 4);
             progressBar2.Name = "progressBar2";
             progressBar2.Size = new Size(138, 15);
@@ -235,6 +238,7 @@
             Margin = new Padding(0);
             Name = "ModelTestModule";
             Size = new Size(375, 537);
+            Load += ModelTestModule_Load;
             pnlSetting.ResumeLayout(false);
             pnlChart.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)chart2).EndInit();
