@@ -100,9 +100,9 @@ namespace DataManager.UserControls
 
                 if (_dialog.ShowDialog() == DialogResult.OK)
                 {
-
+                
                     string _selectedFolderPath = _dialog.SelectedPath;
-                    lblSaveRoute.Text = _selectedFolderPath;
+                //    lblSaveRoute.Text = _selectedFolderPath;
                     LoadDonkeyCarData(_selectedFolderPath);
 
                 }
