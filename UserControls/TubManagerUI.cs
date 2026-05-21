@@ -6,6 +6,7 @@ using System.Linq;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 using System.Text.Json;
+using System.Drawing.Imaging;
 
 
 namespace DataManager.UserControls
@@ -21,6 +22,11 @@ namespace DataManager.UserControls
             public double Throttle { get; set; }
             public double OriginalAngle { get; set; }
             public double OriginalThrottle { get; set; }
+
+            // ── 추가 필드 ──────────────────────────
+            public string SessionId { get; set; }
+            public long TimestampMs { get; set; }
+            public string Mode { get; set; }
         }
 
         public event Action<string, string, string> OnLogReported;
@@ -115,6 +121,8 @@ namespace DataManager.UserControls
             string _imagesFolderPath = Path.Combine(path, "images");
             string[] _catalogFiles = Directory.GetFiles(path, "catalog_*.catalog");
 
+
+
             if (_catalogFiles.Length == 0)
             {
 
@@ -170,6 +178,21 @@ namespace DataManager.UserControls
                             if (_root.TryGetProperty("user/throttle", out JsonElement _thrProp))
                                 _throttle = _thrProp.GetDouble();
 
+                            // 기존 _angle, _throttle 파싱 아래에 추가
+                            string _mode = "user";
+                            if (_root.TryGetProperty("user/mode", out JsonElement _modeProp))
+                                _mode = _modeProp.GetString();
+
+                            string _sessionId = string.Empty;
+                            if (_root.TryGetProperty("_session_id", out JsonElement _sessionProp))
+                                _sessionId = _sessionProp.GetString();
+
+                            long _timestampMs = 0;
+                            if (_root.TryGetProperty("_timestamp_ms", out JsonElement _tsProp))
+                                _timestampMs = _tsProp.GetInt64();
+
+                            
+
                             string _fullImagePath = Path.Combine(_imagesFolderPath, _imageName);
 
                             drivingData.Add(new DrivingFrame
@@ -179,7 +202,10 @@ namespace DataManager.UserControls
                                 Angle = _angle,
                                 Throttle = _throttle,
                                 OriginalAngle = _angle,
-                                OriginalThrottle = _throttle
+                                OriginalThrottle = _throttle,
+                                SessionId = _sessionId,     // 추가
+                                Mode = _mode,               // 추가
+                                TimestampMs = _timestampMs  // 추가
                             });
                         }
                     }
@@ -378,50 +404,105 @@ namespace DataManager.UserControls
             try
             {
                 string _saveImagesDir = Path.Combine(targetSavePath, "images");
-                if (!Directory.Exists(_saveImagesDir)) Directory.CreateDirectory(_saveImagesDir);
+
+                if (Directory.Exists(_saveImagesDir))
+                    Directory.Delete(_saveImagesDir, true);
+
+                Directory.CreateDirectory(_saveImagesDir);
 
                 string _catalogPath = Path.Combine(targetSavePath, "catalog_0.catalog");
                 string _catalogManifestPath = Path.Combine(targetSavePath, "catalog_0.catalog_manifest");
                 string _manifestJsonPath = Path.Combine(targetSavePath, "manifest.json");
 
                 List<string> _catalogLines = new List<string>();
+                int _savedCount = 0;
 
-                foreach (var _frame in drivingData)
+                for (int _i = 0; _i < drivingData.Count; _i++)
                 {
-                    string _fileNameOnly = Path.GetFileName(_frame.ImagePath);
-                    string _destImagePath = Path.Combine(_saveImagesDir, _fileNameOnly);
+                    if (filteredHideSet.Contains(_i))
+                        continue;
 
-                    if (File.Exists(_frame.ImagePath) && _frame.ImagePath != _destImagePath)
+                    var _frame = drivingData[_i];
+
+                    // ── 재정렬 인덱스 및 파일명 ──────────────────────────
+                    // 형식: {index}_cam_image_array_.jpg
+                    string _ext = Path.GetExtension(_frame.ImagePath);
+                    string _newFileName = $"{_savedCount}_cam_image_array_{_ext}";
+                    string _destPath = Path.Combine(_saveImagesDir, _newFileName);
+
+                    // ── 이미지 저장 ───────────────────────────────────────
+                    if (filteredFrameMap.TryGetValue(_i, out Bitmap _filteredBmp))
                     {
-                        File.Copy(_frame.ImagePath, _destImagePath, true);
+                        ImageFormat _format;
+                        switch (_ext.ToLower())
+                        {
+                            case ".png": _format = ImageFormat.Png; break;
+                            case ".bmp": _format = ImageFormat.Bmp; break;
+                            default: _format = ImageFormat.Jpeg; break;
+                        }
+                        _filteredBmp.Save(_destPath, _format);
+                    }
+                    else
+                    {
+                        if (!File.Exists(_frame.ImagePath)) continue;
+                        File.Copy(_frame.ImagePath, _destPath, true);
                     }
 
-                    var _dataObj = new
+                    // ── catalog JSON 라인 ─────────────────────────────────
+                    // 키 순서: _index → _session_id → _timestamp_ms → cam/image_array → user/angle → user/mode → user/throttle
+                    var _ordered = new System.Collections.Specialized.OrderedDictionary
+            {
+                { "_index",           _savedCount },
+                { "_session_id",      _frame.SessionId ?? string.Empty },
+                { "_timestamp_ms",    _frame.TimestampMs },
+                { "cam/image_array",  _newFileName },
+                { "user/angle",       _frame.Angle },
+                { "user/mode",        _frame.Mode ?? "user" },
+                { "user/throttle",    _frame.Throttle }
+            };
+
+                    // OrderedDictionary → JSON 직렬화 (키 순서 보장)
+                    var _sb = new System.Text.StringBuilder();
+                    _sb.Append("{");
+                    bool _first = true;
+                    foreach (System.Collections.DictionaryEntry _kv in _ordered)
                     {
-                        @cam_image_array = _fileNameOnly,
-                        @user_angle = _frame.Angle,
-                        @user_throttle = _frame.Throttle
-                    };
+                        if (!_first) _sb.Append(", ");   // ← 기존 "," 를 ", " 로 수정
+                        _first = false;
 
-                    string _jsonLine = JsonSerializer.Serialize(_dataObj)
-                        .Replace("cam_image_array", "cam/image_array")
-                        .Replace("user_angle", "user/angle")
-                        .Replace("user_throttle", "user/throttle");
+                        string _key = JsonSerializer.Serialize(_kv.Key.ToString());
 
-                    _catalogLines.Add(_jsonLine);
+                        string _val;
+                        switch (_kv.Value)
+                        {
+                            case int v: _val = v.ToString(); break;
+                            case long v: _val = v.ToString(); break;
+                            case double v: _val = JsonSerializer.Serialize(v); break;
+                            default: _val = JsonSerializer.Serialize(_kv.Value?.ToString() ?? ""); break;
+                        }
+
+                        _sb.Append($"{_key}: {_val}");
+                    }
+                    _sb.Append("}");
+
+                    _catalogLines.Add(_sb.ToString());
+                    _savedCount++;
                 }
 
+                // ── 부속 파일 저장 ────────────────────────────────────────
                 File.WriteAllLines(_catalogPath, _catalogLines);
-                File.WriteAllText(_catalogManifestPath, "{\"path\": \"catalog_0.catalog\", \"idx\": 0}");
-                File.WriteAllText(_manifestJsonPath, "{\"format\": \"donkey_car\", \"version\": \"4.3.0\"}");
+                File.WriteAllText(_catalogManifestPath,
+                    "{\"path\": \"catalog_0.catalog\", \"idx\": 0}");
+                File.WriteAllText(_manifestJsonPath,
+                    "{\"format\": \"donkey_car\", \"version\": \"4.3.0\"}");
 
-                ReportLog("정보", $"가공 완료 데이터 최종 저장 성공: {Path.GetFileName(targetSavePath)} (총 {drivingData.Count} 프레임)");
-                MessageBox.Show("가공 및 편집된 주행 데이터 세트 저장이 완전히 끝났습니다!", "저장 완료");
+                ReportLog("정보", $"데이터 저장 완료 (총 {_savedCount} 프레임, 인덱스 재정렬됨)");
+                MessageBox.Show($"저장 완료!\n총 {_savedCount} 프레임 저장됨 (인덱스 재정렬)", "저장 완료");
             }
             catch (Exception _ex)
             {
                 ReportLog("오류", $"데이터 저장 실패: {_ex.Message}");
-                MessageBox.Show($"저장 중 오류 발생: {_ex.Message}", "에러");
+                MessageBox.Show($"저장 중 오류 발생:\n{_ex.Message}", "에러");
             }
         }
 
@@ -451,11 +532,26 @@ namespace DataManager.UserControls
 
             if (filteredFrameMap.TryGetValue(index, out Bitmap _filtered))
             {
-                picImage.Image = _filtered;
+                if (picImage.Image != null)
+                {
+                    picImage.Image.Dispose();
+                    picImage.Image = null;
+                }
+
+                picImage.Image = new Bitmap(_filtered);
             }
             else if (!string.IsNullOrEmpty(_frame.ImagePath) && File.Exists(_frame.ImagePath))
             {
-                picImage.Image = Image.FromFile(_frame.ImagePath);
+                if (picImage.Image != null)
+                {
+                    picImage.Image.Dispose();
+                    picImage.Image = null;
+                }
+
+                using (var _img = Image.FromFile(_frame.ImagePath))
+                {
+                    picImage.Image = new Bitmap(_img);
+                }
             }
         }
 
