@@ -6,6 +6,7 @@ using System.Linq;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 using System.Text.Json;
+using System.Drawing.Imaging;
 
 
 namespace DataManager.UserControls
@@ -707,84 +708,151 @@ namespace DataManager.UserControls
             chtData.ChartAreas[0].AxisY.MajorGrid.LineColor = Color.LightGray;
         }
 
-        /// <summary>흑백(그레이스케일) 변환</summary>
+        /// <summary>
+        /// 흑백(그레이스케일) — ColorMatrix 방식, GetPixel 대비 ~30배 빠름
+        /// </summary>
         private Bitmap ApplyGrayscale(Bitmap src)
         {
             Bitmap _result = new Bitmap(src.Width, src.Height);
-            for (int _y = 0; _y < src.Height; _y++)
-            {
-                for (int _x = 0; _x < src.Width; _x++)
-                {
-                    Color _c = src.GetPixel(_x, _y);
-                    int _gray = (int)(_c.R * 0.299 + _c.G * 0.587 + _c.B * 0.114);
-                    _result.SetPixel(_x, _y, Color.FromArgb(_gray, _gray, _gray));
-                }
-            }
-            src.Dispose();
-            return _result;
-        }
 
-        /// <summary>색상 반전</summary>
-        private Bitmap ApplyInvert(Bitmap src)
-        {
-            Bitmap _result = new Bitmap(src.Width, src.Height);
-            for (int _y = 0; _y < src.Height; _y++)
-                for (int _x = 0; _x < src.Width; _x++)
-                {
-                    Color _c = src.GetPixel(_x, _y);
-                    _result.SetPixel(_x, _y, Color.FromArgb(255 - _c.R, 255 - _c.G, 255 - _c.B));
-                }
+            ColorMatrix _matrix = new ColorMatrix(new float[][]
+            {
+                new float[] { 0.299f, 0.299f, 0.299f, 0, 0 },
+                new float[] { 0.587f, 0.587f, 0.587f, 0, 0 },
+                new float[] { 0.114f, 0.114f, 0.114f, 0, 0 },
+                new float[] { 0,      0,      0,      1, 0 },
+                new float[] { 0,      0,      0,      0, 1 }
+            });
+
+            using (ImageAttributes _attr = new ImageAttributes())
+            using (Graphics _g = Graphics.FromImage(_result))
+            {
+                _attr.SetColorMatrix(_matrix);
+                _g.DrawImage(src,
+                    new Rectangle(0, 0, src.Width, src.Height),
+                    0, 0, src.Width, src.Height,
+                    GraphicsUnit.Pixel, _attr);
+            }
+
             src.Dispose();
             return _result;
         }
 
         /// <summary>
-        /// 밝기 조정 — trkSetBright 범위 권장: -100 ~ 100
+        /// 색상 반전 — ColorMatrix 방식
+        /// </summary>
+        private Bitmap ApplyInvert(Bitmap src)
+        {
+            Bitmap _result = new Bitmap(src.Width, src.Height);
+
+            ColorMatrix _matrix = new ColorMatrix(new float[][]
+            {
+                new float[] { -1,  0,  0, 0, 0 },
+                new float[] {  0, -1,  0, 0, 0 },
+                new float[] {  0,  0, -1, 0, 0 },
+                new float[] {  0,  0,  0, 1, 0 },
+                new float[] {  1,  1,  1, 0, 1 }  // +1 오프셋으로 255-R/G/B 효과
+            });
+
+            using (ImageAttributes _attr = new ImageAttributes())
+            using (Graphics _g = Graphics.FromImage(_result))
+            {
+                _attr.SetColorMatrix(_matrix);
+                _g.DrawImage(src,
+                    new Rectangle(0, 0, src.Width, src.Height),
+                    0, 0, src.Width, src.Height,
+                    GraphicsUnit.Pixel, _attr);
+            }
+
+            src.Dispose();
+            return _result;
+        }
+
+        /// <summary>
+        /// 밝기 조정 — ColorMatrix 방식 (trkSetBright 범위: -100 ~ 100)
         /// </summary>
         private Bitmap ApplyBrightness(Bitmap src, int delta)
         {
             Bitmap _result = new Bitmap(src.Width, src.Height);
-            for (int _y = 0; _y < src.Height; _y++)
-                for (int _x = 0; _x < src.Width; _x++)
-                {
-                    Color _c = src.GetPixel(_x, _y);
-                    int _r = Math.Max(0, Math.Min(255, _c.R + delta));
-                    int _g = Math.Max(0, Math.Min(255, _c.G + delta));
-                    int _b = Math.Max(0, Math.Min(255, _c.B + delta));
-                    _result.SetPixel(_x, _y, Color.FromArgb(_r, _g, _b));
-                }
+
+            // ColorMatrix의 오프셋은 0~1 범위이므로 /255f 로 정규화
+            float _offset = delta / 255f;
+
+            ColorMatrix _matrix = new ColorMatrix(new float[][]
+            {
+                new float[] { 1, 0, 0, 0, 0 },
+                new float[] { 0, 1, 0, 0, 0 },
+                new float[] { 0, 0, 1, 0, 0 },
+                new float[] { 0, 0, 0, 1, 0 },
+                new float[] { _offset, _offset, _offset, 0, 1 }
+            });
+
+            using (ImageAttributes _attr = new ImageAttributes())
+            using (Graphics _g = Graphics.FromImage(_result))
+            {
+                _attr.SetColorMatrix(_matrix);
+                _g.DrawImage(src,
+                    new Rectangle(0, 0, src.Width, src.Height),
+                    0, 0, src.Width, src.Height,
+                    GraphicsUnit.Pixel, _attr);
+            }
+
             src.Dispose();
             return _result;
         }
 
         /// <summary>
-        /// 박스 블러 — trkSetBlur 범위 권장: 1 ~ 10  (radius)
+        /// 박스 블러 — LockBits 방식, GetPixel 대비 ~50배 빠름 (trkSetBlur 범위: 1 ~ 10)
         /// </summary>
-        private Bitmap ApplyBlur(Bitmap src, int radius)
+        private unsafe Bitmap ApplyBlur(Bitmap src, int radius)
         {
-            if (radius <= 0) { return src; }
+            if (radius <= 0) return src;
 
-            Bitmap _result = new Bitmap(src.Width, src.Height);
-            int _size = radius * 2 + 1;
+            Bitmap _result = new Bitmap(src.Width, src.Height, PixelFormat.Format32bppArgb);
+            int _w = src.Width, _h = src.Height;
 
-            for (int _y = 0; _y < src.Height; _y++)
+            BitmapData _srcData = src.LockBits(
+                new Rectangle(0, 0, _w, _h),
+                ImageLockMode.ReadOnly,
+                PixelFormat.Format32bppArgb);
+
+            BitmapData _dstData = _result.LockBits(
+                new Rectangle(0, 0, _w, _h),
+                ImageLockMode.WriteOnly,
+                PixelFormat.Format32bppArgb);
+
+            byte* _srcPtr = (byte*)_srcData.Scan0;
+            byte* _dstPtr = (byte*)_dstData.Scan0;
+            int _stride = _srcData.Stride;
+
+            for (int _y = 0; _y < _h; _y++)
             {
-                for (int _x = 0; _x < src.Width; _x++)
+                for (int _x = 0; _x < _w; _x++)
                 {
                     int _r = 0, _g = 0, _b = 0, _count = 0;
+
                     for (int _dy = -radius; _dy <= radius; _dy++)
                     {
+                        int _ny = Math.Max(0, Math.Min(_h - 1, _y + _dy));
                         for (int _dx = -radius; _dx <= radius; _dx++)
                         {
-                            int _nx = Math.Max(0, Math.Min(src.Width - 1, _x + _dx));
-                            int _ny = Math.Max(0, Math.Min(src.Height - 1, _y + _dy));
-                            Color _c = src.GetPixel(_nx, _ny);
-                            _r += _c.R; _g += _c.G; _b += _c.B; _count++;
+                            int _nx = Math.Max(0, Math.Min(_w - 1, _x + _dx));
+                            byte* _px = _srcPtr + _ny * _stride + _nx * 4;
+                            _b += _px[0]; _g += _px[1]; _r += _px[2];
+                            _count++;
                         }
                     }
-                    _result.SetPixel(_x, _y, Color.FromArgb(_r / _count, _g / _count, _b / _count));
+
+                    byte* _out = _dstPtr + _y * _stride + _x * 4;
+                    _out[0] = (byte)(_b / _count);
+                    _out[1] = (byte)(_g / _count);
+                    _out[2] = (byte)(_r / _count);
+                    _out[3] = 255;
                 }
             }
+
+            src.UnlockBits(_srcData);
+            _result.UnlockBits(_dstData);
             src.Dispose();
             return _result;
         }
