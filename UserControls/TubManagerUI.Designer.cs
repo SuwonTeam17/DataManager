@@ -28,10 +28,10 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea6 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend6 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series11 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series12 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea2 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend2 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series3 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series4 = new System.Windows.Forms.DataVisualization.Charting.Series();
             pnlChart = new Panel();
             chtData = new System.Windows.Forms.DataVisualization.Charting.Chart();
             btnFileLoad = new Button();
@@ -112,23 +112,23 @@
             // chtData
             // 
             chtData.BackColor = SystemColors.Control;
-            chartArea6.Name = "ChartArea1";
-            chtData.ChartAreas.Add(chartArea6);
+            chartArea2.Name = "ChartArea1";
+            chtData.ChartAreas.Add(chartArea2);
             chtData.Dock = DockStyle.Fill;
-            legend6.Name = "Legend1";
-            chtData.Legends.Add(legend6);
+            legend2.Name = "Legend1";
+            chtData.Legends.Add(legend2);
             chtData.Location = new Point(0, 0);
             chtData.Name = "chtData";
-            series11.ChartArea = "ChartArea1";
-            series11.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
-            series11.Legend = "Legend1";
-            series11.Name = "각도";
-            series12.ChartArea = "ChartArea1";
-            series12.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Spline;
-            series12.Legend = "Legend1";
-            series12.Name = "속도";
-            chtData.Series.Add(series11);
-            chtData.Series.Add(series12);
+            series3.ChartArea = "ChartArea1";
+            series3.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series3.Legend = "Legend1";
+            series3.Name = "각도";
+            series4.ChartArea = "ChartArea1";
+            series4.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Spline;
+            series4.Legend = "Legend1";
+            series4.Name = "속도";
+            chtData.Series.Add(series3);
+            chtData.Series.Add(series4);
             chtData.Size = new Size(748, 130);
             chtData.TabIndex = 0;
             chtData.Text = "chart1";
@@ -157,8 +157,8 @@
             // 
             // btnSaveRoute
             // 
-            btnSaveRoute.Anchor = AnchorStyles.Top | AnchorStyles.Bottom;
-            btnSaveRoute.Location = new Point(277, 3);
+            btnSaveRoute.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+            btnSaveRoute.Location = new Point(275, 3);
             btnSaveRoute.Name = "btnSaveRoute";
             btnSaveRoute.Size = new Size(95, 25);
             btnSaveRoute.TabIndex = 3;
@@ -179,7 +179,7 @@
             // 
             // btnDelFolder
             // 
-            btnDelFolder.Anchor = AnchorStyles.Top | AnchorStyles.Bottom;
+            btnDelFolder.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             btnDelFolder.Location = new Point(204, 3);
             btnDelFolder.Name = "btnDelFolder";
             btnDelFolder.Size = new Size(67, 25);
@@ -190,10 +190,10 @@
             // 
             // lblSaveRoute
             // 
-            lblSaveRoute.Anchor = AnchorStyles.Top | AnchorStyles.Bottom;
-            lblSaveRoute.Location = new Point(470, 3);
+            lblSaveRoute.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+            lblSaveRoute.Location = new Point(472, 3);
             lblSaveRoute.Name = "lblSaveRoute";
-            lblSaveRoute.Size = new Size(166, 25);
+            lblSaveRoute.Size = new Size(161, 25);
             lblSaveRoute.TabIndex = 4;
             lblSaveRoute.Text = "(현재 경로)";
             // 
@@ -215,6 +215,7 @@
             // 
             // chkSaveContinue
             // 
+            chkSaveContinue.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             chkSaveContinue.Location = new Point(377, 7);
             chkSaveContinue.Margin = new Padding(0);
             chkSaveContinue.Name = "chkSaveContinue";
