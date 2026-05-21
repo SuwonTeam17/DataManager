@@ -404,17 +404,43 @@ namespace DataManager.UserControls
             try
             {
                 string _saveImagesDir = Path.Combine(targetSavePath, "images");
-
-                if (Directory.Exists(_saveImagesDir))
-                    Directory.Delete(_saveImagesDir, true);
-
-                Directory.CreateDirectory(_saveImagesDir);
-
                 string _catalogPath = Path.Combine(targetSavePath, "catalog_0.catalog");
                 string _catalogManifestPath = Path.Combine(targetSavePath, "catalog_0.catalog_manifest");
                 string _manifestJsonPath = Path.Combine(targetSavePath, "manifest.json");
 
+                // ── 이어쓰기 여부 판단 ────────────────────────────────────
+                bool _isContinue = chkSaveContinue.Checked;
+                int _startIndex = 0;
                 List<string> _catalogLines = new List<string>();
+
+                if (_isContinue)
+                {
+                    // 기존 images 폴더에서 이미 저장된 프레임 수 파악
+                    if (Directory.Exists(_saveImagesDir))
+                    {
+                        int _existingCount = Directory.GetFiles(_saveImagesDir).Length;
+                        _startIndex = _existingCount; // 101번째면 _startIndex = 100
+                    }
+                    else
+                    {
+                        Directory.CreateDirectory(_saveImagesDir);
+                    }
+
+                    // 기존 catalog 내용 불러오기 (이어쓰기)
+                    if (File.Exists(_catalogPath))
+                    {
+                        _catalogLines.AddRange(File.ReadAllLines(_catalogPath));
+                    }
+                }
+                else
+                {
+                    // 기존 데이터 초기화 후 새로 저장
+                    if (Directory.Exists(_saveImagesDir))
+                        Directory.Delete(_saveImagesDir, true);
+
+                    Directory.CreateDirectory(_saveImagesDir);
+                }
+
                 int _savedCount = 0;
 
                 for (int _i = 0; _i < drivingData.Count; _i++)
@@ -424,10 +450,11 @@ namespace DataManager.UserControls
 
                     var _frame = drivingData[_i];
 
-                    // ── 재정렬 인덱스 및 파일명 ──────────────────────────
-                    // 형식: {index}_cam_image_array_.jpg
+                    // ── 재정렬 인덱스: 이어쓰기면 기존 개수부터 시작 ────
+                    int _newIndex = _startIndex + _savedCount;
+
                     string _ext = Path.GetExtension(_frame.ImagePath);
-                    string _newFileName = $"{_savedCount}_cam_image_array_{_ext}";
+                    string _newFileName = $"{_newIndex}_cam_image_array_{_ext}";
                     string _destPath = Path.Combine(_saveImagesDir, _newFileName);
 
                     // ── 이미지 저장 ───────────────────────────────────────
@@ -449,29 +476,26 @@ namespace DataManager.UserControls
                     }
 
                     // ── catalog JSON 라인 ─────────────────────────────────
-                    // 키 순서: _index → _session_id → _timestamp_ms → cam/image_array → user/angle → user/mode → user/throttle
                     var _ordered = new System.Collections.Specialized.OrderedDictionary
             {
-                { "_index",           _savedCount },
-                { "_session_id",      _frame.SessionId ?? string.Empty },
-                { "_timestamp_ms",    _frame.TimestampMs },
-                { "cam/image_array",  _newFileName },
-                { "user/angle",       _frame.Angle },
-                { "user/mode",        _frame.Mode ?? "user" },
-                { "user/throttle",    _frame.Throttle }
+                { "_index",          _newIndex },
+                { "_session_id",     _frame.SessionId ?? string.Empty },
+                { "_timestamp_ms",   _frame.TimestampMs },
+                { "cam/image_array", _newFileName },
+                { "user/angle",      _frame.Angle },
+                { "user/mode",       _frame.Mode ?? "user" },
+                { "user/throttle",   _frame.Throttle }
             };
 
-                    // OrderedDictionary → JSON 직렬화 (키 순서 보장)
                     var _sb = new System.Text.StringBuilder();
                     _sb.Append("{");
                     bool _first = true;
                     foreach (System.Collections.DictionaryEntry _kv in _ordered)
                     {
-                        if (!_first) _sb.Append(", ");   // ← 기존 "," 를 ", " 로 수정
+                        if (!_first) _sb.Append(", ");
                         _first = false;
 
                         string _key = JsonSerializer.Serialize(_kv.Key.ToString());
-
                         string _val;
                         switch (_kv.Value)
                         {
@@ -480,7 +504,6 @@ namespace DataManager.UserControls
                             case double v: _val = JsonSerializer.Serialize(v); break;
                             default: _val = JsonSerializer.Serialize(_kv.Value?.ToString() ?? ""); break;
                         }
-
                         _sb.Append($"{_key}: {_val}");
                     }
                     _sb.Append("}");
@@ -496,8 +519,9 @@ namespace DataManager.UserControls
                 File.WriteAllText(_manifestJsonPath,
                     "{\"format\": \"donkey_car\", \"version\": \"4.3.0\"}");
 
-                ReportLog("정보", $"데이터 저장 완료 (총 {_savedCount} 프레임, 인덱스 재정렬됨)");
-                MessageBox.Show($"저장 완료!\n총 {_savedCount} 프레임 저장됨 (인덱스 재정렬)", "저장 완료");
+                string _modeText = _isContinue ? "이어쓰기" : "새로 저장";
+                ReportLog("정보", $"데이터 저장 완료 [{_modeText}] (총 {_savedCount} 프레임, {_startIndex}번부터 시작)");
+                MessageBox.Show($"저장 완료! [{_modeText}]\n{_startIndex}번 ~ {_startIndex + _savedCount - 1}번 프레임 저장됨", "저장 완료");
             }
             catch (Exception _ex)
             {
