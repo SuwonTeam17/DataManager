@@ -28,10 +28,10 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea2 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend2 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series3 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series4 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
             pnlChart = new Panel();
             chtData = new System.Windows.Forms.DataVisualization.Charting.Chart();
             btnFileLoad = new Button();
@@ -81,6 +81,8 @@
             pnlImage = new Panel();
             picImage = new PictureBox();
             trkProgress = new TrackBar();
+            pnlTimeStamp = new Panel();
+            chkSaveContinue = new CheckBox();
             pnlChart.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)chtData).BeginInit();
             pnlFile.SuspendLayout();
@@ -103,7 +105,7 @@
             pnlChart.Controls.Add(chtData);
             pnlChart.Dock = DockStyle.Bottom;
             pnlChart.Location = new Point(0, 572);
-            pnlChart.Margin = new Padding(4, 4, 4, 4);
+            pnlChart.Margin = new Padding(4);
             pnlChart.Name = "pnlChart";
             pnlChart.Size = new Size(964, 175);
             pnlChart.TabIndex = 3;
@@ -111,34 +113,35 @@
             // chtData
             // 
             chtData.BackColor = SystemColors.Control;
-            chartArea2.Name = "ChartArea1";
-            chtData.ChartAreas.Add(chartArea2);
+            chartArea1.Name = "ChartArea1";
+            chtData.ChartAreas.Add(chartArea1);
             chtData.Dock = DockStyle.Fill;
-            legend2.Name = "Legend1";
-            chtData.Legends.Add(legend2);
+            legend1.Name = "Legend1";
+            chtData.Legends.Add(legend1);
             chtData.Location = new Point(0, 0);
-            chtData.Margin = new Padding(4, 4, 4, 4);
+            chtData.Margin = new Padding(4);
             chtData.Name = "chtData";
-            series3.ChartArea = "ChartArea1";
-            series3.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
-            series3.Legend = "Legend1";
-            series3.Name = "각도";
-            series4.ChartArea = "ChartArea1";
-            series4.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Spline;
-            series4.Legend = "Legend1";
-            series4.Name = "속도";
-            chtData.Series.Add(series3);
-            chtData.Series.Add(series4);
+            series1.ChartArea = "ChartArea1";
+            series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series1.Legend = "Legend1";
+            series1.Name = "각도";
+            series2.ChartArea = "ChartArea1";
+            series2.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Spline;
+            series2.Legend = "Legend1";
+            series2.Name = "속도";
+            chtData.Series.Add(series1);
+            chtData.Series.Add(series2);
             chtData.Size = new Size(962, 173);
             chtData.TabIndex = 0;
             chtData.Text = "chart1";
             // 
             // btnFileLoad
             // 
+            btnFileLoad.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             btnFileLoad.Location = new Point(4, 4);
-            btnFileLoad.Margin = new Padding(4, 4, 4, 4);
+            btnFileLoad.Margin = new Padding(4);
             btnFileLoad.Name = "btnFileLoad";
-            btnFileLoad.Size = new Size(136, 64);
+            btnFileLoad.Size = new Size(136, 33);
             btnFileLoad.TabIndex = 0;
             btnFileLoad.Text = "파일 가져오기";
             btnFileLoad.UseVisualStyleBackColor = true;
@@ -146,10 +149,11 @@
             // 
             // btnNewFolder
             // 
+            btnNewFolder.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             btnNewFolder.Location = new Point(148, 4);
-            btnNewFolder.Margin = new Padding(4, 4, 4, 4);
+            btnNewFolder.Margin = new Padding(4);
             btnNewFolder.Name = "btnNewFolder";
-            btnNewFolder.Size = new Size(136, 64);
+            btnNewFolder.Size = new Size(102, 33);
             btnNewFolder.TabIndex = 1;
             btnNewFolder.Text = "새 폴더 생성";
             btnNewFolder.UseVisualStyleBackColor = true;
@@ -157,10 +161,11 @@
             // 
             // btnSaveRoute
             // 
-            btnSaveRoute.Location = new Point(436, 4);
-            btnSaveRoute.Margin = new Padding(4, 4, 4, 4);
+            btnSaveRoute.Anchor = AnchorStyles.Top | AnchorStyles.Bottom;
+            btnSaveRoute.Location = new Point(349, 4);
+            btnSaveRoute.Margin = new Padding(4);
             btnSaveRoute.Name = "btnSaveRoute";
-            btnSaveRoute.Size = new Size(136, 64);
+            btnSaveRoute.Size = new Size(117, 33);
             btnSaveRoute.TabIndex = 3;
             btnSaveRoute.Text = "저장 경로 지정";
             btnSaveRoute.UseVisualStyleBackColor = true;
@@ -168,11 +173,11 @@
             // 
             // btnSaveData
             // 
-            btnSaveData.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnSaveData.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Right;
             btnSaveData.Location = new Point(822, 4);
-            btnSaveData.Margin = new Padding(4, 4, 4, 4);
+            btnSaveData.Margin = new Padding(4);
             btnSaveData.Name = "btnSaveData";
-            btnSaveData.Size = new Size(136, 64);
+            btnSaveData.Size = new Size(136, 33);
             btnSaveData.TabIndex = 5;
             btnSaveData.Text = "데이터 저장";
             btnSaveData.UseVisualStyleBackColor = true;
@@ -180,10 +185,11 @@
             // 
             // btnDelFolder
             // 
-            btnDelFolder.Location = new Point(292, 4);
-            btnDelFolder.Margin = new Padding(4, 4, 4, 4);
+            btnDelFolder.Anchor = AnchorStyles.Top | AnchorStyles.Bottom;
+            btnDelFolder.Location = new Point(258, 4);
+            btnDelFolder.Margin = new Padding(4);
             btnDelFolder.Name = "btnDelFolder";
-            btnDelFolder.Size = new Size(136, 64);
+            btnDelFolder.Size = new Size(83, 33);
             btnDelFolder.TabIndex = 2;
             btnDelFolder.Text = "폴더 삭제";
             btnDelFolder.UseVisualStyleBackColor = true;
@@ -191,17 +197,18 @@
             // 
             // lblSaveRoute
             // 
-            lblSaveRoute.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            lblSaveRoute.Anchor = AnchorStyles.Top | AnchorStyles.Bottom;
             lblSaveRoute.Location = new Point(580, 4);
             lblSaveRoute.Margin = new Padding(4, 0, 4, 0);
             lblSaveRoute.Name = "lblSaveRoute";
-            lblSaveRoute.Size = new Size(234, 64);
+            lblSaveRoute.Size = new Size(234, 33);
             lblSaveRoute.TabIndex = 4;
             lblSaveRoute.Text = "(현재 경로)";
             // 
             // pnlFile
             // 
             pnlFile.BorderStyle = BorderStyle.FixedSingle;
+            pnlFile.Controls.Add(chkSaveContinue);
             pnlFile.Controls.Add(btnFileLoad);
             pnlFile.Controls.Add(btnDelFolder);
             pnlFile.Controls.Add(lblSaveRoute);
@@ -210,9 +217,9 @@
             pnlFile.Controls.Add(btnSaveData);
             pnlFile.Dock = DockStyle.Top;
             pnlFile.Location = new Point(0, 0);
-            pnlFile.Margin = new Padding(4, 4, 4, 4);
+            pnlFile.Margin = new Padding(4);
             pnlFile.Name = "pnlFile";
-            pnlFile.Size = new Size(964, 73);
+            pnlFile.Size = new Size(964, 42);
             pnlFile.TabIndex = 1;
             // 
             // pnlSetting
@@ -221,7 +228,7 @@
             pnlSetting.Controls.Add(pnlFillter);
             pnlSetting.Dock = DockStyle.Bottom;
             pnlSetting.Location = new Point(0, 452);
-            pnlSetting.Margin = new Padding(4, 4, 4, 4);
+            pnlSetting.Margin = new Padding(4);
             pnlSetting.Name = "pnlSetting";
             pnlSetting.Size = new Size(964, 120);
             pnlSetting.TabIndex = 4;
@@ -238,7 +245,7 @@
             pnlSet.Controls.Add(btnLeftRange);
             pnlSet.Dock = DockStyle.Fill;
             pnlSet.Location = new Point(0, 0);
-            pnlSet.Margin = new Padding(4, 4, 4, 4);
+            pnlSet.Margin = new Padding(4);
             pnlSet.Name = "pnlSet";
             pnlSet.Size = new Size(964, 54);
             pnlSet.TabIndex = 6;
@@ -247,7 +254,7 @@
             // 
             btnInitFillterSet.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             btnInitFillterSet.Location = new Point(788, 7);
-            btnInitFillterSet.Margin = new Padding(4, 4, 4, 4);
+            btnInitFillterSet.Margin = new Padding(4);
             btnInitFillterSet.Name = "btnInitFillterSet";
             btnInitFillterSet.Size = new Size(174, 38);
             btnInitFillterSet.TabIndex = 8;
@@ -259,7 +266,7 @@
             // 
             btnCancelFillter.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             btnCancelFillter.Location = new Point(665, 7);
-            btnCancelFillter.Margin = new Padding(4, 4, 4, 4);
+            btnCancelFillter.Margin = new Padding(4);
             btnCancelFillter.Name = "btnCancelFillter";
             btnCancelFillter.Size = new Size(122, 38);
             btnCancelFillter.TabIndex = 7;
@@ -271,7 +278,7 @@
             // 
             btnApplyFillter.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             btnApplyFillter.Location = new Point(541, 7);
-            btnApplyFillter.Margin = new Padding(4, 4, 4, 4);
+            btnApplyFillter.Margin = new Padding(4);
             btnApplyFillter.Name = "btnApplyFillter";
             btnApplyFillter.Size = new Size(122, 38);
             btnApplyFillter.TabIndex = 6;
@@ -294,7 +301,7 @@
             // 
             btnAllRange.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             btnAllRange.Location = new Point(265, 7);
-            btnAllRange.Margin = new Padding(4, 4, 4, 4);
+            btnAllRange.Margin = new Padding(4);
             btnAllRange.Name = "btnAllRange";
             btnAllRange.Size = new Size(86, 38);
             btnAllRange.TabIndex = 5;
@@ -306,7 +313,7 @@
             // 
             btnRightRange.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             btnRightRange.Location = new Point(126, 7);
-            btnRightRange.Margin = new Padding(4, 4, 4, 4);
+            btnRightRange.Margin = new Padding(4);
             btnRightRange.Name = "btnRightRange";
             btnRightRange.Size = new Size(138, 38);
             btnRightRange.TabIndex = 1;
@@ -318,7 +325,7 @@
             // 
             btnLeftRange.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             btnLeftRange.Location = new Point(3, 7);
-            btnLeftRange.Margin = new Padding(4, 4, 4, 4);
+            btnLeftRange.Margin = new Padding(4);
             btnLeftRange.Name = "btnLeftRange";
             btnLeftRange.Size = new Size(122, 38);
             btnLeftRange.TabIndex = 0;
@@ -341,7 +348,7 @@
             pnlFillter.Controls.Add(lblFillter);
             pnlFillter.Dock = DockStyle.Bottom;
             pnlFillter.Location = new Point(0, 54);
-            pnlFillter.Margin = new Padding(4, 4, 4, 4);
+            pnlFillter.Margin = new Padding(4);
             pnlFillter.Name = "pnlFillter";
             pnlFillter.Size = new Size(964, 66);
             pnlFillter.TabIndex = 4;
@@ -350,7 +357,7 @@
             // 
             chkSetBlur.BackColor = SystemColors.Control;
             chkSetBlur.Location = new Point(552, 35);
-            chkSetBlur.Margin = new Padding(4, 4, 4, 4);
+            chkSetBlur.Margin = new Padding(4);
             chkSetBlur.Name = "chkSetBlur";
             chkSetBlur.Size = new Size(100, 28);
             chkSetBlur.TabIndex = 11;
@@ -363,7 +370,7 @@
             trkSetBlur.BackColor = SystemColors.Control;
             trkSetBlur.LargeChange = 1;
             trkSetBlur.Location = new Point(654, 35);
-            trkSetBlur.Margin = new Padding(4, 4, 4, 4);
+            trkSetBlur.Margin = new Padding(4);
             trkSetBlur.Name = "trkSetBlur";
             trkSetBlur.Size = new Size(213, 28);
             trkSetBlur.TabIndex = 10;
@@ -373,7 +380,7 @@
             // 
             chkSetBright.BackColor = SystemColors.Control;
             chkSetBright.Location = new Point(229, 35);
-            chkSetBright.Margin = new Padding(4, 4, 4, 4);
+            chkSetBright.Margin = new Padding(4);
             chkSetBright.Name = "chkSetBright";
             chkSetBright.Size = new Size(100, 28);
             chkSetBright.TabIndex = 9;
@@ -386,7 +393,7 @@
             trkSetBright.BackColor = SystemColors.Control;
             trkSetBright.LargeChange = 1;
             trkSetBright.Location = new Point(332, 35);
-            trkSetBright.Margin = new Padding(4, 4, 4, 4);
+            trkSetBright.Margin = new Padding(4);
             trkSetBright.Name = "trkSetBright";
             trkSetBright.Size = new Size(213, 28);
             trkSetBright.TabIndex = 8;
@@ -396,7 +403,7 @@
             // 
             chkApplyBlackWhite.BackColor = SystemColors.Control;
             chkApplyBlackWhite.Location = new Point(621, 4);
-            chkApplyBlackWhite.Margin = new Padding(4, 4, 4, 4);
+            chkApplyBlackWhite.Margin = new Padding(4);
             chkApplyBlackWhite.Name = "chkApplyBlackWhite";
             chkApplyBlackWhite.Size = new Size(100, 28);
             chkApplyBlackWhite.TabIndex = 7;
@@ -407,7 +414,7 @@
             // 
             chkInverseColor.BackColor = SystemColors.Control;
             chkInverseColor.Location = new Point(513, 4);
-            chkInverseColor.Margin = new Padding(4, 4, 4, 4);
+            chkInverseColor.Margin = new Padding(4);
             chkInverseColor.Name = "chkInverseColor";
             chkInverseColor.Size = new Size(100, 28);
             chkInverseColor.TabIndex = 6;
@@ -418,7 +425,7 @@
             // 
             chkDelAngle.BackColor = SystemColors.Control;
             chkDelAngle.Location = new Point(370, 4);
-            chkDelAngle.Margin = new Padding(4, 4, 4, 4);
+            chkDelAngle.Margin = new Padding(4);
             chkDelAngle.Name = "chkDelAngle";
             chkDelAngle.Size = new Size(135, 28);
             chkDelAngle.TabIndex = 5;
@@ -429,7 +436,7 @@
             // 
             chkDelThrottle.BackColor = SystemColors.Control;
             chkDelThrottle.Location = new Point(229, 4);
-            chkDelThrottle.Margin = new Padding(4, 4, 4, 4);
+            chkDelThrottle.Margin = new Padding(4);
             chkDelThrottle.Name = "chkDelThrottle";
             chkDelThrottle.Size = new Size(135, 28);
             chkDelThrottle.TabIndex = 4;
@@ -452,10 +459,10 @@
             pnlSub.Controls.Add(pnlControl);
             pnlSub.Controls.Add(pnlData);
             pnlSub.Dock = DockStyle.Right;
-            pnlSub.Location = new Point(681, 73);
-            pnlSub.Margin = new Padding(4, 4, 4, 4);
+            pnlSub.Location = new Point(681, 42);
+            pnlSub.Margin = new Padding(4);
             pnlSub.Name = "pnlSub";
-            pnlSub.Size = new Size(283, 379);
+            pnlSub.Size = new Size(283, 410);
             pnlSub.TabIndex = 6;
             // 
             // pnlControl
@@ -472,9 +479,9 @@
             pnlControl.Controls.Add(btnFrameLeft);
             pnlControl.Dock = DockStyle.Fill;
             pnlControl.Location = new Point(0, 85);
-            pnlControl.Margin = new Padding(4, 4, 4, 4);
+            pnlControl.Margin = new Padding(4);
             pnlControl.Name = "pnlControl";
-            pnlControl.Size = new Size(283, 294);
+            pnlControl.Size = new Size(283, 325);
             pnlControl.TabIndex = 3;
             // 
             // lblSpeed
@@ -492,7 +499,7 @@
             comboBox1.FormattingEnabled = true;
             comboBox1.Items.AddRange(new object[] { "0.25", "0.50", "1.00", "1.50", "2.00", "3.00", "4.00" });
             comboBox1.Location = new Point(143, 77);
-            comboBox1.Margin = new Padding(4, 4, 4, 4);
+            comboBox1.Margin = new Padding(4);
             comboBox1.Name = "comboBox1";
             comboBox1.Size = new Size(133, 28);
             comboBox1.TabIndex = 8;
@@ -512,7 +519,7 @@
             // btnStop
             // 
             btnStop.Location = new Point(143, 233);
-            btnStop.Margin = new Padding(4, 4, 4, 4);
+            btnStop.Margin = new Padding(4);
             btnStop.Name = "btnStop";
             btnStop.Size = new Size(136, 51);
             btnStop.TabIndex = 6;
@@ -523,7 +530,7 @@
             // btnPlay
             // 
             btnPlay.Location = new Point(4, 233);
-            btnPlay.Margin = new Padding(4, 4, 4, 4);
+            btnPlay.Margin = new Padding(4);
             btnPlay.Name = "btnPlay";
             btnPlay.Size = new Size(131, 51);
             btnPlay.TabIndex = 5;
@@ -534,7 +541,7 @@
             // btn5FrameRight
             // 
             btn5FrameRight.Location = new Point(143, 175);
-            btn5FrameRight.Margin = new Padding(4, 4, 4, 4);
+            btn5FrameRight.Margin = new Padding(4);
             btn5FrameRight.Name = "btn5FrameRight";
             btn5FrameRight.Size = new Size(136, 51);
             btn5FrameRight.TabIndex = 4;
@@ -545,7 +552,7 @@
             // btn5FrameLeft
             // 
             btn5FrameLeft.Location = new Point(4, 175);
-            btn5FrameLeft.Margin = new Padding(4, 4, 4, 4);
+            btn5FrameLeft.Margin = new Padding(4);
             btn5FrameLeft.Name = "btn5FrameLeft";
             btn5FrameLeft.Size = new Size(131, 51);
             btn5FrameLeft.TabIndex = 3;
@@ -556,7 +563,7 @@
             // btnFrameRight
             // 
             btnFrameRight.Location = new Point(143, 116);
-            btnFrameRight.Margin = new Padding(4, 4, 4, 4);
+            btnFrameRight.Margin = new Padding(4);
             btnFrameRight.Name = "btnFrameRight";
             btnFrameRight.Size = new Size(136, 51);
             btnFrameRight.TabIndex = 2;
@@ -567,7 +574,7 @@
             // btnFrameLeft
             // 
             btnFrameLeft.Location = new Point(4, 116);
-            btnFrameLeft.Margin = new Padding(4, 4, 4, 4);
+            btnFrameLeft.Margin = new Padding(4);
             btnFrameLeft.Name = "btnFrameLeft";
             btnFrameLeft.Size = new Size(131, 51);
             btnFrameLeft.TabIndex = 1;
@@ -586,7 +593,7 @@
             pnlData.Controls.Add(prgThrottle);
             pnlData.Dock = DockStyle.Top;
             pnlData.Location = new Point(0, 0);
-            pnlData.Margin = new Padding(4, 4, 4, 4);
+            pnlData.Margin = new Padding(4);
             pnlData.Name = "pnlData";
             pnlData.Size = new Size(283, 85);
             pnlData.TabIndex = 2;
@@ -636,7 +643,7 @@
             // prgAngle
             // 
             prgAngle.Location = new Point(140, 8);
-            prgAngle.Margin = new Padding(4, 4, 4, 4);
+            prgAngle.Margin = new Padding(4);
             prgAngle.Name = "prgAngle";
             prgAngle.Size = new Size(139, 31);
             prgAngle.TabIndex = 0;
@@ -644,7 +651,7 @@
             // prgThrottle
             // 
             prgThrottle.Location = new Point(140, 47);
-            prgThrottle.Margin = new Padding(4, 4, 4, 4);
+            prgThrottle.Margin = new Padding(4);
             prgThrottle.Name = "prgThrottle";
             prgThrottle.Size = new Size(139, 31);
             prgThrottle.TabIndex = 1;
@@ -654,11 +661,12 @@
             pnlImage.BorderStyle = BorderStyle.FixedSingle;
             pnlImage.Controls.Add(picImage);
             pnlImage.Controls.Add(trkProgress);
+            pnlImage.Controls.Add(pnlTimeStamp);
             pnlImage.Dock = DockStyle.Fill;
-            pnlImage.Location = new Point(0, 73);
-            pnlImage.Margin = new Padding(4, 4, 4, 4);
+            pnlImage.Location = new Point(0, 42);
+            pnlImage.Margin = new Padding(4);
             pnlImage.Name = "pnlImage";
-            pnlImage.Size = new Size(681, 379);
+            pnlImage.Size = new Size(681, 410);
             pnlImage.TabIndex = 7;
             // 
             // picImage
@@ -666,9 +674,9 @@
             picImage.BackColor = Color.Black;
             picImage.Dock = DockStyle.Fill;
             picImage.Location = new Point(0, 0);
-            picImage.Margin = new Padding(4, 4, 4, 4);
+            picImage.Margin = new Padding(4);
             picImage.Name = "picImage";
-            picImage.Size = new Size(679, 349);
+            picImage.Size = new Size(679, 320);
             picImage.SizeMode = PictureBoxSizeMode.StretchImage;
             picImage.TabIndex = 2;
             picImage.TabStop = false;
@@ -678,12 +686,30 @@
             trkProgress.AutoSize = false;
             trkProgress.Dock = DockStyle.Bottom;
             trkProgress.LargeChange = 1;
-            trkProgress.Location = new Point(0, 349);
-            trkProgress.Margin = new Padding(4, 4, 4, 4);
+            trkProgress.Location = new Point(0, 320);
+            trkProgress.Margin = new Padding(4);
             trkProgress.Name = "trkProgress";
             trkProgress.Size = new Size(679, 28);
             trkProgress.TabIndex = 1;
             trkProgress.TickStyle = TickStyle.None;
+            // 
+            // pnlTimeStamp
+            // 
+            pnlTimeStamp.Dock = DockStyle.Bottom;
+            pnlTimeStamp.Location = new Point(0, 348);
+            pnlTimeStamp.Name = "pnlTimeStamp";
+            pnlTimeStamp.Size = new Size(679, 60);
+            pnlTimeStamp.TabIndex = 12;
+            // 
+            // chkSaveContinue
+            // 
+            chkSaveContinue.AutoSize = true;
+            chkSaveContinue.Location = new Point(473, 9);
+            chkSaveContinue.Name = "chkSaveContinue";
+            chkSaveContinue.Size = new Size(111, 24);
+            chkSaveContinue.TabIndex = 6;
+            chkSaveContinue.Text = "이어서 저장";
+            chkSaveContinue.UseVisualStyleBackColor = true;
             // 
             // TubManagerUI
             // 
@@ -694,12 +720,13 @@
             Controls.Add(pnlSetting);
             Controls.Add(pnlFile);
             Controls.Add(pnlChart);
-            Margin = new Padding(4, 4, 4, 4);
+            Margin = new Padding(4);
             Name = "TubManagerUI";
             Size = new Size(964, 747);
             pnlChart.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)chtData).EndInit();
             pnlFile.ResumeLayout(false);
+            pnlFile.PerformLayout();
             pnlSetting.ResumeLayout(false);
             pnlSet.ResumeLayout(false);
             pnlFillter.ResumeLayout(false);
@@ -764,5 +791,7 @@
         private ComboBox comboBox1;
         private Label lblThrottleDetail;
         private Label lblAngleDetail;
+        private Panel pnlTimeStamp;
+        private CheckBox chkSaveContinue;
     }
 }
