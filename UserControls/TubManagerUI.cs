@@ -49,9 +49,6 @@ namespace DataManager.UserControls
         "EditedData"
         );
         private string targetSavePath = string.Empty;
-        
-        // ── 타임라인 드래그 상태 변수 추가 ──
-        private bool isDraggingTimeline = false;
 
 
         public TubManagerUI()
@@ -86,23 +83,6 @@ namespace DataManager.UserControls
 
             comboBox1.SelectedIndexChanged += ComboBox1_SelectedIndexChanged;
             trkProgress.Scroll += TrkProgress_Scroll;
-
-            // ── [추가] 타임라인 패널 깜빡임 방지 (더블 버퍼링 켜기) ──
-            if (pnlTimeStamp != null)
-            {
-                System.Reflection.PropertyInfo aProp = typeof(System.Windows.Forms.Control)
-                    .GetProperty("DoubleBuffered", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                aProp.SetValue(pnlTimeStamp, true, null);
-            }
-
-            // ── 타임라인 이벤트 등록 ──
-            if (pnlTimeStamp != null)
-            {
-                pnlTimeStamp.Paint += PnlTimeStamp_Paint;
-                pnlTimeStamp.MouseDown += PnlTimeStamp_MouseDown;
-                pnlTimeStamp.MouseMove += PnlTimeStamp_MouseMove;
-                pnlTimeStamp.MouseUp += PnlTimeStamp_MouseUp;
-            }
         }
 
         private void btnFileLoad_Click(object sender, EventArgs e)
@@ -249,9 +229,6 @@ namespace DataManager.UserControls
 
             UpdateChart();
             DisplayFrame(0);
-
-            pnlTimeStamp?.Invalidate();
-
             ReportLog("정보", $"데이터 로드 완료 (총 {drivingData.Count} 프레임)");
         }
 
@@ -577,10 +554,6 @@ namespace DataManager.UserControls
 
             trkProgress.Value = index;
 
-            // ── 타임라인 갱신 추가 ──
-            pnlTimeStamp?.Invalidate();
-                     
-
             if (filteredFrameMap.TryGetValue(index, out Bitmap _filtered))
             {
                 if (picImage.Image != null)
@@ -732,10 +705,6 @@ namespace DataManager.UserControls
             int _endDisplayIdx = drivingData[_end].Index;
 
             lblSelectedRange.Text = $"선택된 범위 ({_startDisplayIdx}, {_endDisplayIdx})  [유효: {_visibleInRange}]";
-
-            // ── 타임라인 갱신 추가 ──
-            pnlTimeStamp?.Invalidate();
-
         }
 
         private void btnApplyFillter_Click(object sender, EventArgs e)
@@ -796,9 +765,6 @@ namespace DataManager.UserControls
             UpdateChart();
             DisplayFrame(currentFrameIndex);
 
-            // ── 타임라인 갱신 추가 ──
-            pnlTimeStamp?.Invalidate();
-
             int _hiddenCount = filteredHideSet.Count(x => x >= _start && x <= _end);
             int _filteredCount = filteredFrameMap.Count(x => x.Key >= _start && x.Key <= _end);
             ReportLog("정보", $"필터 적용 완료 — 숨김: {_hiddenCount}개, 이미지 변환: {_filteredCount}개 " +
@@ -816,10 +782,6 @@ namespace DataManager.UserControls
 
             UpdateChart();
             DisplayFrame(currentFrameIndex);
-
-            // ── 타임라인 갱신 추가 ──
-            pnlTimeStamp?.Invalidate();
-
             ReportLog("정보", "임시 필터 결과가 모두 취소되었습니다.");
         }
         private void btnInitFillterSet_Click(object sender, EventArgs e)
@@ -1035,135 +997,6 @@ namespace DataManager.UserControls
             int _currentIdx = drivingData[currentListIndex].Index;
 
             lblAllImageNumRange.Text = $"({_firstIdx}, {_currentIdx}, {_lastIdx})  [표시: {_visible.Count}]";
-        }
-
-        // =====================================================================
-        // 타임라인 (pnlTimeStamp) 전용 기능 구현부
-        // =====================================================================
-
-        private void PnlTimeStamp_Paint(object sender, PaintEventArgs e)
-        {
-            if (drivingData == null || drivingData.Count <= 1) return;
-
-            Graphics g = e.Graphics;
-            int width = pnlTimeStamp.Width;
-            int height = pnlTimeStamp.Height;
-            int totalFrames = drivingData.Count;
-
-            // ── [추가] 타임라인 배경에 썸네일 이미지 그리기 ──
-            // 패널 크기에 맞춰 약 8개의 이미지 분할 표시 (크기에 따라 조절 가능)
-            int thumbnailCount = 8;
-            int thumbWidth = width / thumbnailCount;
-
-            for (int i = 0; i < thumbnailCount; i++)
-            {
-                // 각 칸에 해당하는 프레임 인덱스 계산
-                int targetFrameIdx = (int)((double)i / thumbnailCount * (totalFrames - 1));
-                if (targetFrameIdx >= 0 && targetFrameIdx < totalFrames)
-                {
-                    string imgPath = drivingData[targetFrameIdx].ImagePath;
-                    if (!string.IsNullOrEmpty(imgPath) && File.Exists(imgPath))
-                    {
-                        try
-                        {
-                            // 디스크에서 이미지를 잠깐 가져와 지정된 칸에 맞게 그려줌
-                            using (Image thumbImg = Image.FromFile(imgPath))
-                            {
-                                Rectangle rect = new Rectangle(i * thumbWidth, 0, thumbWidth, height);
-                                // 이미지가 찌그러지지 않고 꽉 차게 그리기 위해 래핑
-                                g.DrawImage(thumbImg, rect);
-                            }
-                        }
-                        catch { /* 이미지 로드 실패 시 넘어감 */ }
-                    }
-                }
-            }
-
-            // ── 기존 로직 1. 선택된 범위(Range) 그리기 (연한 파란색 투명 배경) ──
-            int startX = (int)((double)selectedRange.Item1 / (totalFrames - 1) * width);
-            int endX = (int)((double)selectedRange.Item2 / (totalFrames - 1) * width);
-            if (startX <= endX && endX > 0)
-            {
-                using (SolidBrush rangeBrush = new SolidBrush(Color.FromArgb(120, 173, 216, 230))) // 투명도 약간 낮춤
-                {
-                    g.FillRectangle(rangeBrush, startX, 0, Math.Max(1, endX - startX), height);
-                }
-            }
-
-            // ── 기존 로직 2. 필터로 인해 숨김 처리된 프레임 표시 (빨간색 하단 마커) ──
-            if (filteredHideSet.Count > 0)
-            {
-                using (Pen hiddenPen = new Pen(Color.FromArgb(180, Color.Red), 1))
-                {
-                    foreach (int hiddenIndex in filteredHideSet)
-                    {
-                        int x = (int)((double)hiddenIndex / (totalFrames - 1) * width);
-                        g.DrawLine(hiddenPen, x, height - 10, x, height);
-                    }
-                }
-            }
-
-            // ── 기존 로직 3. 현재 재생 위치(Playhead) 표시 (빨간색이나 파란색 선) ──
-            int currentX = (int)((double)currentFrameIndex / (totalFrames - 1) * width);
-            using (Pen playheadPen = new Pen(Color.Red, 2)) // 이미지 위에 잘 보이도록 빨간색 추천
-            {
-                g.DrawLine(playheadPen, currentX, 0, currentX, height);
-            }
-
-
-
-        }
-        // ── [오류 해결] 마우스 다운(클릭) 이벤트 메서드 ──
-        private void PnlTimeStamp_MouseDown(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left && drivingData != null && drivingData.Count > 0)
-            {
-                isDraggingTimeline = true;
-                MoveTimelineToPosition(e.X);
-            }
-        }
-
-        // ── [오류 해결] 마우스 무브(드래그) 이벤트 메서드 ──
-        private void PnlTimeStamp_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (isDraggingTimeline && drivingData != null && drivingData.Count > 0)
-            {
-                MoveTimelineToPosition(e.X);
-            }
-        }
-
-        // ── [오류 해결] 마우스 업(클릭 해제) 이벤트 메서드 ──
-        private void PnlTimeStamp_MouseUp(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left)
-            {
-                isDraggingTimeline = false;
-            }
-        }
-
-        // ── 타임라인 좌표를 프레임 인덱스로 변환하고 이미지를 갱신하는 메서드 ──
-        private void MoveTimelineToPosition(int mouseX)
-        {
-            if (drivingData == null || drivingData.Count == 0) return;
-
-            // 마우스 포인터가 패널을 벗어나도 예외가 발생하지 않도록 보정
-            mouseX = Math.Max(0, Math.Min(mouseX, pnlTimeStamp.Width));
-
-            // 클릭한 X좌표 비율을 계산하여 타겟 프레임 인덱스 도출
-            double percentage = (double)mouseX / pnlTimeStamp.Width;
-            int targetIndex = (int)Math.Round(percentage * (drivingData.Count - 1));
-
-            // 가장 가까운 유효 인덱스를 먼저 찾습니다 (기존 코드 활용)
-            int nearestIndex = FindNearestVisibleIndex(targetIndex, 0);
-
-            // 마우스가 움직였어도 프레임 번호가 '실제로' 바뀌었을 때만 이미지를 로드합니다.
-            if (nearestIndex >= 0 && nearestIndex != currentFrameIndex)
-            {
-                DisplayFrame(nearestIndex);
-
-                // PictureBox에게 이미지를 즉시 그리라고 강제 명령 (버벅임 방지)
-                picImage?.Refresh();
-            }
         }
     }
 }
