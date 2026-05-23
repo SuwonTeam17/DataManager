@@ -393,6 +393,7 @@
             btnTrainningHistory.TabIndex = 3;
             btnTrainningHistory.Text = "훈련 기록";
             btnTrainningHistory.UseVisualStyleBackColor = true;
+            btnTrainningHistory.Click += btnTrainningHistory_Click;
             // 
             // btnShowConf
             // 
@@ -403,6 +404,7 @@
             btnShowConf.TabIndex = 2;
             btnShowConf.Text = "구성 표시";
             btnShowConf.UseVisualStyleBackColor = true;
+            btnShowConf.Click += btnShowConf_Click;
             // 
             // btnChgComment
             // 
@@ -413,6 +415,7 @@
             btnChgComment.TabIndex = 1;
             btnChgComment.Text = "메모 변경";
             btnChgComment.UseVisualStyleBackColor = true;
+            btnChgComment.Click += btnChgComment_Click;
             // 
             // btnDelete
             // 
@@ -423,6 +426,7 @@
             btnDelete.TabIndex = 0;
             btnDelete.Text = "삭제";
             btnDelete.UseVisualStyleBackColor = true;
+            btnDelete.Click += btnDelete_Click;
             // 
             // TrainerUI
             // 

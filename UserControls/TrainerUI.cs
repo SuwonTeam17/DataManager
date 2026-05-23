@@ -360,13 +360,48 @@ namespace DataManager.UserControls
 
                     ReportLog("Success", $"학습 완료! '{modelName}' 이름으로 저장되었습니다.");
 
-                    // 4줄 영수증 기록
+                    // (기존 코드) 4줄 영수증 기록
                     string curDataset = Path.GetFileName(tubPath);
                     string modelFolder = Path.Combine(mycarPath, "models", modelName);
                     string metaFilePath = Path.Combine(modelFolder, "meta.txt");
 
                     try { File.WriteAllLines(metaFilePath, new string[] { curDataset, displayType, curTransfer, curMemo }); }
                     catch { }
+
+                    // ==========================================================
+                    // ⭐ [영구 박제 로직] 방금 만든 스마트 엔진을 사용해서 에러 없이 병합!
+                    string baseConfigPath = Path.Combine(mycarPath, "config.py");
+                    string myConfigPath = Path.Combine(mycarPath, "myconfig.py");
+                    string savedConfigPath = Path.Combine(modelFolder, "final_config.txt");
+
+                    try
+                    {
+                        // 1. 원본 파일에서 주석 싹 빼고 깔끔하게 가져오기
+                        var finalConfig = ParseConfigToDict(baseConfigPath);
+
+                        // 2. 내가 덮어쓴 파일 가져와서 병합하기
+                        var customConfig = ParseConfigToDict(myConfigPath);
+                        foreach (var kvp in customConfig)
+                        {
+                            finalConfig[kvp.Key] = kvp.Value;
+                        }
+
+                        // 3. 병합된 결과를 텍스트 파일로 예쁘게 저장
+                        List<string> saveLines = new List<string>();
+
+                        // 항목 이름(A-Z) 순서대로 정렬해서 텍스트 파일에 박제하면 더 보기 좋습니다.
+                        var sortedKeys = finalConfig.Keys.ToList();
+                        sortedKeys.Sort();
+
+                        foreach (var key in sortedKeys)
+                        {
+                            saveLines.Add($"{key} = {finalConfig[key]}");
+                        }
+
+                        File.WriteAllLines(savedConfigPath, saveLines);
+                    }
+                    catch { }
+                    // ==========================================================
 
                     // 리스트뷰 업데이트
                     ListViewItem newItem = new ListViewItem(modelName);
@@ -536,6 +571,420 @@ namespace DataManager.UserControls
                     lblTransferWarning.Visible = true; // 경고 띄우기!
                     break;
                 }
+            }
+        }
+
+        private void btnDelete_Click(object sender, EventArgs e)
+        {
+            // 1. [UX 방어막] 리스트뷰에서 아무것도 선택하지 않고 버튼을 눌렀을 때 컷!
+            if (lvwModel.SelectedItems.Count == 0)
+            {
+                MessageBox.Show("삭제할 모델을 목록에서 먼저 선택해주세요.", "선택된 모델 없음", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // 2. 선택된 줄(모델) 정보 가져오기
+            ListViewItem selectedItem = lvwModel.SelectedItems[0];
+            string modelName = selectedItem.Text; // 첫 번째 칸 (모델명)
+
+            // 3. [UX 방어막] 진짜 지울 것인지 사용자에게 다시 한번 물어보기
+            DialogResult result = MessageBox.Show(
+                $"'{modelName}' 모델을 정말로 삭제하시겠습니까?\n하드디스크의 실제 파일과 영수증이 모두 영구 삭제됩니다.",
+                "모델 완전 삭제 경고",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning
+            );
+
+            if (result == DialogResult.No) return; // '아니오'를 누르면 삭제 취소
+
+            try
+            {
+                // 4. 실제 컴퓨터의 모델 폴더 경로 추적 (mycar\models\모델명)
+                string currentPath = Application.StartupPath;
+                while (!Directory.Exists(Path.Combine(currentPath, "env")))
+                {
+                    DirectoryInfo parentInfo = Directory.GetParent(currentPath);
+                    if (parentInfo == null) break;
+                    currentPath = parentInfo.FullName;
+                }
+                string modelFolderPath = Path.Combine(currentPath, "mycar", "models", modelName);
+
+                // 5. 하드디스크에서 폴더 통째로 완전 삭제 (기존 코드)
+                if (Directory.Exists(modelFolderPath))
+                {
+                    Directory.Delete(modelFolderPath, true);
+                }
+
+                // ==========================================================
+                // ⭐ [추가할 부분] 폴더 옆에 숨어있는 보너스 파일(.tflite, .png)도 추적해서 암살!
+                string tflitePath = Path.Combine(currentPath, "mycar", "models", $"{modelName}.tflite");
+                string pngPath = Path.Combine(currentPath, "mycar", "models", $"{modelName}.png");
+
+                if (File.Exists(tflitePath))
+                {
+                    File.Delete(tflitePath);
+                }
+                if (File.Exists(pngPath))
+                {
+                    File.Delete(pngPath);
+                }
+                // ==========================================================
+
+                // 6. 화면의 리스트뷰(표)에서 해당 줄 지우기 (기존 코드)
+                lvwModel.Items.Remove(selectedItem);
+
+                // 7. 전이학습 선택 콤보박스 목록에서도 똑같이 지워줘서 동기화하기!
+                if (cboSelectTransferModel.Items.Contains(modelName))
+                {
+                    cboSelectTransferModel.Items.Remove(modelName);
+                }
+
+                MessageBox.Show("모델과 실제 파일이 깨끗하게 삭제되었습니다.", "삭제 완료", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                // 파일이 다른 프로그램이나 가상환경 프로세스에 의해 잠겨있을 때 안전하게 예외 처리
+                MessageBox.Show($"파일을 지우는 중 오류가 발생했습니다: {ex.Message}", "삭제 실패", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnChgComment_Click(object sender, EventArgs e)
+        {
+            // 1. 리스트뷰에서 아무것도 선택하지 않았을 때 컷!
+            if (lvwModel.SelectedItems.Count == 0)
+            {
+                MessageBox.Show("메모를 수정할 모델을 목록에서 먼저 선택해주세요.", "선택된 모델 없음", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // 2. 선택된 줄(모델) 정보 가져오기
+            ListViewItem selectedItem = lvwModel.SelectedItems[0];
+            string modelName = selectedItem.Text;
+
+            // ⭐ 메모는 정상적으로 6번째 칸(index 6)에서 가져옵니다.
+            string currentMemo = selectedItem.SubItems[6].Text;
+
+            // 3. 수제 팝업창을 띄워서 새로운 메모 입력받기
+            string newMemo = ShowInputBox("새로운 메모를 입력하세요:", "메모 수정", currentMemo);
+
+            // 4. 내용이 바뀌었고, 빈칸이 아니라면 업데이트 진행!
+            if (!string.IsNullOrWhiteSpace(newMemo) && newMemo != currentMemo)
+            {
+                try
+                {
+                    // 실제 컴퓨터의 meta.txt 파일 경로 추적
+                    string currentPath = Application.StartupPath;
+                    while (!Directory.Exists(Path.Combine(currentPath, "env")))
+                    {
+                        DirectoryInfo parentInfo = Directory.GetParent(currentPath);
+                        if (parentInfo == null) break;
+                        currentPath = parentInfo.FullName;
+                    }
+                    string metaFilePath = Path.Combine(currentPath, "mycar", "models", modelName, "meta.txt");
+
+                    if (File.Exists(metaFilePath))
+                    {
+                        string[] lines = File.ReadAllLines(metaFilePath);
+
+                        // ⭐ 새 모델들은 무조건 4줄이므로, 군더더기 없이 바로 덮어씁니다!
+                        if (lines.Length >= 4)
+                        {
+                            lines[3] = newMemo;
+                            File.WriteAllLines(metaFilePath, lines);
+                        }
+                    }
+
+                    // 화면의 리스트뷰 표 업데이트
+                    selectedItem.SubItems[6].Text = newMemo;
+                    selectedItem.ToolTipText = newMemo;
+
+                    MessageBox.Show("메모가 성공적으로 수정되었습니다.", "수정 완료", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"영수증 파일을 수정하는 중 오류가 발생했습니다: {ex.Message}", "수정 실패", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        // ==========================================================
+        // ⭐ C#용 수제 입력창(InputBox) 도우미 함수 
+        // (반드시 btnChgComment_Click 함수 바깥쪽에 위치해야 합니다!)
+        // ⭐ 화면 잘림을 원천 차단한 C#용 수제 입력창(InputBox)
+        private string ShowInputBox(string text, string caption, string defaultValue)
+        {
+            Form prompt = new Form()
+            {
+                // 세로 높이를 130에서 160으로 아주 넉넉하게 늘렸습니다.
+                ClientSize = new Size(380, 160),
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                Text = caption,
+                StartPosition = FormStartPosition.CenterParent,
+                MaximizeBox = false,
+                MinimizeBox = false,
+                // 화면 배율이 달라도 비율을 유지하도록 돕는 옵션
+                AutoScaleMode = AutoScaleMode.Dpi
+            };
+
+            Label textLabel = new Label() { Left = 16, Top = 20, Text = text, AutoSize = true };
+            TextBox textBox = new TextBox() { Left = 16, Top = 50, Width = 346, Text = defaultValue };
+
+            // 버튼의 높이(Height = 35)를 명시적으로 주고 위치를 잡아줍니다.
+            Button confirmation = new Button()
+            {
+                Text = "확인",
+                Left = 262,
+                Top = 105,
+                Width = 100,
+                Height = 35,
+                DialogResult = DialogResult.OK
+            };
+
+            // ⭐ 핵심 마법: 윈도우가 창 크기를 제멋대로 늘리더라도 
+            // 텍스트 박스는 가로로 늘어나고, 확인 버튼은 우측 하단에 찰싹 붙어있게 만듭니다!
+            textBox.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            confirmation.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+
+            prompt.Controls.Add(textLabel);
+            prompt.Controls.Add(textBox);
+            prompt.Controls.Add(confirmation);
+
+            prompt.AcceptButton = confirmation;
+
+            return prompt.ShowDialog() == DialogResult.OK ? textBox.Text : "";
+        }
+
+        private void btnShowConf_Click(object sender, EventArgs e)
+        {
+            // 1. 리스트뷰에서 모델 선택 확인
+            if (lvwModel.SelectedItems.Count == 0)
+            {
+                MessageBox.Show("설정을 확인할 모델을 먼저 선택해주세요.", "선택된 모델 없음", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            string modelName = lvwModel.SelectedItems[0].Text;
+
+            // 2. 경로 찾기 
+            string currentPath = Application.StartupPath;
+            while (!Directory.Exists(Path.Combine(currentPath, "env")))
+            {
+                DirectoryInfo parentInfo = Directory.GetParent(currentPath);
+                if (parentInfo == null) break;
+                currentPath = parentInfo.FullName;
+            }
+
+            // ⭐ 훈련할 때 만들어둔 통합 박제 파일 경로!
+            string savedConfigPath = Path.Combine(currentPath, "mycar", "models", modelName, "final_config.txt");
+
+            if (!File.Exists(savedConfigPath))
+            {
+                MessageBox.Show("이 모델은 예전 방식이라 통합 설정 파일(final_config.txt)이 존재하지 않습니다.\n다시 훈련된 모델부터 적용됩니다.", "파일 없음", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            // 3. 박제된 텍스트 파일을 딕셔너리로 변환 (아까 만든 ParseConfigToDict 함수 재활용!)
+            var configData = ParseConfigToDict(savedConfigPath);
+
+            // 4. 표(ListView) 뷰어 호출!
+            ShowConfigListViewer(modelName, configData);
+        }
+
+        // ==========================================================
+        // ⭐ 1. 파이썬 설정 파일 완벽 분석기 (멀티라인 & 주석 완벽 대응)
+        private Dictionary<string, string> ParseConfigToDict(string filePath)
+        {
+            var dict = new Dictionary<string, string>();
+            if (!File.Exists(filePath)) return dict;
+
+            string[] lines = File.ReadAllLines(filePath);
+            string currentKey = null;
+            string currentValue = "";
+            int bracketCount = 0; // 괄호의 짝을 추적합니다.
+
+            foreach (string rawLine in lines)
+            {
+                string line = rawLine.Trim();
+
+                // 괄호가 다 닫혀있는데 빈 줄이거나 주석이면 그냥 통과
+                if (bracketCount == 0 && (string.IsNullOrWhiteSpace(line) || line.StartsWith("#")))
+                    continue;
+
+                // 방해되는 인라인 주석 제거 (문자열 안의 # 기호는 보호됨)
+                string cleanLine = RemoveInlineComment(line);
+                if (string.IsNullOrWhiteSpace(cleanLine)) continue;
+
+                // 1. 새로운 '변수 = 값' 시작
+                if (bracketCount == 0)
+                {
+                    int eqIndex = cleanLine.IndexOf('=');
+                    if (eqIndex > 0)
+                    {
+                        currentKey = cleanLine.Substring(0, eqIndex).Trim();
+                        currentValue = cleanLine.Substring(eqIndex + 1).Trim();
+                    }
+                    else continue;
+                }
+                // 2. 멀티라인 이어서 읽기 (딕셔너리나 리스트가 여러 줄일 때)
+                else
+                {
+                    currentValue += " " + cleanLine; // 윗줄과 아랫줄을 한 줄로 예쁘게 합칩니다!
+                }
+
+                // 괄호가 열리고 닫힌 횟수를 셉니다.
+                bracketCount = CountBrackets(currentValue);
+
+                // 괄호가 완벽하게 모두 닫혔다면, 비로소 사전에 저장!
+                if (bracketCount <= 0 && currentKey != null)
+                {
+                    dict[currentKey] = currentValue;
+                    currentKey = null;
+                    bracketCount = 0;
+                }
+            }
+            return dict;
+        }
+
+        // ⭐ 2. 인라인 주석(#)만 정밀 타격해서 지워주는 도우미
+        private string RemoveInlineComment(string line)
+        {
+            bool inSingle = false, inDouble = false;
+            for (int i = 0; i < line.Length; i++)
+            {
+                if (line[i] == '\'' && !inDouble) inSingle = !inSingle;
+                else if (line[i] == '"' && !inSingle) inDouble = !inDouble;
+                else if (line[i] == '#' && !inSingle && !inDouble)
+                    return line.Substring(0, i).Trim(); // 진짜 주석을 만난 순간 그 앞부분까지만 자르기!
+            }
+            return line.Trim();
+        }
+
+        // ⭐ 3. 괄호의 짝을 계산해 주는 도우미
+        private int CountBrackets(string text)
+        {
+            int count = 0;
+            bool inSingle = false, inDouble = false;
+            foreach (char c in text)
+            {
+                if (c == '\'' && !inDouble) inSingle = !inSingle;
+                else if (c == '"' && !inSingle) inDouble = !inDouble;
+                else if (!inSingle && !inDouble)
+                {
+                    if (c == '{' || c == '[' || c == '(') count++;
+                    else if (c == '}' || c == ']' || c == ')') count--;
+                }
+            }
+            return count;
+        }
+        // ==========================================================
+
+        // ⭐ 2. 추출된 설정을 표(ListView) 형태로 예쁘게 띄워주는 뷰어 창
+        private void ShowConfigListViewer(string modelName, Dictionary<string, string> configData)
+        {
+            Form viewer = new Form()
+            {
+                Text = $"[{modelName}] 최종 적용된 환경 설정",
+                ClientSize = new Size(600, 700),
+                StartPosition = FormStartPosition.CenterParent,
+                MinimizeBox = false,
+                MaximizeBox = false
+            };
+
+            // 텍스트 박스 대신 깔끔한 리스트뷰(표) 생성
+            ListView lvConfig = new ListView()
+            {
+                View = View.Details,
+                GridLines = true,       // 엑셀처럼 선 긋기
+                FullRowSelect = true,   // 한 줄 전체 선택
+                Dock = DockStyle.Fill,  // 창에 꽉 차게
+                Font = new Font("Consolas", 10) // 개발자 폰트
+            };
+
+            // 열(Column) 2개 추가
+            lvConfig.Columns.Add("항목 (Setting)", 250);
+            lvConfig.Columns.Add("값 (Value)", 320);
+
+            // 항목 이름(A-Z) 순서대로 정렬해서 보기 편하게 만들기
+            var sortedKeys = configData.Keys.ToList();
+            sortedKeys.Sort();
+
+            // 표에 데이터 채워 넣기
+            foreach (var key in sortedKeys)
+            {
+                ListViewItem item = new ListViewItem(key); // 첫 번째 칸 (항목)
+                item.SubItems.Add(configData[key]);        // 두 번째 칸 (값)
+                lvConfig.Items.Add(item);
+            }
+
+            viewer.Controls.Add(lvConfig);
+            viewer.ShowDialog();
+        }
+
+        // ⭐ C#용 수제 그래프(성적표) 뷰어 도우미 함수
+        // ⭐ 크기를 확 키우고 '전체 화면(최대화)' 기능을 켠 그래프 뷰어
+        private void ShowGraphViewer(string modelName, string imagePath)
+        {
+            Form viewer = new Form()
+            {
+                Text = $"[{modelName}] 훈련 성적표 (Loss Graph)",
+                // 기본 크기를 600x450에서 900x600으로 시원하게 키웠습니다!
+                ClientSize = new Size(900, 600),
+                StartPosition = FormStartPosition.CenterParent,
+                // 이제 최대화 버튼(ㅁ)을 눌러서 모니터 꽉 차게 볼 수 있습니다.
+                MaximizeBox = true,
+                MinimizeBox = false,
+                BackColor = Color.White
+            };
+
+            PictureBox pbGraph = new PictureBox()
+            {
+                Dock = DockStyle.Fill,
+                // 창 크기를 드래그해서 늘리거나 줄여도 사진 비율이 깨지지 않고 자동으로 맞춰집니다.
+                SizeMode = PictureBoxSizeMode.Zoom
+            };
+
+            // 파일을 잠그지 않고 메모리로 읽어오는 안전한 방식 유지
+            using (FileStream fs = new FileStream(imagePath, FileMode.Open, FileAccess.Read))
+            {
+                pbGraph.Image = Image.FromStream(fs);
+            }
+
+            viewer.Controls.Add(pbGraph);
+            viewer.ShowDialog();
+        }
+
+        private void btnTrainningHistory_Click(object sender, EventArgs e)
+        {
+            // 1. 리스트뷰에서 모델 선택 확인
+            if (lvwModel.SelectedItems.Count == 0)
+            {
+                MessageBox.Show("그래프를 확인할 모델을 먼저 선택해주세요.", "선택된 모델 없음", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            string modelName = lvwModel.SelectedItems[0].Text;
+
+            // 2. 모델 폴더 경로 추적
+            string currentPath = Application.StartupPath;
+            while (!Directory.Exists(Path.Combine(currentPath, "env")))
+            {
+                DirectoryInfo parentInfo = Directory.GetParent(currentPath);
+                if (parentInfo == null) break;
+                currentPath = parentInfo.FullName;
+            }
+
+            // 모델 폴더 바깥에 있는 성적표 사진(모델명.png) 경로
+            string pngPath = Path.Combine(currentPath, "mycar", "models", $"{modelName}.png");
+
+            // 3. 사진 파일이 있으면 뷰어 띄우기
+            if (File.Exists(pngPath))
+            {
+                ShowGraphViewer(modelName, pngPath);
+            }
+            else
+            {
+                // 훈련 중 에러가 났거나, 사용자가 폴더에서 사진만 실수로 지운 경우
+                MessageBox.Show("이 모델의 훈련 그래프(png) 파일이 존재하지 않습니다.", "파일 없음", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
     }
