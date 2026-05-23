@@ -1,5 +1,8 @@
 ﻿
 
+using System.Diagnostics;
+using System.Text.RegularExpressions;
+
 namespace DataManager.UserControls
 {
     public partial class TrainerUI : UserControl
@@ -167,7 +170,8 @@ namespace DataManager.UserControls
             btnDelete.ForeColor = Color.Red;
             btnDelete.Padding = new Padding(0);
 
-            btnDelete.Click += (s, args) => {
+            btnDelete.Click += (s, args) =>
+            {
                 flpConfCon.Controls.Remove(rowPanel);
                 rowPanel.Dispose();
                 SyncAllPanelSizes();
@@ -203,6 +207,336 @@ namespace DataManager.UserControls
         {
             string currentTime = DateTime.Now.ToString("HH:mm:ss");
             OnLogReported?.Invoke(currentTime, type, message);
+        }
+
+        private void btnTrain_Click(object sender, EventArgs e)
+        {
+            string tubPath = "";
+
+            // 1. 데이터 폴더 선택
+            using (FolderBrowserDialog fbd = new FolderBrowserDialog())
+            {
+                fbd.Description = "학습시킬 주행 데이터(tub) 폴더를 선택해주세요.";
+                if (fbd.ShowDialog() == DialogResult.OK)
+                {
+                    tubPath = fbd.SelectedPath;
+                }
+                else
+                {
+                    return;
+                }
+            }
+
+            // 2. 작업 경로 찾기
+            string currentPath = Application.StartupPath;
+            while (!Directory.Exists(Path.Combine(currentPath, "env")))
+            {
+                DirectoryInfo parentInfo = Directory.GetParent(currentPath);
+                if (parentInfo == null)
+                {
+                    ReportLog("Error", "'env' 파이썬 엔진 폴더를 찾을 수 없습니다.");
+                    return;
+                }
+                currentPath = parentInfo.FullName;
+            }
+            string rootPath = currentPath;
+            string mycarPath = $@"{rootPath}\mycar";
+
+            // 3. 자동 모델 이름 생성 및 메모 박제
+            string timestamp = DateTime.Now.ToString("yyMMdd_HHmmss");
+            string modelName = $"mypilot_{timestamp}";
+            string curMemo = string.IsNullOrWhiteSpace(txtComment.Text) ? "새로 학습된 모델입니다." : txtComment.Text;
+
+            // 4. 모델 종류(--type) 파라미터 번역
+            string selectedType = "linear";
+            string displayType = cboSelectModelType.SelectedItem.ToString();
+
+            if (displayType.Contains("Categorical")) selectedType = "categorical";
+            else if (displayType.Contains("RNN")) selectedType = "rnn";
+            else if (displayType.Contains("Behavior")) selectedType = "behavior";
+            else if (displayType.Contains("IMU")) selectedType = "imu";
+            else if (displayType.Contains("3D")) selectedType = "3d";
+
+            // ⭐ 5. 전이학습(--transfer) 파라미터 확인 (꼼수 제거, 공식 옵션 적용!)
+            string curTransfer = "X";
+            string transferCommand = "";
+
+            if (cboSelectTransferModel.SelectedItem != null && cboSelectTransferModel.SelectedItem.ToString() != "None")
+            {
+                string selectedBaseModel = cboSelectTransferModel.SelectedItem.ToString();
+                curTransfer = selectedBaseModel;
+
+                // 폴더 복사 꼼수 대신 파이썬 명령어에 직접 --transfer 옵션을 추가합니다.
+                transferCommand = $" --transfer \"models\\{selectedBaseModel}\"";
+            }
+
+            // ⭐ 6. 최종 명령어 조립 (python train.py -> donkey train 으로 변경)
+            string windowsCommand = $"cd /d \"{mycarPath}\" && \"..\\env\\Scripts\\activate\" && set CUDA_VISIBLE_DEVICES=-1 && donkey train --tub \"{tubPath}\" --model \"models\\{modelName}\" --type {selectedType}{transferCommand}";
+
+            // 7. 백그라운드 프로세스 세팅
+            ProcessStartInfo psi = new ProcessStartInfo();
+            psi.FileName = "cmd.exe";
+            psi.Arguments = $"/c \"{windowsCommand}\"";
+            psi.UseShellExecute = false;
+            psi.CreateNoWindow = true;
+            psi.RedirectStandardOutput = true;
+            psi.RedirectStandardError = true;
+
+            Process process = new Process();
+            process.StartInfo = psi;
+
+            prgTrain.Value = 0;
+            prgTrain.Maximum = 100;
+
+            // 8. 훈련 게이지 가로채기
+            process.OutputDataReceived += (s, args) =>
+            {
+                if (!string.IsNullOrEmpty(args.Data))
+                {
+                    Match match = Regex.Match(args.Data, @"Epoch (\d+)/(\d+)");
+                    if (match.Success)
+                    {
+                        int currentEpoch = int.Parse(match.Groups[1].Value);
+                        int totalEpoch = int.Parse(match.Groups[2].Value);
+
+                        this.BeginInvoke((MethodInvoker)async delegate
+                        {
+                            int targetMax = totalEpoch * 100;
+                            int targetValue = currentEpoch * 100;
+
+                            if (prgTrain.Maximum != targetMax) prgTrain.Maximum = targetMax;
+
+                            for (int i = prgTrain.Value; i <= targetValue; i += 2)
+                            {
+                                if (i > prgTrain.Maximum) i = prgTrain.Maximum;
+                                prgTrain.Value = i;
+                                await Task.Delay(1);
+                            }
+                        });
+                    }
+                }
+            };
+
+            // 파이썬 에러 가로채기 (경고 메시지도 포함되어 출력될 수 있습니다)
+            process.ErrorDataReceived += (s, args) =>
+            {
+                if (!string.IsNullOrEmpty(args.Data))
+                {
+                    this.BeginInvoke((MethodInvoker)delegate
+                    {
+                        ReportLog("Python", args.Data);
+                    });
+                }
+            };
+
+            // 9. 파이썬 학습 종료 이벤트 
+            process.EnableRaisingEvents = true;
+            process.Exited += (s, args) =>
+            {
+                // 🚨 [방어막] 비정상 종료 시(에러 등) 여기서 컷!
+                if (process.ExitCode != 0)
+                {
+                    this.BeginInvoke((MethodInvoker)delegate
+                    {
+                        ReportLog("Error", "훈련 중 문제가 발생하여 종료되었습니다. 로그를 확인하세요.");
+                        prgTrain.Value = 0;
+                    });
+                    process.Dispose();
+                    return;
+                }
+
+                // 정상 종료 시 마무리 작업
+                this.BeginInvoke((MethodInvoker)async delegate
+                {
+
+                    int step = 200;
+                    for (int i = prgTrain.Value; i <= prgTrain.Maximum; i += step)
+                    {
+                        if (i > prgTrain.Maximum) i = prgTrain.Maximum;
+                        prgTrain.Value = i;
+                        await Task.Delay(1);
+                    }
+                    prgTrain.Value = prgTrain.Maximum;
+
+                    ReportLog("Success", $"학습 완료! '{modelName}' 이름으로 저장되었습니다.");
+
+                    // 4줄 영수증 기록
+                    string curDataset = Path.GetFileName(tubPath);
+                    string modelFolder = Path.Combine(mycarPath, "models", modelName);
+                    string metaFilePath = Path.Combine(modelFolder, "meta.txt");
+
+                    try { File.WriteAllLines(metaFilePath, new string[] { curDataset, displayType, curTransfer, curMemo }); }
+                    catch { }
+
+                    // 리스트뷰 업데이트
+                    ListViewItem newItem = new ListViewItem(modelName);
+                    newItem.SubItems.Add($"{modelName}");
+                    newItem.SubItems.Add(displayType);
+                    newItem.SubItems.Add(curDataset);
+                    newItem.SubItems.Add(DateTime.Now.ToString("yy-MM-dd HH:mm"));
+                    newItem.SubItems.Add(curTransfer);
+                    newItem.SubItems.Add(curMemo);
+                    newItem.ToolTipText = curMemo;
+
+                    lvwModel.Items.Add(newItem);
+
+                    // 콤보박스에 새 모델 추가 및 폼 초기화
+                    cboSelectTransferModel.Items.Add(modelName);
+                    txtComment.Clear();
+                    cboSelectTransferModel.SelectedIndex = 0;
+                    cboSelectModelType.SelectedIndex = 0;
+
+                    // ⭐ 다음 훈련을 위해 잠가뒀던 모델 종류 콤보박스 다시 풀기
+                    cboSelectModelType.Enabled = true;
+                    lblTransferWarning.Visible = false;
+
+                    await Task.Delay(1500);
+                    prgTrain.Value = 0;
+                });
+
+                process.Dispose();
+            };
+
+            // 10. 엔진 가동 시작!
+            try
+            {
+                process.Start();
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+            }
+            catch (Exception ex)
+            {
+                ReportLog("Error", $"훈련 엔진 가동 실패: {ex.Message}");
+            }
+        }
+
+        private void TrainerUI_Load(object sender, EventArgs e)
+        {
+            // 1. 모델 종류 콤보박스 세팅
+            cboSelectModelType.Items.Clear();
+            cboSelectModelType.Items.Add("기본 주행 (Linear)");
+            cboSelectModelType.Items.Add("분류형 주행 (Categorical)");
+            cboSelectModelType.Items.Add("기억형 주행 (RNN)");
+            cboSelectModelType.Items.Add("지시형 주행 (Behavior)");
+            cboSelectModelType.Items.Add("센서 융합 주행 (IMU)");
+            cboSelectModelType.Items.Add("입체 시각 주행 (3D)");
+            cboSelectModelType.SelectedIndex = 0;
+            lblTransferWarning.Visible = false; // 전이학습 경고 메시지 숨기기
+
+            // 2. 기존 학습된 모델 불러오기 (리스트뷰 & 전이학습 콤보박스 세팅)
+            LoadExistingModels();
+        }
+
+        private void LoadExistingModels()
+        {
+            lvwModel.Items.Clear();
+            lvwModel.ShowItemToolTips = true;
+
+            cboSelectTransferModel.Items.Clear();
+            cboSelectTransferModel.Items.Add("None");
+            cboSelectTransferModel.SelectedIndex = 0;
+
+            string currentPath = Application.StartupPath;
+            while (!Directory.Exists(Path.Combine(currentPath, "env")))
+            {
+                DirectoryInfo parentInfo = Directory.GetParent(currentPath);
+                if (parentInfo == null) return;
+                currentPath = parentInfo.FullName;
+            }
+
+            string modelsPath = Path.Combine(currentPath, "mycar", "models");
+            if (!Directory.Exists(modelsPath)) return;
+
+            DirectoryInfo di = new DirectoryInfo(modelsPath);
+            foreach (DirectoryInfo dir in di.GetDirectories())
+            {
+                string pbFilePath = Path.Combine(dir.FullName, "saved_model.pb");
+
+                if (File.Exists(pbFilePath))
+                {
+                    string modelName = dir.Name;
+
+                    // ⭐ 기본값 설정 (종류도 이제 변수로 관리합니다)
+                    string dataset = "알 수 없음";
+                    string modelType = "기본 주행 (Linear)"; // 기본값은 Linear
+                    string isTransfer = "-";
+                    string memo = "저장되어 있던 모델";
+
+                    string metaFilePath = Path.Combine(dir.FullName, "meta.txt");
+                    if (File.Exists(metaFilePath))
+                    {
+                        try
+                        {
+                            string[] lines = File.ReadAllLines(metaFilePath);
+
+                            // 옛날에 저장된 3줄짜리 영수증 파일일 경우
+                            if (lines.Length == 3)
+                            {
+                                dataset = lines[0];
+                                isTransfer = lines[1];
+                                memo = lines[2];
+                            }
+                            // ⭐ 새롭게 저장될 4줄짜리 영수증 파일일 경우 (종류 포함)
+                            else if (lines.Length >= 4)
+                            {
+                                dataset = lines[0];
+                                modelType = lines[1]; // 2번째 줄에서 모델 종류를 쏙 읽어옵니다!
+                                isTransfer = lines[2];
+                                memo = lines[3];
+                            }
+                        }
+                        catch { }
+                    }
+
+                    ListViewItem item = new ListViewItem(modelName);
+                    item.SubItems.Add(modelName);
+                    item.SubItems.Add(modelType); // ⬅️ 하드코딩 대신 파일에서 읽어온 진짜 종류 적용!
+                    item.SubItems.Add(dataset);
+                    item.SubItems.Add(dir.CreationTime.ToString("yy-MM-dd HH:mm"));
+                    item.SubItems.Add(isTransfer);
+                    item.SubItems.Add(memo);
+
+                    item.ToolTipText = memo;
+                    lvwModel.Items.Add(item);
+
+                    cboSelectTransferModel.Items.Add(modelName);
+                }
+            }
+        }
+
+        private void cboSelectTransferModel_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            string selectedBaseModel = cboSelectTransferModel.SelectedItem.ToString();
+
+            // 1. 전이학습을 안 할 때 ("None" 선택)
+            if (selectedBaseModel == "None")
+            {
+                cboSelectModelType.Enabled = true; // 콤보박스 잠금 해제
+                lblTransferWarning.Visible = false; // 경고 숨기기
+                return;
+            }
+
+            // 2. 전이학습할 모델을 선택했을 때
+            foreach (ListViewItem item in lvwModel.Items)
+            {
+                if (item.Text == selectedBaseModel)
+                {
+                    string originalType = item.SubItems[2].Text;
+
+                    for (int i = 0; i < cboSelectModelType.Items.Count; i++)
+                    {
+                        if (cboSelectModelType.Items[i].ToString() == originalType)
+                        {
+                            cboSelectModelType.SelectedIndex = i;
+                            break;
+                        }
+                    }
+
+                    cboSelectModelType.Enabled = false; // 콤보박스 잠금
+                    lblTransferWarning.Visible = true; // 경고 띄우기!
+                    break;
+                }
+            }
         }
     }
 }
