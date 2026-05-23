@@ -55,11 +55,17 @@ namespace DataManager.UserControls
             if (chart1.ChartAreas.Count > 0)
             {
                 chart1.ChartAreas[0].AxisX.Title = "Frame";
+                chart1.ChartAreas[0].AxisY.Minimum = -1.0;
+                chart1.ChartAreas[0].AxisY.Maximum = 1.0;
+                chart1.ChartAreas[0].AxisY.Interval = 0.5;
             }
 
             if (chart2.ChartAreas.Count > 0)
             {
                 chart2.ChartAreas[0].AxisX.Title = "Frame";
+                chart2.ChartAreas[0].AxisY.Minimum = -1.0;
+                chart2.ChartAreas[0].AxisY.Maximum = 1.0;
+                chart2.ChartAreas[0].AxisY.Interval = 0.5;
             }
 
             // Chart 1 (Angle)
@@ -192,26 +198,11 @@ namespace DataManager.UserControls
                 }
             }
 
-            if (selectedModelType == "savedmodel")
-            {
-                lblAngle.Text = "savedmodel prediction not supported";
-                lblThrottle.Text = "savedmodel prediction not supported";
-            }
-            else
-            {
-                lblAngle.Text = $"Angle: {actualAngle:F3}";
-                lblThrottle.Text = $"Throttle: {actualThrottle:F3}";
-            }
+            lblAngle.Text = $"Angle: {actualAngle:F3}";
+            lblThrottle.Text = $"Throttle: {actualThrottle:F3}";
 
-            // Angle (-1.0 ~ 1.0) -> (0 ~ 100)
-            int angleVal = (int)Math.Round((actualAngle + 1.0) * 50.0);
-
-            // Throttle (0.0 ~ 1.0) -> (0 ~ 100)
-            int throttleVal = (int)Math.Round(actualThrottle * 100.0);
-
-            // progressBar1 (Angle), progressBar2 (Throttle)
-            progressBar1.Value = Math.Clamp(angleVal, 0, 100);
-            progressBar2.Value = Math.Clamp(throttleVal, 0, 100);
+            gaugeBar1.Value = Math.Clamp(actualAngle, -1.0, 1.0);
+            gaugeBar2.Value = Math.Clamp(actualThrottle, -1.0, 1.0);
 
             // 추후 AI 예측값을 표시하기 위한 뼈대 구조
             if (predictedAngle.HasValue && predictedThrottle.HasValue)
@@ -226,17 +217,20 @@ namespace DataManager.UserControls
 
         public void UpdatePrediction(double predictedAngle, double predictedThrottle)
         {
-            if (selectedModelType == "savedmodel") return;
-
             double angleError = Math.Abs(currentActualAngle - predictedAngle);
             double throttleError = Math.Abs(currentActualThrottle - predictedThrottle);
 
             lblAngle.Text = $"user/angle: {currentActualAngle:F3} | pilot/angle: {predictedAngle:F3} | error: {angleError:F3}";
             lblThrottle.Text = $"user/throttle: {currentActualThrottle:F3} | pilot/throttle: {predictedThrottle:F3} | error: {throttleError:F3}";
 
+            double clampedActualAngle = Math.Clamp(currentActualAngle, -1.0, 1.0);
+            double clampedPredictedAngle = Math.Clamp(predictedAngle, -1.0, 1.0);
+            double clampedActualThrottle = Math.Clamp(currentActualThrottle, -1.0, 1.0);
+            double clampedPredictedThrottle = Math.Clamp(predictedThrottle, -1.0, 1.0);
+
             // Chart1: Angle update
-            chart1.Series["user/angle"].Points.AddXY(chartFrameIndex, currentActualAngle);
-            chart1.Series["pilot/angle"].Points.AddXY(chartFrameIndex, predictedAngle);
+            chart1.Series["user/angle"].Points.AddXY(chartFrameIndex, clampedActualAngle);
+            chart1.Series["pilot/angle"].Points.AddXY(chartFrameIndex, clampedPredictedAngle);
 
             if (chart1.Series["user/angle"].Points.Count > 100)
             {
@@ -245,8 +239,8 @@ namespace DataManager.UserControls
             }
 
             // Chart2: Throttle update
-            chart2.Series["user/throttle"].Points.AddXY(chartFrameIndex, currentActualThrottle);
-            chart2.Series["pilot/throttle"].Points.AddXY(chartFrameIndex, predictedThrottle);
+            chart2.Series["user/throttle"].Points.AddXY(chartFrameIndex, clampedActualThrottle);
+            chart2.Series["pilot/throttle"].Points.AddXY(chartFrameIndex, clampedPredictedThrottle);
 
             if (chart2.Series["user/throttle"].Points.Count > 100)
             {
@@ -260,9 +254,6 @@ namespace DataManager.UserControls
         private async Task RunPredictionAsync()
         {
             if (!isModelLoaded || string.IsNullOrEmpty(selectedModelFilePath) || string.IsNullOrEmpty(selectedModelType) || string.IsNullOrEmpty(currentImagePath) || !File.Exists(currentImagePath))
-                return;
-
-            if (selectedModelType == "savedmodel")
                 return;
 
             if (isPredicting) return;
