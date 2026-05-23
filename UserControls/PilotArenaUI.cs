@@ -351,7 +351,16 @@ namespace DataManager.UserControls
             {
                 if (control is ModelTestModule module)
                 {
-                    module.UpdateFrame(finalImagePath, currentFrame.Angle, currentFrame.Throttle);
+                    // ±5 윈도우 범위의 user 데이터를 미리 채워서 선이 끊기지 않게 함
+                    for (int offset = -5; offset <= 5; offset++)
+                    {
+                        int idx = currentFrameIndex + offset;
+                        if (idx < 0 || idx >= frames.Count) continue;
+                        var f = frames[idx];
+                        module.SetUserFrameData(idx, f.Angle, f.Throttle);
+                    }
+
+                    module.UpdateFrame(finalImagePath, currentFrame.Angle, currentFrame.Throttle, currentFrameIndex);
                 }
             }
         }
@@ -372,6 +381,7 @@ namespace DataManager.UserControls
                 {
                     module.Margin = new Padding(0);
                     module.Size = new Size(width, height);
+                    module.UpdateLayout();
                 }
             }
             else

@@ -192,12 +192,12 @@
             pnlData.Dock = DockStyle.Bottom;
             pnlData.Location = new Point(0, 212);
             pnlData.Name = "pnlData";
-            pnlData.Size = new Size(375, 25);
+            pnlData.Size = new Size(375, 50);
             pnlData.TabIndex = 0;
             // 
             // gaugeBar2
             //
-            gaugeBar2.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            gaugeBar2.Anchor = AnchorStyles.Top | AnchorStyles.Left;
             gaugeBar2.Location = new Point(225, 4);
             gaugeBar2.Name = "gaugeBar2";
             gaugeBar2.Size = new Size(138, 15);
