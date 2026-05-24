@@ -35,6 +35,10 @@ namespace DataManager.UserControls
         private Dictionary<int, double> frameAnglePilot = new();
         private Dictionary<int, double> frameThrottleUser = new();
         private Dictionary<int, double> frameThrottlePilot = new();
+        private Dictionary<int, string> frameImagePaths = new();
+
+        // 가장 최근에 요청된 중심 프레임 — 사용자가 다른 프레임으로 이동하면 창 예측을 중단하는 데 사용
+        private volatile int _latestWindowCenter = -1;
 
         private Series? seriesAngleUser;
         private Series? seriesAnglePilot;
@@ -196,10 +200,12 @@ namespace DataManager.UserControls
             }
         }
 
-        public void SetUserFrameData(int frameIndex, double angle, double throttle)
+        /// <summary>이미지 경로와 user 값을 함께 저장. PilotArenaUI가 ±5 윈도우 전체에 호출.</summary>
+        public void SetFrameContext(int frameIndex, string imagePath, double angle, double throttle)
         {
-            frameAngleUser[frameIndex] = Math.Clamp(angle, -1.0, 1.0);
-            frameThrottleUser[frameIndex] = Math.Clamp(throttle, -1.0, 1.0);
+            frameImagePaths[frameIndex] = imagePath;
+            frameAngleUser[frameIndex] = angle;
+            frameThrottleUser[frameIndex] = throttle;
         }
 
         public void UpdateFrame(string imagePath, double actualAngle, double actualThrottle, int frameIndex = 0, double? predictedAngle = null, double? predictedThrottle = null)
@@ -209,8 +215,10 @@ namespace DataManager.UserControls
             currentImagePath = imagePath;
             currentFrameIndex = frameIndex;
 
-            frameAngleUser[frameIndex] = Math.Clamp(actualAngle, -1.0, 1.0);
-            frameThrottleUser[frameIndex] = Math.Clamp(actualThrottle, -1.0, 1.0);
+            frameAngleUser[frameIndex] = actualAngle;
+            frameThrottleUser[frameIndex] = actualThrottle;
+            frameImagePaths[frameIndex] = imagePath;
+            _latestWindowCenter = frameIndex;
 
             if (imagePath != lastLoadedImagePath)
             {
@@ -240,19 +248,23 @@ namespace DataManager.UserControls
             {
                 UpdatePrediction(predictedAngle.Value, predictedThrottle.Value);
             }
-            else if (isModelLoaded && !string.IsNullOrEmpty(currentImagePath) && !isPredicting)
+            else if (isModelLoaded && !isPredicting)
             {
-                _ = RunPredictionAsync();
+                _ = RunPredictionWindowAsync(frameIndex);
             }
         }
 
         public void UpdatePrediction(double predictedAngle, double predictedThrottle)
         {
+            Debug.WriteLine($"[UpdatePrediction] frame={currentFrameIndex} | predictedAngle={predictedAngle:F4} | predictedThrottle={predictedThrottle:F4}");
+            Debug.WriteLine($"[UpdatePrediction] currentActualAngle={currentActualAngle:F4} | currentActualThrottle={currentActualThrottle:F4}");
+            Debug.WriteLine($"[UpdatePrediction] diff angle={predictedAngle - currentActualAngle:F4} | diff throttle={predictedThrottle - currentActualThrottle:F4}");
+
             lblAngle.Text = $"Angle\nu:{FormatVal(currentActualAngle)} p:{FormatVal(predictedAngle)}";
             lblThrottle.Text = $"Throttle\nu:{FormatVal(currentActualThrottle)} p:{FormatVal(predictedThrottle)}";
 
-            frameAnglePilot[currentFrameIndex] = Math.Clamp(predictedAngle, -1.2, 1.2);
-            frameThrottlePilot[currentFrameIndex] = Math.Clamp(predictedThrottle, -1.2, 1.2);
+            frameAnglePilot[currentFrameIndex] = predictedAngle;
+            frameThrottlePilot[currentFrameIndex] = predictedThrottle;
 
             RedrawCharts();
         }
@@ -349,7 +361,7 @@ namespace DataManager.UserControls
                     }));
 
                     if (!string.IsNullOrEmpty(currentImagePath) && File.Exists(currentImagePath))
-                        this.Invoke((MethodInvoker)(() => { _ = RunPredictionAsync(); }));
+                        this.Invoke((MethodInvoker)(() => { _ = RunPredictionWindowAsync(currentFrameIndex); }));
                 }
                 else
                 {
@@ -387,57 +399,89 @@ namespace DataManager.UserControls
             _pythonProcess = null;
         }
 
-        private async Task RunPredictionAsync()
+        /// <summary>
+        /// 현재 프레임을 중심으로 ±5 윈도우를 순차 예측합니다.
+        /// 예측 순서: 0, +1, -1, +2, -2, ... (현재 프레임 우선)
+        /// 사용자가 다른 프레임으로 이동하면 현재 진행 중인 예측 완료 후 중단하고
+        /// 새로운 중심으로 다시 시작합니다.
+        /// </summary>
+        private async Task RunPredictionWindowAsync(int centerFrame)
         {
             if (!_pythonReady || _pythonStdin == null || _pythonStdout == null) return;
-            if (string.IsNullOrEmpty(currentImagePath) || !File.Exists(currentImagePath)) return;
             if (isPredicting) return;
             isPredicting = true;
 
-            int frameIndex = currentFrameIndex;
-            string imagePath = currentImagePath;
+            // 현재 프레임부터, 그 다음 +1/-1, +2/-2 순으로 예측
+            int[] offsets = { 0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5 };
 
             try
             {
-                await _pythonStdin.WriteLineAsync(imagePath);
-                await _pythonStdin.FlushAsync();
-
-                string? response = await _pythonStdout.ReadLineAsync();
-                if (string.IsNullOrEmpty(response))
+                foreach (int offset in offsets)
                 {
-                    // 프로세스가 종료된 경우
-                    _pythonReady = false;
-                    return;
-                }
+                    // 사용자가 다른 프레임으로 이동했으면 중단
+                    if (_latestWindowCenter != centerFrame) break;
 
-                using var doc = JsonDocument.Parse(response);
-                var root = doc.RootElement;
-                if (root.TryGetProperty("angle", out JsonElement angleElem) &&
-                    root.TryGetProperty("throttle", out JsonElement throttleElem))
-                {
-                    double pa = angleElem.GetDouble();
-                    double pt = throttleElem.GetDouble();
+                    int idx = centerFrame + offset;
+
+                    // 이미 예측된 프레임은 건너뜀
+                    if (frameAnglePilot.ContainsKey(idx)) continue;
+
+                    // 이미지 경로가 없으면 건너뜀
+                    if (!frameImagePaths.TryGetValue(idx, out string? imgPath)) continue;
+                    if (!File.Exists(imgPath)) continue;
+
+                    await _pythonStdin.WriteLineAsync(imgPath);
+                    await _pythonStdin.FlushAsync();
+
+                    string? response = await _pythonStdout.ReadLineAsync();
+                    if (string.IsNullOrEmpty(response))
+                    {
+                        _pythonReady = false;
+                        break;
+                    }
+
+                    using var doc = JsonDocument.Parse(response);
+                    var root = doc.RootElement;
+                    if (!root.TryGetProperty("angle", out JsonElement aElem) ||
+                        !root.TryGetProperty("throttle", out JsonElement tElem)) continue;
+
+                    double pa = aElem.GetDouble();
+                    double pt = tElem.GetDouble();
+                    int capturedIdx = idx;
+
                     this.Invoke((MethodInvoker)delegate
                     {
-                        frameAnglePilot[frameIndex] = Math.Clamp(pa, -1.2, 1.2);
-                        frameThrottlePilot[frameIndex] = Math.Clamp(pt, -1.2, 1.2);
-                        if (frameIndex == currentFrameIndex)
+                        frameAnglePilot[capturedIdx] = pa;
+                        frameThrottlePilot[capturedIdx] = pt;
+
+                        // 현재 보여주는 프레임이 center인 경우에만 레이블 갱신
+                        if (capturedIdx == centerFrame && _latestWindowCenter == centerFrame)
                         {
                             lblAngle.Text = $"Angle\nu:{FormatVal(currentActualAngle)} p:{FormatVal(pa)}";
                             lblThrottle.Text = $"Throttle\nu:{FormatVal(currentActualThrottle)} p:{FormatVal(pt)}";
                         }
+
                         RedrawCharts();
                     });
+
+                    Debug.WriteLine($"[Window] center={centerFrame} offset={offset:+0;-0;0} frame={capturedIdx} angle={pa:F4} throttle={pt:F4}");
                 }
             }
             catch (Exception ex)
             {
                 _pythonReady = false;
-                Debug.WriteLine($"[RunPredictionAsync] Exception: {ex.Message}");
+                Debug.WriteLine($"[RunPredictionWindowAsync] {ex.Message}");
             }
             finally
             {
                 isPredicting = false;
+
+                // 예측 도중 사용자가 이동했다면 새 중심으로 재시작
+                int latest = _latestWindowCenter;
+                if (latest != centerFrame && latest >= 0 && _pythonReady)
+                {
+                    this.BeginInvoke(new Action(() => _ = RunPredictionWindowAsync(latest)));
+                }
             }
         }
 
