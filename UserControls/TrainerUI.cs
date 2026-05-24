@@ -211,6 +211,9 @@ namespace DataManager.UserControls
 
         private void btnTrain_Click(object sender, EventArgs e)
         {
+            btnTrain.Enabled = false;
+            btnTrain.Text = "학습 중...";
+
             string tubPath = "";
 
             // 1. 데이터 폴더 선택
@@ -318,16 +321,7 @@ namespace DataManager.UserControls
             };
 
             // 파이썬 에러 가로채기 (경고 메시지도 포함되어 출력될 수 있습니다)
-            process.ErrorDataReceived += (s, args) =>
-            {
-                if (!string.IsNullOrEmpty(args.Data))
-                {
-                    this.BeginInvoke((MethodInvoker)delegate
-                    {
-                        ReportLog("Python", args.Data);
-                    });
-                }
-            };
+            process.ErrorDataReceived += (s, args) => {};
 
             // 9. 파이썬 학습 종료 이벤트 
             process.EnableRaisingEvents = true;
@@ -340,6 +334,9 @@ namespace DataManager.UserControls
                     {
                         ReportLog("Error", "훈련 중 문제가 발생하여 종료되었습니다. 로그를 확인하세요.");
                         prgTrain.Value = 0;
+
+                        btnTrain.Enabled = true;
+                        btnTrain.Text = "학습 시작";
                     });
                     process.Dispose();
                     return;
@@ -427,6 +424,9 @@ namespace DataManager.UserControls
 
                     await Task.Delay(1500);
                     prgTrain.Value = 0;
+
+                    btnTrain.Enabled = true;
+                    btnTrain.Text = "학습 시작";
                 });
 
                 process.Dispose();
@@ -438,10 +438,15 @@ namespace DataManager.UserControls
                 process.Start();
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
+
+                ReportLog("Info", $"'{modelName}' 모델 학습 엔진 가동을 시작했습니다.");
             }
             catch (Exception ex)
             {
                 ReportLog("Error", $"훈련 엔진 가동 실패: {ex.Message}");
+
+                btnTrain.Enabled = true;
+                btnTrain.Text = "학습 시작";
             }
         }
 
@@ -579,7 +584,7 @@ namespace DataManager.UserControls
             // 1. [UX 방어막] 리스트뷰에서 아무것도 선택하지 않고 버튼을 눌렀을 때 컷!
             if (lvwModel.SelectedItems.Count == 0)
             {
-                MessageBox.Show("삭제할 모델을 목록에서 먼저 선택해주세요.", "선택된 모델 없음", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                ReportLog("Error", "삭제할 모델이 선택되지 않았습니다.");
                 return;
             }
 
@@ -639,12 +644,12 @@ namespace DataManager.UserControls
                     cboSelectTransferModel.Items.Remove(modelName);
                 }
 
-                MessageBox.Show("모델과 실제 파일이 깨끗하게 삭제되었습니다.", "삭제 완료", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ReportLog("Info", "모델이 성공적으로 삭제되었습니다.");
             }
             catch (Exception ex)
             {
                 // 파일이 다른 프로그램이나 가상환경 프로세스에 의해 잠겨있을 때 안전하게 예외 처리
-                MessageBox.Show($"파일을 지우는 중 오류가 발생했습니다: {ex.Message}", "삭제 실패", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ReportLog("Error", "모델 삭제 중 문제가 발생하여 종료되었습니다. 로그를 확인하세요.");
             }
         }
 
@@ -653,7 +658,7 @@ namespace DataManager.UserControls
             // 1. 리스트뷰에서 아무것도 선택하지 않았을 때 컷!
             if (lvwModel.SelectedItems.Count == 0)
             {
-                MessageBox.Show("메모를 수정할 모델을 목록에서 먼저 선택해주세요.", "선택된 모델 없음", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                ReportLog("Error", "메모를 수정할 모델이 선택되지 않았습니다.");
                 return;
             }
 
@@ -698,11 +703,11 @@ namespace DataManager.UserControls
                     selectedItem.SubItems[6].Text = newMemo;
                     selectedItem.ToolTipText = newMemo;
 
-                    MessageBox.Show("메모가 성공적으로 수정되었습니다.", "수정 완료", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    ReportLog("Info", "메모가 성공적으로 수정되었습니다.");
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"영수증 파일을 수정하는 중 오류가 발생했습니다: {ex.Message}", "수정 실패", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    ReportLog("Error", "메모 수정 중 문제가 발생하여 종료되었습니다. 로그를 확인하세요.");
                 }
             }
         }
@@ -759,7 +764,7 @@ namespace DataManager.UserControls
             // 1. 리스트뷰에서 모델 선택 확인
             if (lvwModel.SelectedItems.Count == 0)
             {
-                MessageBox.Show("설정을 확인할 모델을 먼저 선택해주세요.", "선택된 모델 없음", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                ReportLog("Error", "설정을 확인할 모델을 먼저 선택해주세요.");
                 return;
             }
 
@@ -779,7 +784,7 @@ namespace DataManager.UserControls
 
             if (!File.Exists(savedConfigPath))
             {
-                MessageBox.Show("이 모델은 예전 방식이라 통합 설정 파일(final_config.txt)이 존재하지 않습니다.\n다시 훈련된 모델부터 적용됩니다.", "파일 없음", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ReportLog("Error", "이 모델은 예전 방식이라 통합 설정 파일(final_config.txt)이 존재하지 않습니다.\n다시 훈련된 모델부터 적용됩니다.");
                 return;
             }
 
@@ -958,7 +963,7 @@ namespace DataManager.UserControls
             // 1. 리스트뷰에서 모델 선택 확인
             if (lvwModel.SelectedItems.Count == 0)
             {
-                MessageBox.Show("그래프를 확인할 모델을 먼저 선택해주세요.", "선택된 모델 없음", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                ReportLog("Error", "그래프를 확인할 모델을 먼저 선택해주세요.");
                 return;
             }
 
@@ -984,7 +989,7 @@ namespace DataManager.UserControls
             else
             {
                 // 훈련 중 에러가 났거나, 사용자가 폴더에서 사진만 실수로 지운 경우
-                MessageBox.Show("이 모델의 훈련 그래프(png) 파일이 존재하지 않습니다.", "파일 없음", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ReportLog("Error", "이 모델의 훈련 그래프(png) 파일이 존재하지 않습니다.");
             }
         }
     }
