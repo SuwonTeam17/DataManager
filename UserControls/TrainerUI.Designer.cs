@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             pnlConfEditor = new Panel();
+            pnlConfig = new Panel();
             flpConfCon = new FlowLayoutPanel();
             btnSaveMyConf = new Button();
             cboAddConfCount = new ComboBox();
@@ -64,6 +65,7 @@
             btnChgComment = new Button();
             btnDelete = new Button();
             pnlConfEditor.SuspendLayout();
+            pnlConfig.SuspendLayout();
             pnlTrainer.SuspendLayout();
             pnlViewerAndEditor.SuspendLayout();
             pnlListView.SuspendLayout();
@@ -74,7 +76,7 @@
             // pnlConfEditor
             // 
             pnlConfEditor.BorderStyle = BorderStyle.FixedSingle;
-            pnlConfEditor.Controls.Add(flpConfCon);
+            pnlConfEditor.Controls.Add(pnlConfig);
             pnlConfEditor.Controls.Add(btnSaveMyConf);
             pnlConfEditor.Controls.Add(cboAddConfCount);
             pnlConfEditor.Controls.Add(btnAddConf);
@@ -82,18 +84,29 @@
             pnlConfEditor.Controls.Add(lblConfEditor);
             pnlConfEditor.Dock = DockStyle.Top;
             pnlConfEditor.Location = new Point(0, 0);
-            pnlConfEditor.Margin = new Padding(5, 6, 5, 6);
             pnlConfEditor.Name = "pnlConfEditor";
-            pnlConfEditor.Size = new Size(1286, 250);
+            pnlConfEditor.Size = new Size(750, 126);
             pnlConfEditor.TabIndex = 0;
+            // 
+            // pnlConfig
+            // 
+            pnlConfig.Controls.Add(flpConfCon);
+            pnlConfig.Dock = DockStyle.Bottom;
+            pnlConfig.Location = new Point(0, 77);
+            pnlConfig.Name = "pnlConfig";
+            pnlConfig.Padding = new Padding(10, 0, 10, 0);
+            pnlConfig.Size = new Size(748, 47);
+            pnlConfig.TabIndex = 9;
             // 
             // flpConfCon
             // 
             flpConfCon.AutoScroll = true;
+            flpConfCon.Dock = DockStyle.Fill;
             flpConfCon.FlowDirection = FlowDirection.TopDown;
-            flpConfCon.Location = new Point(17, 150);
+            flpConfCon.Location = new Point(10, 0);
+            flpConfCon.Margin = new Padding(2);
             flpConfCon.Name = "flpConfCon";
-            flpConfCon.Size = new Size(1250, 90);
+            flpConfCon.Size = new Size(728, 47);
             flpConfCon.TabIndex = 8;
             flpConfCon.WrapContents = false;
             // 
@@ -101,10 +114,9 @@
             // 
             btnSaveMyConf.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             btnSaveMyConf.Font = new Font("맑은 고딕", 12F);
-            btnSaveMyConf.Location = new Point(1061, 6);
-            btnSaveMyConf.Margin = new Padding(5, 6, 5, 6);
+            btnSaveMyConf.Location = new Point(618, 3);
             btnSaveMyConf.Name = "btnSaveMyConf";
-            btnSaveMyConf.Size = new Size(219, 78);
+            btnSaveMyConf.Size = new Size(128, 39);
             btnSaveMyConf.TabIndex = 4;
             btnSaveMyConf.Text = "내 구성 저장";
             btnSaveMyConf.UseVisualStyleBackColor = true;
@@ -114,20 +126,18 @@
             // 
             cboAddConfCount.FormattingEnabled = true;
             cboAddConfCount.Items.AddRange(new object[] { "1", "2", "3", "4" });
-            cboAddConfCount.Location = new Point(288, 97);
-            cboAddConfCount.Margin = new Padding(5, 6, 5, 6);
+            cboAddConfCount.Location = new Point(168, 48);
             cboAddConfCount.Name = "cboAddConfCount";
-            cboAddConfCount.Size = new Size(76, 38);
+            cboAddConfCount.Size = new Size(46, 23);
             cboAddConfCount.TabIndex = 3;
             cboAddConfCount.Text = "1";
             // 
             // btnAddConf
             // 
             btnAddConf.Font = new Font("맑은 고딕", 11F);
-            btnAddConf.Location = new Point(232, 81);
-            btnAddConf.Margin = new Padding(5, 6, 5, 6);
+            btnAddConf.Location = new Point(135, 40);
             btnAddConf.Name = "btnAddConf";
-            btnAddConf.Size = new Size(46, 60);
+            btnAddConf.Size = new Size(27, 30);
             btnAddConf.TabIndex = 2;
             btnAddConf.Text = "+";
             btnAddConf.TextAlign = ContentAlignment.TopLeft;
@@ -137,10 +147,9 @@
             // lblAddConfSetter
             // 
             lblAddConfSetter.Font = new Font("맑은 고딕", 11F);
-            lblAddConfSetter.Location = new Point(17, 89);
-            lblAddConfSetter.Margin = new Padding(5, 0, 5, 0);
+            lblAddConfSetter.Location = new Point(10, 44);
             lblAddConfSetter.Name = "lblAddConfSetter";
-            lblAddConfSetter.Size = new Size(197, 46);
+            lblAddConfSetter.Size = new Size(115, 23);
             lblAddConfSetter.TabIndex = 1;
             lblAddConfSetter.Text = "구성 설정 추가";
             lblAddConfSetter.TextAlign = ContentAlignment.MiddleCenter;
@@ -148,10 +157,10 @@
             // lblConfEditor
             // 
             lblConfEditor.Font = new Font("맑은 고딕", 20F, FontStyle.Bold);
-            lblConfEditor.Location = new Point(5, 6);
-            lblConfEditor.Margin = new Padding(5, 6, 5, 6);
+            lblConfEditor.Location = new Point(3, 3);
+            lblConfEditor.Margin = new Padding(3);
             lblConfEditor.Name = "lblConfEditor";
-            lblConfEditor.Size = new Size(255, 78);
+            lblConfEditor.Size = new Size(149, 39);
             lblConfEditor.TabIndex = 0;
             lblConfEditor.Text = "구성 편집";
             lblConfEditor.TextAlign = ContentAlignment.MiddleCenter;
@@ -170,10 +179,9 @@
             pnlTrainer.Controls.Add(lblSelectModelType);
             pnlTrainer.Controls.Add(label1);
             pnlTrainer.Dock = DockStyle.Top;
-            pnlTrainer.Location = new Point(0, 250);
-            pnlTrainer.Margin = new Padding(5, 6, 5, 6);
+            pnlTrainer.Location = new Point(0, 126);
             pnlTrainer.Name = "pnlTrainer";
-            pnlTrainer.Size = new Size(1286, 212);
+            pnlTrainer.Size = new Size(750, 107);
             pnlTrainer.TabIndex = 1;
             // 
             // lblTransferWarning
@@ -181,27 +189,26 @@
             lblTransferWarning.AutoSize = true;
             lblTransferWarning.Font = new Font("맑은 고딕", 9F, FontStyle.Bold, GraphicsUnit.Point, 129);
             lblTransferWarning.ForeColor = Color.Red;
-            lblTransferWarning.Location = new Point(181, 6);
+            lblTransferWarning.Location = new Point(106, 3);
+            lblTransferWarning.Margin = new Padding(2, 0, 2, 0);
             lblTransferWarning.Name = "lblTransferWarning";
-            lblTransferWarning.Size = new Size(692, 30);
+            lblTransferWarning.Size = new Size(394, 15);
             lblTransferWarning.TabIndex = 8;
             lblTransferWarning.Text = "전이학습을 하는 동안 모델 종류를 바꿀 수 없습니다. (바꿀시 오류 발생)";
             lblTransferWarning.Visible = false;
             // 
             // prgTrain
             // 
-            prgTrain.Location = new Point(228, 150);
-            prgTrain.Margin = new Padding(5, 6, 5, 6);
+            prgTrain.Location = new Point(133, 75);
             prgTrain.Name = "prgTrain";
-            prgTrain.Size = new Size(1037, 50);
+            prgTrain.Size = new Size(605, 25);
             prgTrain.TabIndex = 7;
             // 
             // btnTrain
             // 
-            btnTrain.Location = new Point(17, 150);
-            btnTrain.Margin = new Padding(5, 6, 5, 6);
+            btnTrain.Location = new Point(10, 75);
             btnTrain.Name = "btnTrain";
-            btnTrain.Size = new Size(201, 50);
+            btnTrain.Size = new Size(117, 25);
             btnTrain.TabIndex = 6;
             btnTrain.Text = "훈련 시작";
             btnTrain.UseVisualStyleBackColor = true;
@@ -209,29 +216,26 @@
             // 
             // txtComment
             // 
-            txtComment.Location = new Point(838, 43);
-            txtComment.Margin = new Padding(5, 6, 5, 6);
+            txtComment.Location = new Point(489, 22);
             txtComment.Multiline = true;
             txtComment.Name = "txtComment";
-            txtComment.Size = new Size(403, 95);
+            txtComment.Size = new Size(237, 50);
             txtComment.TabIndex = 0;
             // 
             // lblComment
             // 
-            lblComment.Location = new Point(722, 38);
-            lblComment.Margin = new Padding(5, 0, 5, 0);
+            lblComment.Location = new Point(421, 19);
             lblComment.Name = "lblComment";
-            lblComment.Size = new Size(106, 104);
+            lblComment.Size = new Size(62, 52);
             lblComment.TabIndex = 5;
             lblComment.Text = "모델 메모";
             lblComment.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // lblSelectTransferModel
             // 
-            lblSelectTransferModel.Location = new Point(179, 90);
-            lblSelectTransferModel.Margin = new Padding(5, 0, 5, 0);
+            lblSelectTransferModel.Location = new Point(104, 45);
             lblSelectTransferModel.Name = "lblSelectTransferModel";
-            lblSelectTransferModel.Size = new Size(206, 46);
+            lblSelectTransferModel.Size = new Size(120, 23);
             lblSelectTransferModel.TabIndex = 4;
             lblSelectTransferModel.Text = "전이 학습 모델 선택";
             lblSelectTransferModel.TextAlign = ContentAlignment.MiddleCenter;
@@ -240,28 +244,25 @@
             // 
             cboSelectTransferModel.DropDownStyle = ComboBoxStyle.DropDownList;
             cboSelectTransferModel.FormattingEnabled = true;
-            cboSelectTransferModel.Location = new Point(395, 95);
-            cboSelectTransferModel.Margin = new Padding(5, 6, 5, 6);
+            cboSelectTransferModel.Location = new Point(230, 48);
             cboSelectTransferModel.Name = "cboSelectTransferModel";
-            cboSelectTransferModel.Size = new Size(317, 38);
+            cboSelectTransferModel.Size = new Size(187, 23);
             cboSelectTransferModel.TabIndex = 3;
             cboSelectTransferModel.SelectedIndexChanged += cboSelectTransferModel_SelectedIndexChanged;
             // 
             // cboSelectModelType
             // 
             cboSelectModelType.FormattingEnabled = true;
-            cboSelectModelType.Location = new Point(343, 42);
-            cboSelectModelType.Margin = new Padding(5, 6, 5, 6);
+            cboSelectModelType.Location = new Point(200, 21);
             cboSelectModelType.Name = "cboSelectModelType";
-            cboSelectModelType.Size = new Size(369, 38);
+            cboSelectModelType.Size = new Size(217, 23);
             cboSelectModelType.TabIndex = 2;
             // 
             // lblSelectModelType
             // 
-            lblSelectModelType.Location = new Point(179, 38);
-            lblSelectModelType.Margin = new Padding(5, 0, 5, 0);
+            lblSelectModelType.Location = new Point(104, 19);
             lblSelectModelType.Name = "lblSelectModelType";
-            lblSelectModelType.Size = new Size(154, 46);
+            lblSelectModelType.Size = new Size(90, 23);
             lblSelectModelType.TabIndex = 1;
             lblSelectModelType.Text = "모델 종류 선택";
             lblSelectModelType.TextAlign = ContentAlignment.MiddleCenter;
@@ -269,10 +270,10 @@
             // label1
             // 
             label1.Font = new Font("맑은 고딕", 20F, FontStyle.Bold);
-            label1.Location = new Point(5, 6);
-            label1.Margin = new Padding(5, 6, 5, 6);
+            label1.Location = new Point(3, 3);
+            label1.Margin = new Padding(3);
             label1.Name = "label1";
-            label1.Size = new Size(168, 78);
+            label1.Size = new Size(98, 39);
             label1.TabIndex = 0;
             label1.Text = "학습기";
             label1.TextAlign = ContentAlignment.MiddleCenter;
@@ -284,21 +285,19 @@
             pnlViewerAndEditor.Controls.Add(pnlLabel);
             pnlViewerAndEditor.Controls.Add(pnlButton);
             pnlViewerAndEditor.Dock = DockStyle.Fill;
-            pnlViewerAndEditor.Location = new Point(0, 462);
-            pnlViewerAndEditor.Margin = new Padding(5, 6, 5, 6);
+            pnlViewerAndEditor.Location = new Point(0, 233);
             pnlViewerAndEditor.Name = "pnlViewerAndEditor";
-            pnlViewerAndEditor.Size = new Size(1286, 658);
+            pnlViewerAndEditor.Size = new Size(750, 327);
             pnlViewerAndEditor.TabIndex = 2;
             // 
             // pnlListView
             // 
             pnlListView.Controls.Add(lvwModel);
             pnlListView.Dock = DockStyle.Fill;
-            pnlListView.Location = new Point(0, 106);
-            pnlListView.Margin = new Padding(5, 6, 5, 6);
+            pnlListView.Location = new Point(0, 53);
             pnlListView.Name = "pnlListView";
-            pnlListView.Padding = new Padding(17, 20, 17, 20);
-            pnlListView.Size = new Size(1284, 470);
+            pnlListView.Padding = new Padding(10);
+            pnlListView.Size = new Size(748, 232);
             pnlListView.TabIndex = 12;
             // 
             // lvwModel
@@ -307,10 +306,9 @@
             lvwModel.Dock = DockStyle.Fill;
             lvwModel.FullRowSelect = true;
             lvwModel.GridLines = true;
-            lvwModel.Location = new Point(17, 20);
-            lvwModel.Margin = new Padding(5, 6, 5, 6);
+            lvwModel.Location = new Point(10, 10);
             lvwModel.Name = "lvwModel";
-            lvwModel.Size = new Size(1250, 430);
+            lvwModel.Size = new Size(728, 212);
             lvwModel.TabIndex = 0;
             lvwModel.UseCompatibleStateImageBehavior = false;
             lvwModel.View = View.Details;
@@ -357,16 +355,15 @@
             pnlLabel.Location = new Point(0, 0);
             pnlLabel.Margin = new Padding(0);
             pnlLabel.Name = "pnlLabel";
-            pnlLabel.Size = new Size(1284, 106);
+            pnlLabel.Size = new Size(748, 53);
             pnlLabel.TabIndex = 11;
             // 
             // lblViewerAndEditor
             // 
             lblViewerAndEditor.Font = new Font("맑은 고딕", 20F, FontStyle.Bold);
-            lblViewerAndEditor.Location = new Point(0, 15);
-            lblViewerAndEditor.Margin = new Padding(5, 0, 5, 0);
+            lblViewerAndEditor.Location = new Point(0, 8);
             lblViewerAndEditor.Name = "lblViewerAndEditor";
-            lblViewerAndEditor.Size = new Size(492, 76);
+            lblViewerAndEditor.Size = new Size(287, 38);
             lblViewerAndEditor.TabIndex = 8;
             lblViewerAndEditor.Text = "파일럿 뷰어 및 편집기";
             lblViewerAndEditor.TextAlign = ContentAlignment.MiddleCenter;
@@ -378,18 +375,17 @@
             pnlButton.Controls.Add(btnChgComment);
             pnlButton.Controls.Add(btnDelete);
             pnlButton.Dock = DockStyle.Bottom;
-            pnlButton.Location = new Point(0, 576);
-            pnlButton.Margin = new Padding(5, 6, 5, 6);
+            pnlButton.Location = new Point(0, 285);
             pnlButton.Name = "pnlButton";
-            pnlButton.Size = new Size(1284, 80);
+            pnlButton.Size = new Size(748, 40);
             pnlButton.TabIndex = 9;
             // 
             // btnTrainningHistory
             // 
-            btnTrainningHistory.Location = new Point(1023, 10);
-            btnTrainningHistory.Margin = new Padding(9, 10, 34, 10);
+            btnTrainningHistory.Location = new Point(597, 5);
+            btnTrainningHistory.Margin = new Padding(5, 5, 20, 5);
             btnTrainningHistory.Name = "btnTrainningHistory";
-            btnTrainningHistory.Size = new Size(228, 60);
+            btnTrainningHistory.Size = new Size(133, 30);
             btnTrainningHistory.TabIndex = 3;
             btnTrainningHistory.Text = "훈련 기록";
             btnTrainningHistory.UseVisualStyleBackColor = true;
@@ -397,10 +393,10 @@
             // 
             // btnShowConf
             // 
-            btnShowConf.Location = new Point(699, 10);
-            btnShowConf.Margin = new Padding(9, 10, 9, 10);
+            btnShowConf.Location = new Point(408, 5);
+            btnShowConf.Margin = new Padding(5);
             btnShowConf.Name = "btnShowConf";
-            btnShowConf.Size = new Size(228, 60);
+            btnShowConf.Size = new Size(133, 30);
             btnShowConf.TabIndex = 2;
             btnShowConf.Text = "구성 표시";
             btnShowConf.UseVisualStyleBackColor = true;
@@ -408,10 +404,10 @@
             // 
             // btnChgComment
             // 
-            btnChgComment.Location = new Point(363, 10);
-            btnChgComment.Margin = new Padding(9, 10, 9, 10);
+            btnChgComment.Location = new Point(212, 5);
+            btnChgComment.Margin = new Padding(5);
             btnChgComment.Name = "btnChgComment";
-            btnChgComment.Size = new Size(228, 60);
+            btnChgComment.Size = new Size(133, 30);
             btnChgComment.TabIndex = 1;
             btnChgComment.Text = "메모 변경";
             btnChgComment.UseVisualStyleBackColor = true;
@@ -419,10 +415,10 @@
             // 
             // btnDelete
             // 
-            btnDelete.Location = new Point(34, 10);
-            btnDelete.Margin = new Padding(34, 10, 9, 10);
+            btnDelete.Location = new Point(20, 5);
+            btnDelete.Margin = new Padding(20, 5, 5, 5);
             btnDelete.Name = "btnDelete";
-            btnDelete.Size = new Size(228, 60);
+            btnDelete.Size = new Size(133, 30);
             btnDelete.TabIndex = 0;
             btnDelete.Text = "삭제";
             btnDelete.UseVisualStyleBackColor = true;
@@ -430,16 +426,16 @@
             // 
             // TrainerUI
             // 
-            AutoScaleDimensions = new SizeF(12F, 30F);
+            AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             Controls.Add(pnlViewerAndEditor);
             Controls.Add(pnlTrainer);
             Controls.Add(pnlConfEditor);
-            Margin = new Padding(5, 6, 5, 6);
             Name = "TrainerUI";
-            Size = new Size(1286, 1120);
+            Size = new Size(750, 560);
             Load += TrainerUI_Load;
             pnlConfEditor.ResumeLayout(false);
+            pnlConfig.ResumeLayout(false);
             pnlTrainer.ResumeLayout(false);
             pnlTrainer.PerformLayout();
             pnlViewerAndEditor.ResumeLayout(false);
@@ -486,5 +482,6 @@
         private ColumnHeader colTransfer;
         private ColumnHeader colComment;
         private Label lblTransferWarning;
+        private Panel pnlConfig;
     }
 }
