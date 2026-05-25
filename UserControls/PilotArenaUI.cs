@@ -485,11 +485,5 @@ namespace DataManager.UserControls
                 }
             }
         }
-
-        private void ReportLog(string type, string message)
-        {
-            string currentTime = DateTime.Now.ToString("HH:mm:ss");
-            OnLogReported?.Invoke(currentTime, type, message);
-        }
     }
 }
