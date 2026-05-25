@@ -153,7 +153,7 @@ namespace DataManager.UserControls
             if (_catalogFiles.Length == 0)
             {
 
-                ReportLog("경고", "해당 폴더에 .catalog 파일이 존재하지 않습니다.");
+                ReportLog("오류", "해당 폴더에 .catalog 파일이 존재하지 않습니다.");
                 MessageBox.Show("해당 폴더 경로에 catalog 파일이 없습니다.", "알림");
 
                 return;
@@ -332,7 +332,7 @@ namespace DataManager.UserControls
                 catch (Exception _ex)
                 {
                     ReportLog("오류", $"폴더 생성 실패: {_ex.Message}");
-                    MessageBox.Show($"폴더 생성 중 오류 발생: {_ex.Message}", "에러");
+                    MessageBox.Show($"폴더 생성 중 오류 발생: {_ex.Message}", "오류");
                 }
             }
         }
@@ -549,7 +549,7 @@ namespace DataManager.UserControls
             catch (Exception _ex)
             {
                 ReportLog("오류", $"데이터 저장 실패: {_ex.Message}");
-                MessageBox.Show($"저장 중 오류 발생:\n{_ex.Message}", "에러");
+                MessageBox.Show($"저장 중 오류 발생:\n{_ex.Message}", "오류");
             }
         }
 
