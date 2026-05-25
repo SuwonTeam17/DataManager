@@ -694,19 +694,40 @@ namespace DataManager.UserControls
 
         private void btnLeftRange_Click(object sender, EventArgs e)
         {
-            selectedRange = new Tuple<int, int>(currentFrameIndex, selectedRange.Item2);
+            // [방어 코드] 주행 데이터가 로드되지 않았다면 무시
+            if (drivingData == null || drivingData.Count == 0) return;
+
+            // 현재 프레임이 기존 종료 범위보다 뒤에 있다면, 종료 범위도 현재 프레임으로 맞춰서 오류를 방지합니다.
+            if (currentFrameIndex > selectedRange.Item2)
+            {
+                selectedRange = new Tuple<int, int>(currentFrameIndex, currentFrameIndex);
+            }
+            else
+            {
+                selectedRange = new Tuple<int, int>(currentFrameIndex, selectedRange.Item2);
+            }
+
             UpdateRangeLabel();
             ReportLog("정보", $"시작 범위 지정: {drivingData[currentFrameIndex].Index}번 프레임");
         }
 
         private void btnRightRange_Click(object sender, EventArgs e)
         {
-            if (currentFrameIndex >= selectedRange.Item1)
+            // [방어 코드] 주행 데이터가 로드되지 않았다면 무시
+            if (drivingData == null || drivingData.Count == 0) return;
+
+            // 현재 프레임이 기존 시작 범위보다 앞에 있다면, 시작 범위도 현재 프레임으로 맞춰서 오류를 방지합니다.
+            if (currentFrameIndex < selectedRange.Item1)
+            {
+                selectedRange = new Tuple<int, int>(currentFrameIndex, currentFrameIndex);
+            }
+            else
             {
                 selectedRange = new Tuple<int, int>(selectedRange.Item1, currentFrameIndex);
-                UpdateRangeLabel();
-                ReportLog("정보", $"종료 범위 지정: {drivingData[currentFrameIndex].Index}번 프레임");
             }
+
+            UpdateRangeLabel();
+            ReportLog("정보", $"종료 범위 지정: {drivingData[currentFrameIndex].Index}번 프레임");
         }
 
         private void btnAllRange_Click(object sender, EventArgs e)
@@ -721,13 +742,20 @@ namespace DataManager.UserControls
 
         private void UpdateRangeLabel()
         {
+            // [방어 코드] 주행 데이터가 없으면 실행 안 함
+            if (drivingData == null || drivingData.Count == 0) return;
+
             int _start = selectedRange.Item1;
             int _end = selectedRange.Item2;
 
-            // 범위 내 보이는 프레임 수 계산
+            // 혹시 모를 인덱스 초과 및 역전 현상 최종 방어
+            if (_start < 0) _start = 0;
+            if (_end >= drivingData.Count) _end = drivingData.Count - 1;
+            if (_start > _end) _start = _end;
+
+            // 범위 내 보이는 프레임 수 계산 (이제 무조건 0 이상의 개수가 보장됩니다)
             int _visibleInRange = Enumerable.Range(_start, _end - _start + 1)
                                             .Count(i => !filteredHideSet.Contains(i));
-
             int _startDisplayIdx = drivingData[_start].Index;
             int _endDisplayIdx = drivingData[_end].Index;
 
@@ -735,7 +763,6 @@ namespace DataManager.UserControls
 
             // ── 타임라인 갱신 추가 ──
             pnlTimeStamp?.Invalidate();
-
         }
 
         private void btnApplyFillter_Click(object sender, EventArgs e)
