@@ -7,13 +7,43 @@ namespace DataManager.UserControls
 {
     public partial class TrainerUI : UserControl
     {
+        // 클래스 내부 최상단 멤버 변수 구역에 넣어주세요
         public event Action<string, string, string> OnLogReported;
+
+        // ⭐ 한글 이름과 파이썬 변수명을 연결해 주는 공통 사전
+        private readonly Dictionary<string, string> configMapping = new Dictionary<string, string>()
+        {
+            { "상단 자르기", "ROI_CROP_TOP" },
+            { "하단 자르기", "ROI_CROP_BOTTOM" },
+            { "우측 자르기", "ROI_CROP_RIGHT" },
+            { "좌측 자르기", "ROI_CROP_LEFT" },
+            { "반복 횟수", "MAX_EPOCHS" },
+            { "학습 한번에 쓸 사진 수", "BATCH_SIZE" }
+        };
+
+        // ⭐ 모든 메서드가 동일한 myconfig.py 경로를 바라보도록 만드는 안전한 경로 탐색기
+        private string GetMyConfigPath()
+        {
+            string currentPath = Application.StartupPath;
+            while (!Directory.Exists(Path.Combine(currentPath, "env")))
+            {
+                DirectoryInfo parentInfo = Directory.GetParent(currentPath);
+                if (parentInfo == null) break;
+                currentPath = parentInfo.FullName;
+            }
+            return Path.Combine(currentPath, "mycar", "myconfig.py"); // mycar_real 대신 공식 폴더로 통일!
+        }
 
         public TrainerUI()
         {
             InitializeComponent();
 
             this.cboAddConfCount.SelectedIndexChanged += new System.EventHandler(this.cboAddConfCount_SelectedIndexChanged);
+
+            // ==========================================================
+            // ⭐ [해결책] FlowLayoutPanel의 크기가 변할 때(창 크기 조절 시) 실시간으로 비율 재계산!
+            this.flpConfCon.SizeChanged += (s, args) => SyncAllPanelSizes();
+            // ==========================================================
         }
 
         private int GetItemsPerRow()
@@ -30,7 +60,7 @@ namespace DataManager.UserControls
         // ====================================================================
         private void btnSaveMyConf_Click(object sender, EventArgs e)
         {
-            string filePath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\mycar_real\myconfig.py"));
+            string filePath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\..\mycar\myconfig.py"));
 
             // 1. 파일이 없을 때 메인 폼의 로그박스 원격 호출
             if (!File.Exists(filePath))
@@ -118,9 +148,12 @@ namespace DataManager.UserControls
                     Control txt = rowPanel.Controls["txtSetConf"];
                     Control btn = rowPanel.Controls["btnDelete"];
 
-                    // ★ 핵심: 콤보박스가 패널 너비의 45%를 차지하게 하되, 최대 180px까지만 커지도록 제한 (Math.Min 사용)
-                    int cboWidth = Math.Min(180, (int)(newWidth * 0.45));
-                    int txtPosX = cboWidth + 15; // 콤보박스 시작위치(5) + 콤보박스 너비 + 사이 간격(10)
+                    // ==========================================================
+                    // ⭐ 핵심 수정: 콤보박스의 최대 폭 제한(Math.Min)을 아예 없애버렸습니다!
+                    // 무조건 패널 너비의 60%를 콤보박스가 차지하도록 시원하게 몰아줍니다.
+                    int cboWidth = (int)(newWidth * 0.60);
+                    int txtPosX = cboWidth + 10; // 콤보박스와 텍스트박스 사이의 간격은 10px로 밀착
+                    // ==========================================================
 
                     if (cbo != null)
                     {
@@ -226,6 +259,8 @@ namespace DataManager.UserControls
                 }
                 else
                 {
+                    btnTrain.Enabled = true;
+                    btnTrain.Text = "학습 시작";
                     return;
                 }
             }
@@ -273,8 +308,10 @@ namespace DataManager.UserControls
                 transferCommand = $" --transfer \"models\\{selectedBaseModel}\"";
             }
 
+            string cudaCommand = rdoUseCPU.Checked ? "set CUDA_VISIBLE_DEVICES=-1 && " : "";
+
             // ⭐ 6. 최종 명령어 조립 (python train.py -> donkey train 으로 변경)
-            string windowsCommand = $"cd /d \"{mycarPath}\" && \"..\\env\\Scripts\\activate\" && set CUDA_VISIBLE_DEVICES=-1 && donkey train --tub \"{tubPath}\" --model \"models\\{modelName}\" --type {selectedType}{transferCommand}";
+            string windowsCommand = $"cd /d \"{mycarPath}\" && \"..\\env\\Scripts\\activate\" && {cudaCommand}donkey train --tub \"{tubPath}\" --model \"models\\{modelName}\" --type {selectedType}{transferCommand}";
 
             // 7. 백그라운드 프로세스 세팅
             ProcessStartInfo psi = new ProcessStartInfo();
@@ -465,6 +502,10 @@ namespace DataManager.UserControls
 
             // 2. 기존 학습된 모델 불러오기 (리스트뷰 & 전이학습 콤보박스 세팅)
             LoadExistingModels();
+
+            rdoUseCPU.Checked = true; // 기본값은 안전하게 CPU 모드로 켜지게 세팅
+
+            LoadConfigToUI();
         }
 
         private void LoadExistingModels()
@@ -991,6 +1032,81 @@ namespace DataManager.UserControls
                 // 훈련 중 에러가 났거나, 사용자가 폴더에서 사진만 실수로 지운 경우
                 ReportLog("Error", "이 모델의 훈련 그래프(png) 파일이 존재하지 않습니다.");
             }
+        }
+
+        // ⭐ 프로그램이 켜질 때 myconfig.py를 분석해서 Panel(flpConfCon)에 동적 생성해 주는 함수
+        private void LoadConfigToUI()
+        {
+            string filePath = GetMyConfigPath();
+            flpConfCon.Controls.Clear(); // 일단 UI 깨끗하게 비우기
+
+            // 만약 처음 실행해서 파일이 없거나, 초기화 상태를 원하시면 아래 주석을 해제하세요.
+            // File.WriteAllText(filePath, "# --- GUI User Settings ---\n"); return; // 💡 완전 초기화 모드
+
+            if (!File.Exists(filePath)) return;
+
+            // 스마트 파서 엔진으로 파이썬 파일 읽어오기
+            var savedConfig = ParseConfigToDict(filePath);
+
+            foreach (var setting in savedConfig)
+            {
+                // 파이썬 영어 변수명(예: MAX_EPOCHS)으로 한글 UI 이름(예: 반복 횟수)을 역추적합니다.
+                string koreanKey = configMapping.FirstOrDefault(x => x.Value == setting.Key).Key;
+
+                // 우리가 지원하는 설정값이고 값이 비어있지 않다면 UI 패널에 한 줄 추가!
+                if (!string.IsNullOrEmpty(koreanKey))
+                {
+                    CreateConfigRowWithData(koreanKey, setting.Value);
+                }
+            }
+        }
+
+        // 복원 전용 동적 UI 생성 도우미 (btnAddConf_Click의 로직과 완벽히 일치함)
+        private void CreateConfigRowWithData(string selectedKoreanKey, string savedValue)
+        {
+            flpConfCon.FlowDirection = FlowDirection.LeftToRight;
+            flpConfCon.WrapContents = true;
+
+            Panel rowPanel = new Panel { Height = 50, Margin = new Padding(4, 4, 4, 4) };
+
+            ComboBox cboSelConf_New = new ComboBox
+            {
+                Name = "cboSelConf",
+                Location = new Point(5, 13),
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
+            cboSelConf_New.Items.AddRange(configMapping.Keys.ToArray());
+            cboSelConf_New.SelectedItem = selectedKoreanKey; // 저장되어 있던 항목 선택!
+
+            TextBox txtSetConf_New = new TextBox
+            {
+                Name = "txtSetConf",
+                Text = savedValue // 저장되어 있던 수치 복원!
+            };
+
+            Button btnDelete = new Button
+            {
+                Name = "btnDelete",
+                Text = "X",
+                Width = 45,
+                Height = 35,
+                Font = new Font("맑은 고딕", 10, FontStyle.Bold),
+                ForeColor = Color.Red,
+                Padding = new Padding(0)
+            };
+            btnDelete.Click += (s, args) =>
+            {
+                flpConfCon.Controls.Remove(rowPanel);
+                rowPanel.Dispose();
+                SyncAllPanelSizes();
+            };
+
+            rowPanel.Controls.Add(cboSelConf_New);
+            rowPanel.Controls.Add(txtSetConf_New);
+            rowPanel.Controls.Add(btnDelete);
+            flpConfCon.Controls.Add(rowPanel);
+
+            SyncAllPanelSizes();
         }
     }
 }
