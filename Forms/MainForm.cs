@@ -19,14 +19,14 @@ namespace DataManager
 
             ui.Dock = DockStyle.Fill;
 
-            // LogRequested 이벤트가 존재하면 구독
-            var eventInfo = ui.GetType().GetEvent("LogRequested");
-            if (eventInfo != null && eventInfo.EventHandlerType == typeof(Action<string, string>))
+            // OnLogReported 이벤트가 존재하면 구독
+            var eventInfo = ui.GetType().GetEvent("OnLogReported");
+            if (eventInfo != null && eventInfo.EventHandlerType == typeof(Action<string, string, string>))
             {
-                var addLogMethod = this.GetType().GetMethod(nameof(AddLog), new[] { typeof(string), typeof(string) });
+                var addLogMethod = this.GetType().GetMethod(nameof(AddLog), new[] { typeof(string), typeof(string), typeof(string) });
                 if (addLogMethod != null)
                 {
-                    var del = Delegate.CreateDelegate(typeof(Action<string, string>), this, addLogMethod);
+                    var del = Delegate.CreateDelegate(typeof(Action<string, string, string>), this, addLogMethod);
                     eventInfo.AddEventHandler(ui, del);
                 }
             }
@@ -34,15 +34,15 @@ namespace DataManager
             pnlMain.Controls.Add(ui);
         }
 
-        public void AddLog(string level, string message)
+        public void AddLog(string time, string level, string message)
         {
             if (this.InvokeRequired)
             {
-                this.Invoke(new Action(() => AddLog(level, message)));
+                this.Invoke(new Action(() => AddLog(time, level, message)));
                 return;
             }
 
-            var item = new ListViewItem(DateTime.Now.ToString("HH:mm:ss"));
+            var item = new ListViewItem(time);
             item.SubItems.Add(level);
             item.SubItems.Add(message);
             lvwLogBox.Items.Add(item);
