@@ -759,7 +759,7 @@ namespace DataManager.UserControls
             int _startDisplayIdx = drivingData[_start].Index;
             int _endDisplayIdx = drivingData[_end].Index;
 
-            lblSelectedRange.Text = $"선택된 범위 ({_startDisplayIdx}, {_endDisplayIdx})  [유효: {_visibleInRange}]";
+            lblSelectedRange.Text = $"선택된 범위 ({_startDisplayIdx}, {_endDisplayIdx})";
 
             // ── 타임라인 갱신 추가 ──
             pnlTimeStamp?.Invalidate();
