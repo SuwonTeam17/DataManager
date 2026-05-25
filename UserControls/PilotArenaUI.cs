@@ -40,7 +40,6 @@ namespace DataManager.UserControls
             };
             flpModule.Controls.Add(lblEmptyModels);
 
-            flpModule.WrapContents = false;
             flpModule.SizeChanged += FlpModule_SizeChanged;
 
             btnFrameLeft.Click += (s, e) => MoveFrame(-1);
@@ -183,11 +182,22 @@ namespace DataManager.UserControls
                                 root.TryGetProperty("user/angle", out JsonElement angleElem) &&
                                 root.TryGetProperty("user/throttle", out JsonElement throttleElem))
                             {
+                                double rawAngle = angleElem.GetDouble();
+                                double rawThrottle = throttleElem.GetDouble();
+                                string imgFile = imgElem.GetString() ?? "";
+
+                                // 처음 5개 프레임은 catalog 원본 값 로깅
+                                if (frames.Count < 5)
+                                {
+                                    ReportLog("DEBUG",
+                                        $"[Catalog raw] frame={frames.Count} | img={imgFile} | user/angle={rawAngle:F4} | user/throttle={rawThrottle:F4}");
+                                }
+
                                 frames.Add(new FrameData
                                 {
-                                    ImageFileName = imgElem.GetString() ?? "",
-                                    Angle = angleElem.GetDouble(),
-                                    Throttle = throttleElem.GetDouble()
+                                    ImageFileName = imgFile,
+                                    Angle = rawAngle,
+                                    Throttle = rawThrottle
                                 });
                             }
                         }
@@ -347,18 +357,35 @@ namespace DataManager.UserControls
             var currentFrame = frames[currentFrameIndex];
             string rawImagePath = Path.Combine(tubFolderPath, "images", currentFrame.ImageFileName);
 
+            System.Diagnostics.Debug.WriteLine(
+                $"[ShowFrame] idx={currentFrameIndex} | img={currentFrame.ImageFileName} | user/angle={currentFrame.Angle:F4} | user/throttle={currentFrame.Throttle:F4}");
+
             string finalImagePath = CreateTransformedImage(rawImagePath);
+            if (finalImagePath != rawImagePath)
+                System.Diagnostics.Debug.WriteLine($"[ShowFrame] 이미지 변환 적용됨 → {finalImagePath}");
 
             foreach (Control control in flpModule.Controls)
             {
                 if (control is ModelTestModule module)
                 {
-                    module.UpdateFrame(finalImagePath, currentFrame.Angle, currentFrame.Throttle);
+                    // ±5 윈도우 범위의 이미지 경로 + user 데이터를 미리 등록
+                    // → ModelTestModule이 오른쪽 프레임도 예측할 수 있게 됨
+                    for (int offset = -5; offset <= 5; offset++)
+                    {
+                        int idx = currentFrameIndex + offset;
+                        if (idx < 0 || idx >= frames.Count) continue;
+                        var f = frames[idx];
+                        string wRaw  = Path.Combine(tubFolderPath, "images", f.ImageFileName);
+                        string wPath = CreateTransformedImage(wRaw);
+                        module.SetFrameContext(idx, wPath, f.Angle, f.Throttle);
+                    }
+
+                    module.UpdateFrame(finalImagePath, currentFrame.Angle, currentFrame.Throttle, currentFrameIndex);
                 }
             }
         }
 
-        private void FlpModule_SizeChanged(object? sender, EventArgs e)
+        private void RefreshModuleLayout()
         {
             var modules = flpModule.Controls.OfType<ModelTestModule>().ToList();
             int count = modules.Count;
@@ -366,22 +393,38 @@ namespace DataManager.UserControls
             if (count > 0)
             {
                 lblEmptyModels.Visible = false;
-                int width = flpModule.ClientSize.Width / count;
+                int totalW = flpModule.ClientSize.Width;
                 int height = flpModule.ClientSize.Height;
 
-                // 마진 제거를 위해 Margin 을 0으로 설정
-                foreach (var module in modules)
+                for (int i = 0; i < count; i++)
                 {
-                    module.Margin = new Padding(0);
-                    module.Size = new Size(width, height);
+                    // 마지막 모듈은 나머지 픽셀을 모두 차지해 1px 공백 방지
+                    int x     = totalW / count * i;
+                    int width = (i == count - 1) ? totalW - x : totalW / count;
+
+                    modules[i].Margin   = new Padding(0);
+                    modules[i].Location = new Point(x, 0);   // 위치도 직접 지정
+                    modules[i].Size     = new Size(width, height);
+                    modules[i].PerformLayout();
+                    modules[i].UpdateLayout();
                 }
             }
             else
             {
-                lblEmptyModels.Visible = true;
-                lblEmptyModels.Margin = new Padding(0);
-                lblEmptyModels.Size = flpModule.ClientSize;
+                lblEmptyModels.Visible  = true;
+                lblEmptyModels.Location = Point.Empty;
+                lblEmptyModels.Margin   = new Padding(0);
+                lblEmptyModels.Size     = flpModule.ClientSize;
             }
+        }
+
+        // SizeChanged 이벤트 → 창 리사이즈 시 호출
+        private void FlpModule_SizeChanged(object? sender, EventArgs e) => RefreshModuleLayout();
+
+        private void ReportLog(string type, string message)
+        {
+            string currentTime = DateTime.Now.ToString("HH:mm:ss");
+            OnLogReported?.Invoke(currentTime, type, message);
         }
 
         private void btnModelAdd_Click(object sender, EventArgs e)
@@ -391,10 +434,10 @@ namespace DataManager.UserControls
 
             var module = new ModelTestModule();
             module.CloseRequested += Module_CloseRequested;
+            module.OnLogReported += (time, level, msg) => OnLogReported?.Invoke(time, level, msg);
 
             flpModule.Controls.Add(module);
-
-            FlpModule_SizeChanged(this, EventArgs.Empty);
+            RefreshModuleLayout();
 
             if (frames.Count > 0)
             {
@@ -409,7 +452,7 @@ namespace DataManager.UserControls
                 module.CloseRequested -= Module_CloseRequested;
                 flpModule.Controls.Remove(module);
                 module.Dispose();
-                FlpModule_SizeChanged(this, EventArgs.Empty);
+                RefreshModuleLayout();
             }
         }
 

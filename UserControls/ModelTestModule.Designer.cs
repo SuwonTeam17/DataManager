@@ -45,8 +45,8 @@
             pnlImage = new Panel();
             picImage = new PictureBox();
             pnlData = new Panel();
-            progressBar2 = new ProgressBar();
-            progressBar1 = new ProgressBar();
+            gaugeBar2 = new GaugeBar();
+            gaugeBar1 = new GaugeBar();
             lblThrottle = new Label();
             lblAngle = new Label();
             pnlSetting.SuspendLayout();
@@ -185,30 +185,30 @@
             // pnlData
             // 
             pnlData.BorderStyle = BorderStyle.FixedSingle;
-            pnlData.Controls.Add(progressBar2);
-            pnlData.Controls.Add(progressBar1);
+            pnlData.Controls.Add(gaugeBar2);
+            pnlData.Controls.Add(gaugeBar1);
             pnlData.Controls.Add(lblThrottle);
             pnlData.Controls.Add(lblAngle);
             pnlData.Dock = DockStyle.Bottom;
             pnlData.Location = new Point(0, 212);
             pnlData.Name = "pnlData";
-            pnlData.Size = new Size(375, 25);
+            pnlData.Size = new Size(375, 50);
             pnlData.TabIndex = 0;
             // 
-            // progressBar2
-            // 
-            progressBar2.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            progressBar2.Location = new Point(225, 4);
-            progressBar2.Name = "progressBar2";
-            progressBar2.Size = new Size(138, 15);
-            progressBar2.TabIndex = 2;
-            // 
-            // progressBar1
-            // 
-            progressBar1.Location = new Point(42, 4);
-            progressBar1.Name = "progressBar1";
-            progressBar1.Size = new Size(138, 15);
-            progressBar1.TabIndex = 0;
+            // gaugeBar2
+            //
+            gaugeBar2.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            gaugeBar2.Location = new Point(225, 4);
+            gaugeBar2.Name = "gaugeBar2";
+            gaugeBar2.Size = new Size(138, 15);
+            gaugeBar2.TabIndex = 2;
+            //
+            // gaugeBar1
+            //
+            gaugeBar1.Location = new Point(42, 4);
+            gaugeBar1.Name = "gaugeBar1";
+            gaugeBar1.Size = new Size(138, 15);
+            gaugeBar1.TabIndex = 0;
             // 
             // lblThrottle
             // 
@@ -262,8 +262,8 @@
         private Panel pnlData;
         private Label lblAngle;
         private Label lblThrottle;
-        private ProgressBar progressBar1;
-        private ProgressBar progressBar2;
+        private GaugeBar gaugeBar1;
+        private GaugeBar gaugeBar2;
         private System.Windows.Forms.DataVisualization.Charting.Chart chart2;
         private System.Windows.Forms.DataVisualization.Charting.Chart chart1;
     }

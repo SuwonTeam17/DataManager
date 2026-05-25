@@ -45,7 +45,7 @@
             lblBright = new Label();
             trkProgress = new TrackBar();
             lblSpeed = new Label();
-            flpModule = new FlowLayoutPanel();
+            flpModule = new Panel();
             pnlSetting.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)trkBlur).BeginInit();
             ((System.ComponentModel.ISupportInitialize)trkBright).BeginInit();
@@ -267,7 +267,7 @@
         private Button btnFrameLeft;
         private Panel pnlSetting;
         private TrackBar trkProgress;
-        private FlowLayoutPanel flpModule;
+        private Panel flpModule;
         private Label lblBright;
         private TrackBar trkBright;
         private TrackBar trkBlur;

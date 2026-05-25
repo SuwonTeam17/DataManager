@@ -32,10 +32,6 @@ namespace DataManager
             {
                 pilotArenaUI.OnLogReported += AppendLogToListView;
             }
-            else if (ui is ModelTestModule modelTestModule)
-            {
-                modelTestModule.OnLogReported += AppendLogToListView;
-            }
 
             pnlMain.Controls.Add(ui);
         }
