@@ -116,16 +116,6 @@
             btnFrameLeft.Text = "<";
             btnFrameLeft.UseVisualStyleBackColor = true;
             // 
-            // btnLoadTub
-            // 
-            btnLoadTub.Location = new Point(81, 38);
-            btnLoadTub.Name = "btnLoadTub";
-            btnLoadTub.Size = new Size(68, 23);
-            btnLoadTub.TabIndex = 21;
-            btnLoadTub.Text = "Tub 열기";
-            btnLoadTub.UseVisualStyleBackColor = true;
-            btnLoadTub.Click += btnLoadTub_Click;
-            // 
             // pnlSetting
             // 
             pnlSetting.BorderStyle = BorderStyle.FixedSingle;
@@ -152,11 +142,21 @@
             pnlSetting.Size = new Size(750, 63);
             pnlSetting.TabIndex = 5;
             // 
+            // btnLoadTub
+            // 
+            btnLoadTub.Location = new Point(81, 38);
+            btnLoadTub.Name = "btnLoadTub";
+            btnLoadTub.Size = new Size(68, 23);
+            btnLoadTub.TabIndex = 21;
+            btnLoadTub.Text = "Tub 열기";
+            btnLoadTub.UseVisualStyleBackColor = true;
+            btnLoadTub.Click += btnLoadTub_Click;
+            // 
             // comboBox1
             // 
             comboBox1.FormattingEnabled = true;
             comboBox1.Items.AddRange(new object[] { "0.25", "0.50", "1.00", "1.50", "2.00", "3.00", "4.00" });
-            comboBox1.Location = new Point(379, 36);
+            comboBox1.Location = new Point(479, 36);
             comboBox1.Name = "comboBox1";
             comboBox1.Size = new Size(50, 23);
             comboBox1.TabIndex = 19;
@@ -195,7 +195,7 @@
             // 
             trkBright.AutoSize = false;
             trkBright.LargeChange = 1;
-            trkBright.Location = new Point(152, 38);
+            trkBright.Location = new Point(228, 38);
             trkBright.Name = "trkBright";
             trkBright.Size = new Size(184, 21);
             trkBright.TabIndex = 15;
@@ -203,7 +203,7 @@
             // 
             // lblBright
             // 
-            lblBright.Location = new Point(82, 38);
+            lblBright.Location = new Point(158, 38);
             lblBright.Name = "lblBright";
             lblBright.Size = new Size(71, 22);
             lblBright.TabIndex = 14;
@@ -214,20 +214,21 @@
             // 
             trkProgress.AutoSize = false;
             trkProgress.LargeChange = 1;
-            trkProgress.Location = new Point(430, 37);
+            trkProgress.Location = new Point(532, 37);
             trkProgress.Name = "trkProgress";
-            trkProgress.Size = new Size(315, 21);
+            trkProgress.Size = new Size(213, 21);
             trkProgress.TabIndex = 13;
             trkProgress.TickStyle = TickStyle.None;
             // 
             // lblSpeed
             // 
-            lblSpeed.Location = new Point(340, 35);
+            lblSpeed.AutoSize = true;
+            lblSpeed.Location = new Point(442, 39);
             lblSpeed.Name = "lblSpeed";
-            lblSpeed.Size = new Size(40, 22);
+            lblSpeed.Size = new Size(31, 15);
             lblSpeed.TabIndex = 20;
-            lblSpeed.Text = "Speed";
-            lblSpeed.TextAlign = ContentAlignment.MiddleRight;
+            lblSpeed.Text = "배속";
+            lblSpeed.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // flpModule
             // 
@@ -247,6 +248,7 @@
             Name = "PilotArenaUI";
             Size = new Size(750, 600);
             pnlSetting.ResumeLayout(false);
+            pnlSetting.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)trkBlur).EndInit();
             ((System.ComponentModel.ISupportInitialize)trkBright).EndInit();
             ((System.ComponentModel.ISupportInitialize)trkProgress).EndInit();

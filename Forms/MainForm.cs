@@ -1,5 +1,7 @@
+using System;
+using System.Windows.Forms;
 using DataManager.UserControls;
-
+ 
 namespace DataManager
 {
     public partial class MainForm : Form
@@ -8,7 +10,6 @@ namespace DataManager
         {
             InitializeComponent();
 
-            // 시작 화면
             ShowUI(new InitUI());
         }
 
@@ -19,35 +20,36 @@ namespace DataManager
 
             ui.Dock = DockStyle.Fill;
 
-            // OnLogReported 이벤트가 존재하면 구독
-            var eventInfo = ui.GetType().GetEvent("OnLogReported");
-            if (eventInfo != null && eventInfo.EventHandlerType == typeof(Action<string, string, string>))
+            if (ui is TubManagerUI tubUI)
             {
-                var addLogMethod = this.GetType().GetMethod(nameof(AddLog), new[] { typeof(string), typeof(string), typeof(string) });
-                if (addLogMethod != null)
-                {
-                    var del = Delegate.CreateDelegate(typeof(Action<string, string, string>), this, addLogMethod);
-                    eventInfo.AddEventHandler(ui, del);
-                }
+                tubUI.OnLogReported += AppendLogToListView;
+            }
+            else if (ui is TrainerUI trainerUI)
+            {
+                trainerUI.OnLogReported += AppendLogToListView;
+            }
+            else if (ui is PilotArenaUI pilotArenaUI)
+            {
+                pilotArenaUI.OnLogReported += AppendLogToListView;
             }
 
             pnlMain.Controls.Add(ui);
         }
 
-        public void AddLog(string time, string level, string message)
+        private void AppendLogToListView(string _time, string _type, string _message)
         {
-            if (this.InvokeRequired)
+            if (lvwLogBox.InvokeRequired)
             {
-                this.Invoke(new Action(() => AddLog(time, level, message)));
+                lvwLogBox.Invoke(new Action(() => AppendLogToListView(_time, _type, _message)));
                 return;
             }
 
-            var item = new ListViewItem(time);
-            item.SubItems.Add(level);
-            item.SubItems.Add(message);
-            lvwLogBox.Items.Add(item);
-
-            // 항상 마지막 항목을 볼 수 있도록 처리
+            ListViewItem _item = new ListViewItem(_time);
+            
+            _item.SubItems.Add(_type);
+            _item.SubItems.Add(_message);
+            lvwLogBox.Items.Add(_item);
+            
             lvwLogBox.EnsureVisible(lvwLogBox.Items.Count - 1);
         }
 

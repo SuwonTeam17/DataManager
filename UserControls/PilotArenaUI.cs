@@ -16,6 +16,8 @@ namespace DataManager.UserControls
             public double Throttle { get; set; }
         }
 
+        public event Action<string, string, string> OnLogReported;
+
         private List<FrameData> frames = new List<FrameData>();
         private string tubFolderPath = string.Empty;
         private int currentFrameIndex = 0;
@@ -419,8 +421,6 @@ namespace DataManager.UserControls
         // SizeChanged 이벤트 → 창 리사이즈 시 호출
         private void FlpModule_SizeChanged(object? sender, EventArgs e) => RefreshModuleLayout();
 
-        public event Action<string, string, string> OnLogReported;
-
         private void ReportLog(string type, string message)
         {
             string currentTime = DateTime.Now.ToString("HH:mm:ss");
@@ -484,6 +484,12 @@ namespace DataManager.UserControls
                     }
                 }
             }
+        }
+
+        private void ReportLog(string type, string message)
+        {
+            string currentTime = DateTime.Now.ToString("HH:mm:ss");
+            OnLogReported?.Invoke(currentTime, type, message);
         }
     }
 }

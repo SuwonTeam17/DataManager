@@ -15,6 +15,8 @@ namespace DataManager.UserControls
 {
     public partial class ModelTestModule : UserControl
     {
+        public event Action<string, string, string> OnLogReported;
+
         private string selectedModelFolderPath = string.Empty;
         private string selectedModelFilePath = string.Empty;
         private string selectedModelType = string.Empty;
@@ -121,7 +123,6 @@ namespace DataManager.UserControls
         }
 
         public event EventHandler CloseRequested;
-        public event Action<string, string, string> OnLogReported;
 
         private void ReportLog(string type, string message)
         {
