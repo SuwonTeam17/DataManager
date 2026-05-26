@@ -1,13 +1,13 @@
-﻿namespace DataManager.UserControls
+namespace DataManager.UserControls
 {
     partial class ModelTestModule
     {
-        /// <summary> 
+        /// <summary>
         /// 필수 디자이너 변수입니다.
         /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary> 
+        /// <summary>
         /// 사용 중인 모든 리소스를 정리합니다.
         /// </summary>
         /// <param name="disposing">관리되는 리소스를 삭제해야 하면 true이고, 그렇지 않으면 false입니다.</param>
@@ -22,8 +22,8 @@
 
         #region 구성 요소 디자이너에서 생성한 코드
 
-        /// <summary> 
-        /// 디자이너 지원에 필요한 메서드입니다. 
+        /// <summary>
+        /// 디자이너 지원에 필요한 메서드입니다.
         /// 이 메서드의 내용을 코드 편집기로 수정하지 마세요.
         /// </summary>
         private void InitializeComponent()
@@ -57,9 +57,9 @@
             ((System.ComponentModel.ISupportInitialize)picImage).BeginInit();
             pnlData.SuspendLayout();
             SuspendLayout();
-            // 
+            //
             // cboModelType
-            // 
+            //
             cboModelType.FormattingEnabled = true;
             cboModelType.Items.AddRange(new object[] { "linear" });
             cboModelType.Location = new Point(101, 4);
@@ -67,9 +67,9 @@
             cboModelType.Size = new Size(112, 23);
             cboModelType.TabIndex = 5;
             cboModelType.Text = "linear";
-            // 
+            //
             // btnLoadModel
-            // 
+            //
             btnLoadModel.Location = new Point(3, 3);
             btnLoadModel.Name = "btnLoadModel";
             btnLoadModel.Size = new Size(92, 24);
@@ -77,9 +77,9 @@
             btnLoadModel.Text = "모델 가져오기";
             btnLoadModel.UseVisualStyleBackColor = true;
             btnLoadModel.Click += btnLoadModel_Click;
-            // 
+            //
             // pnlSetting
-            // 
+            //
             pnlSetting.BorderStyle = BorderStyle.FixedSingle;
             pnlSetting.Controls.Add(btnDelModel);
             pnlSetting.Controls.Add(lblModelRoute);
@@ -90,9 +90,9 @@
             pnlSetting.Name = "pnlSetting";
             pnlSetting.Size = new Size(375, 52);
             pnlSetting.TabIndex = 6;
-            // 
+            //
             // btnDelModel
-            // 
+            //
             btnDelModel.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             btnDelModel.Location = new Point(311, 4);
             btnDelModel.Name = "btnDelModel";
@@ -101,9 +101,9 @@
             btnDelModel.Text = "창 닫기";
             btnDelModel.UseVisualStyleBackColor = true;
             btnDelModel.Click += btnDelModel_Click;
-            // 
+            //
             // lblModelRoute
-            // 
+            //
             lblModelRoute.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             lblModelRoute.Location = new Point(3, 30);
             lblModelRoute.Margin = new Padding(3);
@@ -112,9 +112,9 @@
             lblModelRoute.TabIndex = 6;
             lblModelRoute.Text = "(Route)";
             lblModelRoute.TextAlign = ContentAlignment.MiddleLeft;
-            // 
+            //
             // pnlChart
-            // 
+            //
             pnlChart.BorderStyle = BorderStyle.FixedSingle;
             pnlChart.Controls.Add(chart2);
             pnlChart.Controls.Add(chart1);
@@ -123,9 +123,9 @@
             pnlChart.Name = "pnlChart";
             pnlChart.Size = new Size(375, 248);
             pnlChart.TabIndex = 7;
-            // 
+            //
             // chart2
-            // 
+            //
             chartArea1.Name = "ChartArea1";
             chart2.ChartAreas.Add(chartArea1);
             chart2.Dock = DockStyle.Fill;
@@ -142,9 +142,9 @@
             chart2.Size = new Size(373, 123);
             chart2.TabIndex = 1;
             chart2.Text = "chart2";
-            // 
+            //
             // chart1
-            // 
+            //
             chartArea2.Name = "ChartArea1";
             chart1.ChartAreas.Add(chartArea2);
             chart1.Dock = DockStyle.Top;
@@ -161,9 +161,9 @@
             chart1.Size = new Size(373, 123);
             chart1.TabIndex = 0;
             chart1.Text = "chart1";
-            // 
+            //
             // pnlImage
-            // 
+            //
             pnlImage.Controls.Add(picImage);
             pnlImage.Controls.Add(pnlData);
             pnlImage.Dock = DockStyle.Fill;
@@ -171,9 +171,9 @@
             pnlImage.Name = "pnlImage";
             pnlImage.Size = new Size(375, 237);
             pnlImage.TabIndex = 8;
-            // 
+            //
             // picImage
-            // 
+            //
             picImage.BackColor = Color.Black;
             picImage.Dock = DockStyle.Fill;
             picImage.Location = new Point(0, 0);
@@ -181,9 +181,9 @@
             picImage.Size = new Size(375, 212);
             picImage.TabIndex = 1;
             picImage.TabStop = false;
-            // 
+            //
             // pnlData
-            // 
+            //
             pnlData.BorderStyle = BorderStyle.FixedSingle;
             pnlData.Controls.Add(gaugeBar2);
             pnlData.Controls.Add(gaugeBar1);
@@ -194,7 +194,7 @@
             pnlData.Name = "pnlData";
             pnlData.Size = new Size(375, 50);
             pnlData.TabIndex = 0;
-            // 
+            //
             // gaugeBar2
             //
             gaugeBar2.Anchor = AnchorStyles.Top | AnchorStyles.Left;
@@ -209,27 +209,27 @@
             gaugeBar1.Name = "gaugeBar1";
             gaugeBar1.Size = new Size(138, 15);
             gaugeBar1.TabIndex = 0;
-            // 
+            //
             // lblThrottle
-            // 
+            //
             lblThrottle.Location = new Point(188, 4);
             lblThrottle.Margin = new Padding(5, 3, 3, 3);
             lblThrottle.Name = "lblThrottle";
             lblThrottle.Size = new Size(31, 15);
             lblThrottle.TabIndex = 1;
             lblThrottle.Text = "속도";
-            // 
+            //
             // lblAngle
-            // 
+            //
             lblAngle.Location = new Point(5, 4);
             lblAngle.Margin = new Padding(5, 3, 3, 3);
             lblAngle.Name = "lblAngle";
             lblAngle.Size = new Size(31, 15);
             lblAngle.TabIndex = 0;
             lblAngle.Text = "각도";
-            // 
+            //
             // ModelTestModule
-            // 
+            //
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             Controls.Add(pnlImage);

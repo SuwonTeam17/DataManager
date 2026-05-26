@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -191,7 +191,7 @@ namespace DataManager.UserControls
             }
             else
             {
-                ReportLog("ERROR", "지원하지 않는 모델 폴더입니다.");
+                ReportLog("오류", "지원하지 않는 모델 폴더입니다.");
                 isModelLoaded = false;
                 selectedModelType = string.Empty;
                 selectedModelFolderPath = string.Empty;
@@ -204,6 +204,13 @@ namespace DataManager.UserControls
                 lblModelRoute.Text += " (로드 중...)";
                 _ = StartPythonProcessAsync();
             }
+        }
+
+        /// <summary>밝기/흐림 등 변환 파라미터가 바뀔 때 호출 — 이전 파일럿 예측 캐시를 지웁니다.</summary>
+        public void ClearPredictions()
+        {
+            frameAnglePilot.Clear();
+            frameThrottlePilot.Clear();
         }
 
         /// <summary>이미지 경로와 user 값을 함께 저장. PilotArenaUI가 ±5 윈도우 전체에 호출.</summary>
@@ -314,7 +321,7 @@ namespace DataManager.UserControls
             if (!File.Exists(pythonExePath))
             {
                 this.Invoke((MethodInvoker)(() =>
-                    ReportLog("ERROR", $"Python 실행 파일을 찾을 수 없습니다: {pythonExePath}")));
+                    ReportLog("오류", $"Python 실행 파일을 찾을 수 없습니다: {pythonExePath}")));
                 return;
             }
 
@@ -363,7 +370,7 @@ namespace DataManager.UserControls
                     {
                         string cur = lblModelRoute.Text.Replace(" (로드 중...)", "");
                         lblModelRoute.Text = cur + " ✓";
-                        ReportLog("INFO", "Python 모델 로드 완료. 추론 준비됨.");
+                        ReportLog("정보", "Python 모델 로드 완료. 추론 준비됨.");
                     }));
 
                     if (!string.IsNullOrEmpty(currentImagePath) && File.Exists(currentImagePath))
@@ -372,14 +379,14 @@ namespace DataManager.UserControls
                 else
                 {
                     this.Invoke((MethodInvoker)(() =>
-                        ReportLog("ERROR", $"Python 준비 실패: {signal}")));
+                        ReportLog("오류", $"Python 준비 실패: {signal}")));
                     StopPythonProcess();
                 }
             }
             catch (Exception ex)
             {
                 this.Invoke((MethodInvoker)(() =>
-                    ReportLog("ERROR", $"Python 프로세스 시작 오류: {ex.Message}")));
+                    ReportLog("오류", $"Python 프로세스 시작 오류: {ex.Message}")));
                 StopPythonProcess();
             }
         }
