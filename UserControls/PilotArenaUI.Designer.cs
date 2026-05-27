@@ -37,6 +37,7 @@
             btnFrameLeft = new Button();
             pnlSetting = new Panel();
             btnLoadTub = new Button();
+            btnFullGraph = new Button();
             comboBox1 = new ComboBox();
             btnModelAdd = new Button();
             trkBlur = new TrackBar();
@@ -130,6 +131,7 @@
             // 
             pnlSetting.BorderStyle = BorderStyle.FixedSingle;
             pnlSetting.Controls.Add(btnLoadTub);
+            pnlSetting.Controls.Add(btnFullGraph);
             pnlSetting.Controls.Add(comboBox1);
             pnlSetting.Controls.Add(btnModelAdd);
             pnlSetting.Controls.Add(trkBlur);
@@ -149,7 +151,7 @@
             pnlSetting.Location = new Point(0, 0);
             pnlSetting.Margin = new Padding(0);
             pnlSetting.Name = "pnlSetting";
-            pnlSetting.Size = new Size(750, 63);
+            pnlSetting.Size = new Size(750, 90);
             pnlSetting.TabIndex = 5;
             // 
             // comboBox1
@@ -232,7 +234,7 @@
             // flpModule
             // 
             flpModule.Dock = DockStyle.Fill;
-            flpModule.Location = new Point(0, 63);
+            flpModule.Location = new Point(0, 90);
             flpModule.Margin = new Padding(0);
             flpModule.Name = "flpModule";
             flpModule.Size = new Size(750, 537);
@@ -273,6 +275,7 @@
         private Button btnModelAdd;
         private Label lblSpeed;
         private ComboBox comboBox1;
-            private Button btnLoadTub;
-        }
+        private Button btnLoadTub;
+        private Button btnFullGraph;
     }
+}

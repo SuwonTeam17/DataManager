@@ -1,4 +1,4 @@
-["cam/image_array", "user/angle", "user/throttle", "user/mode"]
+﻿["cam/image_array", "user/angle", "user/throttle", "user/mode"]
 ["image_array", "float", "float", "str"]
 {}
 {"created_at": 1778683647.6687474}

@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Windows.Forms;
+using DataManager.Forms;
 
 namespace DataManager.UserControls
 {
@@ -22,6 +24,8 @@ namespace DataManager.UserControls
         private System.Windows.Forms.Timer playbackTimer;
 
         private Label lblEmptyModels;
+        private FullGraphForm? _fullGraphForm;
+        private DateTime _lastGraphRefresh = DateTime.MinValue;
 
         public PilotArenaUI()
         {
@@ -224,6 +228,13 @@ namespace DataManager.UserControls
             }
 
             ShowCurrentFrame();
+
+            // Tub 로드 시점에 이미 모델이 준비된 모듈이 있으면 전체 스캔 시작
+            foreach (var module in flpModule.Controls.OfType<ModelTestModule>())
+            {
+                if (module.IsModelReady)
+                    TriggerFullScanForModule(module);
+            }
         }
 
         private void TrkTransform_ValueChanged(object? sender, EventArgs e)
@@ -390,6 +401,9 @@ namespace DataManager.UserControls
                     module.UpdateFrame(finalImagePath, currentFrame.Angle, currentFrame.Throttle, currentFrameIndex);
                 }
             }
+
+            if (_fullGraphForm != null && !_fullGraphForm.IsDisposed)
+                _fullGraphForm.UpdateCurrentFrame(currentFrameIndex);
         }
 
         private void RefreshModuleLayout()
@@ -403,6 +417,7 @@ namespace DataManager.UserControls
                 int totalW = flpModule.ClientSize.Width;
                 int height = flpModule.ClientSize.Height;
 
+                flpModule.SuspendLayout();
                 for (int i = 0; i < count; i++)
                 {
                     // 마지막 모듈은 나머지 픽셀을 모두 차지해 1px 공백 방지
@@ -410,11 +425,12 @@ namespace DataManager.UserControls
                     int width = (i == count - 1) ? totalW - x : totalW / count;
 
                     modules[i].Margin   = new Padding(0);
-                    modules[i].Location = new Point(x, 0);   // 위치도 직접 지정
+                    modules[i].Location = new Point(x, 0);
                     modules[i].Size     = new Size(width, height);
                     modules[i].PerformLayout();
                     modules[i].UpdateLayout();
                 }
+                flpModule.ResumeLayout(false);
             }
             else
             {
@@ -433,6 +449,48 @@ namespace DataManager.UserControls
             OnLogReported?.Invoke(currentTime, type, message);
         }
 
+        private void RefreshGraphForm()
+        {
+            if (_fullGraphForm == null || _fullGraphForm.IsDisposed) return;
+
+            var userFrames = frames
+                .Select((f, i) => (Index: i, Angle: f.Angle, Throttle: f.Throttle))
+                .ToList();
+
+            var pilotData = flpModule.Controls
+                .OfType<ModelTestModule>()
+                .Select(m =>
+                {
+                    var (angles, throttles) = m.GetAllPredictions();
+                    return (ModelName: m.ModelName, Angles: angles, Throttles: throttles);
+                })
+                .ToList();
+
+            _fullGraphForm.RefreshData(userFrames, pilotData);
+        }
+
+        // 예측이 추가될 때마다 호출 — 500ms 스로틀링으로 과도한 갱신 방지
+        private void Module_PredictionUpdated(object? sender, EventArgs e)
+        {
+            if (_fullGraphForm == null || _fullGraphForm.IsDisposed) return;
+            var now = DateTime.Now;
+            if ((now - _lastGraphRefresh).TotalMilliseconds < 500) return;
+            _lastGraphRefresh = now;
+            RefreshGraphForm();
+        }
+
+        private void TriggerFullScanForModule(ModelTestModule module)
+        {
+            if (frames.Count == 0 || string.IsNullOrEmpty(tubFolderPath)) return;
+            for (int i = 0; i < frames.Count; i++)
+            {
+                var f = frames[i];
+                string rawPath = Path.Combine(tubFolderPath, "images", f.ImageFileName);
+                module.SetFrameContext(i, rawPath, f.Angle, f.Throttle);
+            }
+            _ = module.RunAllFramePredictionsAsync();
+        }
+
         private void btnModelAdd_Click(object sender, EventArgs e)
         {
             var modules = flpModule.Controls.OfType<ModelTestModule>().ToList();
@@ -441,14 +499,18 @@ namespace DataManager.UserControls
             var module = new ModelTestModule();
             module.CloseRequested += Module_CloseRequested;
             module.OnLogReported += (time, level, msg) => OnLogReported?.Invoke(time, level, msg);
+            module.ModelReady += (s, e) => TriggerFullScanForModule(module);
+            module.PredictionUpdated += Module_PredictionUpdated;
 
             flpModule.Controls.Add(module);
-            RefreshModuleLayout();
 
-            if (frames.Count > 0)
+            // BeginInvoke로 AutoScaleMode.Font 스케일링이 완전히 끝난 뒤 레이아웃 확정
+            BeginInvoke(new Action(() =>
             {
-                ShowCurrentFrame();
-            }
+                RefreshModuleLayout();
+                if (frames.Count > 0)
+                    ShowCurrentFrame();
+            }));
         }
 
         private void Module_CloseRequested(object? sender, EventArgs e)
@@ -456,10 +518,45 @@ namespace DataManager.UserControls
             if (sender is ModelTestModule module)
             {
                 module.CloseRequested -= Module_CloseRequested;
+                module.PredictionUpdated -= Module_PredictionUpdated;
                 flpModule.Controls.Remove(module);
                 module.Dispose();
                 RefreshModuleLayout();
             }
+        }
+
+        private void btnFullGraph_Click(object sender, EventArgs e)
+        {
+            if (frames.Count == 0)
+            {
+                MessageBox.Show("먼저 Tub 데이터를 로드하세요.", "안내", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            if (_fullGraphForm != null && !_fullGraphForm.IsDisposed)
+            {
+                RefreshGraphForm();
+                _fullGraphForm.BringToFront();
+                _fullGraphForm.Focus();
+                return;
+            }
+
+            var userFrames = frames
+                .Select((f, i) => (Index: i, Angle: f.Angle, Throttle: f.Throttle))
+                .ToList();
+
+            var pilotData = flpModule.Controls
+                .OfType<ModelTestModule>()
+                .Select(m =>
+                {
+                    var (angles, throttles) = m.GetAllPredictions();
+                    return (ModelName: m.ModelName, Angles: angles, Throttles: throttles);
+                })
+                .ToList();
+
+            _fullGraphForm = new FullGraphForm(userFrames, pilotData);
+            _fullGraphForm.FormClosed += (s, _) => _fullGraphForm = null;
+            _fullGraphForm.Show(this.FindForm());
         }
 
         private void btnLoadTub_Click(object sender, EventArgs e)
