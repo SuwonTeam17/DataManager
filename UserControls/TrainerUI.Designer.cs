@@ -44,7 +44,6 @@
             pnlListView = new Panel();
             lvwModel = new ListView();
             colName = new ColumnHeader();
-            colPilot = new ColumnHeader();
             colType = new ColumnHeader();
             colTubs = new ColumnHeader();
             colTime = new ColumnHeader();
@@ -420,7 +419,7 @@
             // 
             lvwModel.BackColor = Color.White;
             lvwModel.BorderStyle = BorderStyle.None;
-            lvwModel.Columns.AddRange(new ColumnHeader[] { colName, colPilot, colType, colTubs, colTime, colTransfer, colComment });
+            lvwModel.Columns.AddRange(new ColumnHeader[] { colName, colType, colTubs, colTime, colTransfer, colComment });
             lvwModel.Dock = DockStyle.Fill;
             lvwModel.Font = new Font("맑은 고딕", 9.5F);
             lvwModel.ForeColor = Color.FromArgb(60, 72, 92);
@@ -437,11 +436,6 @@
             // 
             colName.Text = "모델 이름";
             colName.Width = 240;
-            // 
-            // colPilot
-            // 
-            colPilot.Text = "이거 뭐였는지 기억 안남 수정 부탁";
-            colPilot.Width = 200;
             // 
             // colType
             // 
@@ -646,7 +640,6 @@
         private Panel pnlListView;
         private ListView lvwModel;
         private ColumnHeader colName;
-        private ColumnHeader colPilot;
         private ColumnHeader colType;
         private ColumnHeader colTubs;
         private ColumnHeader colTime;

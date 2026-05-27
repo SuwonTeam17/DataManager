@@ -44,7 +44,7 @@
             // 
             // btnChgTubForm
             // 
-            btnChgTubForm.BackColor = Color.FromArgb(67, 130, 220);
+            btnChgTubForm.BackColor = Color.FromArgb(100, 110, 130);
             btnChgTubForm.Cursor = Cursors.Hand;
             btnChgTubForm.FlatAppearance.BorderSize = 0;
             btnChgTubForm.FlatStyle = FlatStyle.Flat;
