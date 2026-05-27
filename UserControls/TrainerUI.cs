@@ -2,11 +2,16 @@
 using System.IO;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using System.Text.RegularExpressions; // 이거 하나만 맨 위에 추가해주세요!
 
 namespace DataManager.UserControls
 {
     public partial class TrainerUI : UserControl
     {
+
+        // ⭐ 실시간 힌트를 띄워줄 백그라운드 타이머
+        private System.Windows.Forms.Timer placeholderTimer;
+
         // 클래스 내부 최상단 멤버 변수 구역에 넣어주세요
         public event Action<string, string, string> OnLogReported;
 
@@ -41,6 +46,16 @@ namespace DataManager.UserControls
 
             LoadConfigToUI();
             CleanUpZombieFolders();
+
+            // ⭐ 타이머 세팅: 1초(1000ms)마다 갱신
+            placeholderTimer = new System.Windows.Forms.Timer();
+            placeholderTimer.Interval = 1000;
+            placeholderTimer.Tick += PlaceholderTimer_Tick; // 1초마다 실행할 함수 연결
+            placeholderTimer.Start(); // 타이머 시작!
+
+            // 시작하자마자 바로 한 번 띄워주기 (1초 기다리는 것 방지)
+            UpdatePlaceholder();
+            txtComment.PlaceholderText = "모델 설명 (예: 50에포크, 직선코스 학습)";
         }
 
         // ⭐ 모든 메서드가 동일한 myconfig.py 경로를 바라보도록 만드는 안전한 경로 탐색기
@@ -344,7 +359,6 @@ namespace DataManager.UserControls
 
             // 3. 자동 모델 이름 생성 및 메모 박제
             string timestamp = DateTime.Now.ToString("yyMMdd_HHmmss");
-            string modelName = $"mypilot_{timestamp}";
             string curMemo = string.IsNullOrWhiteSpace(txtComment.Text) ? "새로 학습된 모델입니다." : txtComment.Text;
 
             // 4. 모델 종류(--type) 파라미터 번역
@@ -375,8 +389,38 @@ namespace DataManager.UserControls
                 ? "set CUDA_VISIBLE_DEVICES=-1 && set DML_VISIBLE_DEVICES=-1 && "
                 : "";
 
-            // 1. 확인하고 싶은 폴더의 전체 경로를 지정합니다.
-            string modelFolderPath = Path.Combine(currentPath, "mycar", "models", modelName);
+            // 7. 모델 이름 결정하기
+            string customName = txtModelName.Text.Trim();
+            string modelName = "";
+
+            if (!string.IsNullOrEmpty(customName))
+            {
+                // ⭐ 새로 추가된 강력한 방어막 (영어, 숫자, 언더바만 허용)
+                if (!Regex.IsMatch(customName, @"^[a-zA-Z0-9_]+$"))
+                {
+                    MessageBox.Show("안정적인 AI 훈련을 위해 모델 이름은\n영어, 숫자, 언더바(_)만 사용할 수 있습니다.",
+                                    "이름 형식 오류", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    btnTrain.Enabled = true;
+                    btnTrain.Text = "학습 시작";
+                    return; // 훈련 즉시 중단
+                }
+                modelName = customName;
+            }
+            else
+            {
+                // 빈칸이면 안전한 날짜 형식으로 자동 생성
+                modelName = $"mypilot_{DateTime.Now.ToString("yyMMdd_HHmmss")}";
+            }
+
+            // 🚨 방어막 2: 사용자가 적은 이름의 모델이 이미 존재하는지 검사 (덮어쓰기 방지)
+            string modelFolderPath = Path.Combine(mycarPath, "models", modelName);
+            if (Directory.Exists(modelFolderPath))
+            {
+                ReportLog("오류", $"'{modelName}'(이)라는 모델이 이미 존재합니다. 다른 이름을 지정해주세요.");
+                btnTrain.Enabled = true;
+                btnTrain.Text = "학습 시작";
+                return; // 훈련 중단
+            }
 
             // 2. Directory.Exists로 폴더가 '없는' 상태인지 확인합니다.
             if (!Directory.Exists(modelFolderPath))
@@ -390,7 +434,7 @@ namespace DataManager.UserControls
             // ⭐ 6. 최종 명령어 조립 (python train.py -> donkey train 으로 변경)
             string windowsCommand = $"cd /d \"{mycarPath}\" && \"..\\env\\Scripts\\activate\" && {cudaCommand}donkey train --tub \"{tubPath}\" --model \"models\\{modelName}\\{modelName}\" --type {selectedType}{transferCommand}";
 
-            
+
             // 7. 백그라운드 프로세스 세팅
             ProcessStartInfo psi = new ProcessStartInfo();
             psi.FileName = "cmd.exe";
@@ -449,15 +493,17 @@ namespace DataManager.UserControls
             process.EnableRaisingEvents = true;
             process.Exited += (s, args) =>
             {
+                // ⭐ 핵심 수정: 프로세스가 메모리에서 날아가기 전에 '종료 코드'를 미리 안전하게 복사해 둡니다!
+                int savedExitCode = process.ExitCode;
+
                 // 🚨 [방어막] 비정상 종료 시(에러 등)
-                if (process.ExitCode != 0)
+                if (savedExitCode != 0)
                 {
                     this.BeginInvoke((MethodInvoker)delegate
                     {
-                        // 1. 화면의 로그 기록에는 에러 코드만 깔끔하게 남기기
-                        ReportLog("오류", $"학습 중 오류 발생! (종료 코드: {process.ExitCode})");
+                        // 화면의 로그 기록에는 안전하게 빼둔 savedExitCode를 사용합니다.
+                        ReportLog("Error", $"학습 중 오류 발생! (종료 코드: {savedExitCode})");
 
-                        // 2. 팝업창에는 파이썬이 비명 지른 '진짜 이유'만 보여주기
                         string displayError = string.IsNullOrWhiteSpace(pythonErrorMessage)
                                               ? "알 수 없는 이유로 프로세스가 강제 종료되었습니다. (메모리 부족 등)"
                                               : pythonErrorMessage.Trim();
@@ -471,7 +517,7 @@ namespace DataManager.UserControls
 
                         prgTrain.Value = 0;
 
-                        // 3. 껍데기 폴더는 예정대로 미련 없이 삭제
+                        // 껍데기 폴더는 예정대로 미련 없이 삭제
                         if (Directory.Exists(modelFolderPath))
                         {
                             try { Directory.Delete(modelFolderPath, true); } catch { }
@@ -480,6 +526,8 @@ namespace DataManager.UserControls
                         btnTrain.Enabled = true;
                         btnTrain.Text = "학습 시작";
                     });
+
+                    // 화면 스레드가 변수를 읽든 말든, 본체는 여기서 안전하게 삭제됩니다.
                     process.Dispose();
                     return;
                 }
@@ -496,9 +544,9 @@ namespace DataManager.UserControls
                     }
                     prgTrain.Value = prgTrain.Maximum;
 
-                    ReportLog("알림", $"학습 완료! '{modelName}' 이름으로 저장되었습니다.");
+                    ReportLog("Success", $"학습 완료! '{modelName}' 이름으로 저장되었습니다.");
 
-                    // (기존 코드) 4줄 영수증 기록
+                    // 4줄 영수증 기록
                     string curDataset = Path.GetFileName(tubPath);
                     string modelFolder = Path.Combine(mycarPath, "models", modelName);
                     string metaFilePath = Path.Combine(modelFolder, "meta.txt");
@@ -506,27 +554,21 @@ namespace DataManager.UserControls
                     try { File.WriteAllLines(metaFilePath, new string[] { curDataset, displayType, curTransfer, curMemo }); }
                     catch { }
 
-                    // ==========================================================
-                    // [영구 박제 로직] 방금 만든 스마트 엔진을 사용해서 에러 없이 병합!
+                    // [영구 박제 로직] 설정 파일 병합
                     string baseConfigPath = Path.Combine(mycarPath, "config.py");
                     string myConfigPath = Path.Combine(mycarPath, "myconfig.py");
                     string savedConfigPath = Path.Combine(modelFolder, "final_config.txt");
 
                     try
                     {
-                        // 1. 원본 파일에서 주석 싹 빼고 깔끔하게 가져오기
                         var finalConfig = ParseConfigToDict(baseConfigPath);
-
-                        // 2. 내가 덮어쓴 파일 가져와서 병합하기
                         var customConfig = ParseConfigToDict(myConfigPath);
                         foreach (var kvp in customConfig)
                         {
                             finalConfig[kvp.Key] = kvp.Value;
                         }
 
-                        // 3. 병합된 결과를 텍스트 파일로 예쁘게 저장
                         List<string> saveLines = new List<string>();
-
                         var sortedKeys = finalConfig.Keys.ToList();
                         sortedKeys.Sort();
 
@@ -538,11 +580,9 @@ namespace DataManager.UserControls
                         File.WriteAllLines(savedConfigPath, saveLines);
                     }
                     catch { }
-                    // ==========================================================
 
                     // 리스트뷰 업데이트
                     ListViewItem newItem = new ListViewItem(modelName);
-                    newItem.SubItems.Add($"{modelName}");
                     newItem.SubItems.Add(displayType);
                     newItem.SubItems.Add(curDataset);
                     newItem.SubItems.Add(DateTime.Now.ToString("yy-MM-dd HH:mm"));
@@ -552,11 +592,14 @@ namespace DataManager.UserControls
 
                     lvwModel.Items.Add(newItem);
 
-                    // 콤보박스에 새 모델 추가 및 폼 초기화
+                    // 콤보박스 추가 및 폼 초기화
                     cboSelectTransferModel.Items.Add(modelName);
                     txtComment.Clear();
                     cboSelectTransferModel.SelectedIndex = 0;
                     cboSelectModelType.SelectedIndex = 0;
+
+                    txtModelName.Clear();
+                    txtComment.PlaceholderText = "모델 설명 (예: 50에포크, 직선코스 학습)";
 
                     cboSelectModelType.Enabled = true;
                     lblTransferWarning.Visible = false;
@@ -665,7 +708,6 @@ namespace DataManager.UserControls
                     }
 
                     ListViewItem item = new ListViewItem(modelName);
-                    item.SubItems.Add(modelName);
                     item.SubItems.Add(modelType);
                     item.SubItems.Add(dataset);
                     item.SubItems.Add(dir.CreationTime.ToString("yy-MM-dd HH:mm"));
@@ -1216,6 +1258,102 @@ namespace DataManager.UserControls
             flpConfCon.Controls.Add(rowPanel);
 
             SyncAllPanelSizes();
+        }
+
+        private void btnRename_Click(object sender, EventArgs e)
+        {
+            if (lvwModel.SelectedItems.Count == 0) return;
+            ListViewItem selectedItem = lvwModel.SelectedItems[0];
+            string oldName = selectedItem.Text;
+
+            // ⭐ 1. 작성하신 루트 경로 동적 탐색 로직 
+            string currentPath = Application.StartupPath;
+            while (!Directory.Exists(Path.Combine(currentPath, "env")))
+            {
+                DirectoryInfo parentInfo = Directory.GetParent(currentPath);
+                if (parentInfo == null)
+                {
+                    ReportLog("오류", "env 폴더를 찾을 수 없습니다.");
+                    return;
+                }
+                currentPath = parentInfo.FullName;
+            }
+
+            // ⭐ 2. 찾아낸 루트 경로를 기반으로 mycarPath 완성!
+            string mycarPath = Path.Combine(currentPath, "mycar");
+
+            // 3. 커스텀 입력창 호출
+            string rawInput = ShowInputBox("새로운 모델 이름을 입력하세요:", "모델 이름 변경", oldName);
+            // ... 커스텀 입력창 호출 이후 ...
+            string newName = rawInput.Trim();
+
+            if (string.IsNullOrEmpty(newName) || oldName == newName) return;
+
+            // ⭐ 강력한 방어막: 정규표현식으로 영어, 숫자, 언더바(_)만 통과시킵니다.
+            if (!Regex.IsMatch(newName, @"^[a-zA-Z0-9_]+$"))
+            {
+                MessageBox.Show("안정적인 AI 훈련을 위해 모델 이름은\n영어, 숫자, 언더바(_)만 사용할 수 있습니다.",
+                                "이름 형식 오류", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return; // 즉시 중단
+            }
+
+            // 중복 체크 및 연쇄 이동 로직 시작...
+
+            // 4. 경로 조립 및 중복 체크
+            string modelsBaseDir = Path.Combine(mycarPath, "models");
+            string oldFullDir = Path.Combine(modelsBaseDir, oldName);
+            string newFullDir = Path.Combine(modelsBaseDir, newName);
+
+            if (Directory.Exists(newFullDir))
+            {
+                ReportLog("오류", $"'{newName}'(이)라는 모델이 이미 존재합니다.");
+                return;
+            }
+
+            try
+            {
+                // 5. [연쇄 이동 시작] 바깥 폴더 -> 안쪽 폴더 -> 내부 파일들
+                Directory.Move(oldFullDir, newFullDir);
+
+                string oldInnerModelPath = Path.Combine(newFullDir, oldName);
+                string newInnerModelPath = Path.Combine(newFullDir, newName);
+                if (Directory.Exists(oldInnerModelPath))
+                {
+                    Directory.Move(oldInnerModelPath, newInnerModelPath);
+                }
+
+                DirectoryInfo di = new DirectoryInfo(newFullDir);
+                foreach (FileInfo file in di.GetFiles())
+                {
+                    if (file.Name.StartsWith(oldName))
+                    {
+                        string newFileName = file.Name.Replace(oldName, newName);
+                        file.MoveTo(Path.Combine(newFullDir, newFileName));
+                    }
+                }
+
+                selectedItem.Text = newName;
+                LoadExistingModels(); // (여기 내부에도 mycarPath 찾는 로직이 이미 동일하게 들어있겠군요!)
+
+                ReportLog("알림", "이름이 성공적으로 변경되었습니다.");
+            }
+            catch (Exception ex)
+            {
+                ReportLog("오류", $"이름 변경 중 오류 발생: {ex.Message}");
+            }
+        }
+
+        // 1초마다 타이머가 호출하는 함수
+        private void PlaceholderTimer_Tick(object sender, EventArgs e)
+        {
+            UpdatePlaceholder();
+        }
+
+        // 회색 힌트 글씨를 현재 시간으로 새로고침 하는 함수
+        private void UpdatePlaceholder()
+        {
+            // 해리 님이 원하셨던 분 단위(yyMMddHHmm) 실시간 포맷
+            txtModelName.PlaceholderText = $"mypilot_{DateTime.Now.ToString("yyMMdd_HHmmss")}";
         }
     }
 }

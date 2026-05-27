@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             pnlConfEditor = new Panel();
+            label2 = new Label();
             pnlConfig = new Panel();
             flpConfCon = new FlowLayoutPanel();
             btnSaveMyConf = new Button();
@@ -37,6 +38,8 @@
             lblAddConfSetter = new Label();
             lblConfEditor = new Label();
             pnlTrainer = new Panel();
+            lblSetModelName = new Label();
+            txtModelName = new TextBox();
             grpSetTrainSetting = new GroupBox();
             rdoUseCPU = new RadioButton();
             rdoUseGPU = new RadioButton();
@@ -54,7 +57,6 @@
             pnlListView = new Panel();
             lvwModel = new ListView();
             colName = new ColumnHeader();
-            colPilot = new ColumnHeader();
             colType = new ColumnHeader();
             colTubs = new ColumnHeader();
             colTime = new ColumnHeader();
@@ -63,11 +65,11 @@
             pnlLabel = new Panel();
             lblViewerAndEditor = new Label();
             pnlButton = new Panel();
+            btnRename = new Button();
             btnTrainningHistory = new Button();
             btnShowConf = new Button();
             btnChgComment = new Button();
             btnDelete = new Button();
-            label2 = new Label();
             pnlConfEditor.SuspendLayout();
             pnlConfig.SuspendLayout();
             pnlTrainer.SuspendLayout();
@@ -94,6 +96,16 @@
             pnlConfEditor.Name = "pnlConfEditor";
             pnlConfEditor.Size = new Size(1286, 213);
             pnlConfEditor.TabIndex = 0;
+            // 
+            // label2
+            // 
+            label2.AutoSize = true;
+            label2.Font = new Font("맑은 고딕", 11.1428576F, FontStyle.Regular, GraphicsUnit.Point, 129);
+            label2.Location = new Point(578, 39);
+            label2.Name = "label2";
+            label2.Size = new Size(260, 37);
+            label2.TabIndex = 3;
+            label2.Text = "한줄에 띄울 설정 수";
             // 
             // pnlConfig
             // 
@@ -180,6 +192,8 @@
             // pnlTrainer
             // 
             pnlTrainer.BorderStyle = BorderStyle.FixedSingle;
+            pnlTrainer.Controls.Add(lblSetModelName);
+            pnlTrainer.Controls.Add(txtModelName);
             pnlTrainer.Controls.Add(grpSetTrainSetting);
             pnlTrainer.Controls.Add(lblTransferWarning);
             pnlTrainer.Controls.Add(prgTrain);
@@ -197,6 +211,23 @@
             pnlTrainer.Name = "pnlTrainer";
             pnlTrainer.Size = new Size(1286, 262);
             pnlTrainer.TabIndex = 1;
+            // 
+            // lblSetModelName
+            // 
+            lblSetModelName.Location = new Point(164, 8);
+            lblSetModelName.Margin = new Padding(5, 0, 5, 0);
+            lblSetModelName.Name = "lblSetModelName";
+            lblSetModelName.Size = new Size(191, 46);
+            lblSetModelName.TabIndex = 11;
+            lblSetModelName.Text = "모델 이름 (선택) : ";
+            lblSetModelName.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // txtModelName
+            // 
+            txtModelName.Location = new Point(363, 13);
+            txtModelName.Name = "txtModelName";
+            txtModelName.Size = new Size(346, 35);
+            txtModelName.TabIndex = 10;
             // 
             // grpSetTrainSetting
             // 
@@ -283,7 +314,7 @@
             // 
             // lblSelectTransferModel
             // 
-            lblSelectTransferModel.Location = new Point(164, 94);
+            lblSelectTransferModel.Location = new Point(164, 99);
             lblSelectTransferModel.Margin = new Padding(5, 0, 5, 0);
             lblSelectTransferModel.Name = "lblSelectTransferModel";
             lblSelectTransferModel.Size = new Size(206, 46);
@@ -295,7 +326,7 @@
             // 
             cboSelectTransferModel.DropDownStyle = ComboBoxStyle.DropDownList;
             cboSelectTransferModel.FormattingEnabled = true;
-            cboSelectTransferModel.Location = new Point(391, 99);
+            cboSelectTransferModel.Location = new Point(391, 104);
             cboSelectTransferModel.Margin = new Padding(5, 6, 5, 6);
             cboSelectTransferModel.Name = "cboSelectTransferModel";
             cboSelectTransferModel.Size = new Size(318, 38);
@@ -306,7 +337,7 @@
             // 
             cboSelectModelType.DropDownStyle = ComboBoxStyle.DropDownList;
             cboSelectModelType.FormattingEnabled = true;
-            cboSelectModelType.Location = new Point(340, 41);
+            cboSelectModelType.Location = new Point(340, 57);
             cboSelectModelType.Margin = new Padding(5, 6, 5, 6);
             cboSelectModelType.Name = "cboSelectModelType";
             cboSelectModelType.Size = new Size(369, 38);
@@ -314,7 +345,7 @@
             // 
             // lblSelectModelType
             // 
-            lblSelectModelType.Location = new Point(164, 36);
+            lblSelectModelType.Location = new Point(164, 52);
             lblSelectModelType.Margin = new Padding(5, 0, 5, 0);
             lblSelectModelType.Name = "lblSelectModelType";
             lblSelectModelType.Size = new Size(154, 46);
@@ -359,7 +390,7 @@
             // 
             // lvwModel
             // 
-            lvwModel.Columns.AddRange(new ColumnHeader[] { colName, colPilot, colType, colTubs, colTime, colTransfer, colComment });
+            lvwModel.Columns.AddRange(new ColumnHeader[] { colName, colType, colTubs, colTime, colTransfer, colComment });
             lvwModel.Dock = DockStyle.Fill;
             lvwModel.FullRowSelect = true;
             lvwModel.GridLines = true;
@@ -374,22 +405,17 @@
             // colName
             // 
             colName.Text = "모델 이름";
-            colName.Width = 180;
-            // 
-            // colPilot
-            // 
-            colPilot.Text = "모델 파일명";
-            colPilot.Width = 175;
+            colName.Width = 240;
             // 
             // colType
             // 
             colType.Text = "모델 종류";
-            colType.Width = 175;
+            colType.Width = 200;
             // 
             // colTubs
             // 
             colTubs.Text = "사용한 데이터셋";
-            colTubs.Width = 180;
+            colTubs.Width = 200;
             // 
             // colTime
             // 
@@ -399,12 +425,12 @@
             // colTransfer
             // 
             colTransfer.Text = "전이학습 여부";
-            colTransfer.Width = 150;
+            colTransfer.Width = 180;
             // 
             // colComment
             // 
             colComment.Text = "메모";
-            colComment.Width = 200;
+            colComment.Width = 240;
             // 
             // pnlLabel
             // 
@@ -429,6 +455,7 @@
             // 
             // pnlButton
             // 
+            pnlButton.Controls.Add(btnRename);
             pnlButton.Controls.Add(btnTrainningHistory);
             pnlButton.Controls.Add(btnShowConf);
             pnlButton.Controls.Add(btnChgComment);
@@ -440,12 +467,23 @@
             pnlButton.Size = new Size(1284, 80);
             pnlButton.TabIndex = 9;
             // 
+            // btnRename
+            // 
+            btnRename.Location = new Point(296, 11);
+            btnRename.Margin = new Padding(34, 10, 9, 10);
+            btnRename.Name = "btnRename";
+            btnRename.Size = new Size(184, 60);
+            btnRename.TabIndex = 4;
+            btnRename.Text = "이름 변경";
+            btnRename.UseVisualStyleBackColor = true;
+            btnRename.Click += btnRename_Click;
+            // 
             // btnTrainningHistory
             // 
-            btnTrainningHistory.Location = new Point(1023, 10);
+            btnTrainningHistory.Location = new Point(1081, 11);
             btnTrainningHistory.Margin = new Padding(9, 10, 34, 10);
             btnTrainningHistory.Name = "btnTrainningHistory";
-            btnTrainningHistory.Size = new Size(228, 60);
+            btnTrainningHistory.Size = new Size(184, 60);
             btnTrainningHistory.TabIndex = 3;
             btnTrainningHistory.Text = "훈련 기록";
             btnTrainningHistory.UseVisualStyleBackColor = true;
@@ -453,10 +491,10 @@
             // 
             // btnShowConf
             // 
-            btnShowConf.Location = new Point(699, 10);
+            btnShowConf.Location = new Point(814, 11);
             btnShowConf.Margin = new Padding(9, 10, 9, 10);
             btnShowConf.Name = "btnShowConf";
-            btnShowConf.Size = new Size(228, 60);
+            btnShowConf.Size = new Size(184, 60);
             btnShowConf.TabIndex = 2;
             btnShowConf.Text = "구성 표시";
             btnShowConf.UseVisualStyleBackColor = true;
@@ -464,10 +502,10 @@
             // 
             // btnChgComment
             // 
-            btnChgComment.Location = new Point(363, 10);
+            btnChgComment.Location = new Point(550, 11);
             btnChgComment.Margin = new Padding(9, 10, 9, 10);
             btnChgComment.Name = "btnChgComment";
-            btnChgComment.Size = new Size(228, 60);
+            btnChgComment.Size = new Size(184, 60);
             btnChgComment.TabIndex = 1;
             btnChgComment.Text = "메모 변경";
             btnChgComment.UseVisualStyleBackColor = true;
@@ -475,24 +513,14 @@
             // 
             // btnDelete
             // 
-            btnDelete.Location = new Point(34, 10);
+            btnDelete.Location = new Point(33, 11);
             btnDelete.Margin = new Padding(34, 10, 9, 10);
             btnDelete.Name = "btnDelete";
-            btnDelete.Size = new Size(228, 60);
+            btnDelete.Size = new Size(184, 60);
             btnDelete.TabIndex = 0;
             btnDelete.Text = "삭제";
             btnDelete.UseVisualStyleBackColor = true;
             btnDelete.Click += btnDelete_Click;
-            // 
-            // label2
-            // 
-            label2.AutoSize = true;
-            label2.Font = new Font("맑은 고딕", 11.1428576F, FontStyle.Regular, GraphicsUnit.Point, 129);
-            label2.Location = new Point(578, 39);
-            label2.Name = "label2";
-            label2.Size = new Size(260, 37);
-            label2.TabIndex = 3;
-            label2.Text = "한줄에 띄울 설정 수";
             // 
             // TrainerUI
             // 
@@ -549,7 +577,6 @@
         private FlowLayoutPanel flpConfCon;
         private ListView lvwModel;
         private ColumnHeader colName;
-        private ColumnHeader colPilot;
         private ColumnHeader colType;
         private ColumnHeader colTubs;
         private ColumnHeader colTime;
@@ -561,5 +588,8 @@
         private RadioButton rdoUseCPU;
         private RadioButton rdoUseGPU;
         private Label label2;
+        private Label lblSetModelName;
+        private TextBox txtModelName;
+        private Button btnRename;
     }
 }
