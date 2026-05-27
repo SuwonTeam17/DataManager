@@ -1,5 +1,5 @@
 ﻿
-
+using System.IO;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 
@@ -21,6 +21,28 @@ namespace DataManager.UserControls
             { "학습 한번에 쓸 사진 수", "BATCH_SIZE" }
         };
 
+        private void TrainerUI_Load(object sender, EventArgs e)
+        {
+            // 1. 모델 종류 콤보박스 세팅
+            cboSelectModelType.Items.Clear();
+            cboSelectModelType.Items.Add("기본 주행 (Linear)");
+            cboSelectModelType.Items.Add("분류형 주행 (Categorical)");
+            cboSelectModelType.Items.Add("기억형 주행 (RNN)");
+            cboSelectModelType.Items.Add("지시형 주행 (Behavior)");
+            cboSelectModelType.Items.Add("센서 융합 주행 (IMU)");
+            cboSelectModelType.Items.Add("입체 시각 주행 (3D)");
+            cboSelectModelType.SelectedIndex = 0;
+            lblTransferWarning.Visible = false; // 전이학습 경고 메시지 숨기기
+
+            // 2. 기존 학습된 모델 불러오기 (리스트뷰 & 전이학습 콤보박스 세팅)
+            LoadExistingModels();
+
+            rdoUseCPU.Checked = true; // 기본값은 안전하게 CPU 모드로 켜지게 세팅
+
+            LoadConfigToUI();
+            CleanUpZombieFolders();
+        }
+
         // ⭐ 모든 메서드가 동일한 myconfig.py 경로를 바라보도록 만드는 안전한 경로 탐색기
         private string GetMyConfigPath()
         {
@@ -33,6 +55,46 @@ namespace DataManager.UserControls
             }
             return Path.Combine(currentPath, "mycar", "myconfig.py"); // mycar_real 대신 공식 폴더로 통일!
         }
+
+        private void CleanUpZombieFolders()
+        {
+            try
+            {
+                string currentPath = Application.StartupPath;
+                while (!Directory.Exists(Path.Combine(currentPath, "env")))
+                {
+                    DirectoryInfo parentInfo = Directory.GetParent(currentPath);
+                    if (parentInfo == null) return;
+                    currentPath = parentInfo.FullName;
+                }
+
+                string modelsPath = Path.Combine(currentPath, "mycar", "models");
+                if (!Directory.Exists(modelsPath)) return;
+
+                DirectoryInfo di = new DirectoryInfo(modelsPath);
+                foreach (DirectoryInfo dir in di.GetDirectories())
+                {
+                    string modelName = dir.Name;
+
+                    // 1. 옛날 방식: 바깥 폴더에 pb가 있는지 확인
+                    string oldPbPath = Path.Combine(dir.FullName, "saved_model.pb");
+                    // 2. 새 방식: 안쪽에 '모델명'과 똑같은 이름의 중첩 폴더가 있는지 확인
+                    string nestedFolderPath = Path.Combine(dir.FullName, modelName);
+
+                    // ⭐ 두 가지 흔적이 모두 없을 때만(진짜 껍데기일 때만) 암살!
+                    if (!File.Exists(oldPbPath) && !Directory.Exists(nestedFolderPath))
+                    {
+                        try
+                        {
+                            dir.Delete(true);
+                        }
+                        catch { }
+                    }
+                }
+            }
+            catch { }
+        }
+
 
         public TrainerUI()
         {
@@ -272,7 +334,7 @@ namespace DataManager.UserControls
                 DirectoryInfo parentInfo = Directory.GetParent(currentPath);
                 if (parentInfo == null)
                 {
-                    ReportLog("Error", "'env' 파이썬 엔진 폴더를 찾을 수 없습니다.");
+                    ReportLog("오류", "'env' 파이썬 엔진 폴더를 찾을 수 없습니다.");
                     return;
                 }
                 currentPath = parentInfo.FullName;
@@ -308,11 +370,27 @@ namespace DataManager.UserControls
                 transferCommand = $" --transfer \"models\\{selectedBaseModel}\"";
             }
 
-            string cudaCommand = rdoUseCPU.Checked ? "set CUDA_VISIBLE_DEVICES=-1 && " : "";
+            // CPU 모드일 때는 CUDA와 DML 양쪽 모두에게 -1을 주어 GPU를 완벽하게 숨깁니다.
+            string cudaCommand = rdoUseCPU.Checked
+                ? "set CUDA_VISIBLE_DEVICES=-1 && set DML_VISIBLE_DEVICES=-1 && "
+                : "";
+
+            // 1. 확인하고 싶은 폴더의 전체 경로를 지정합니다.
+            string modelFolderPath = Path.Combine(currentPath, "mycar", "models", modelName);
+
+            // 2. Directory.Exists로 폴더가 '없는' 상태인지 확인합니다.
+            if (!Directory.Exists(modelFolderPath))
+            {
+                // 3. 폴더가 없다면 새로 만듭니다. (상위 폴더가 없다면 상위 폴더까지 한 번에 다 만들어 줍니다)
+                Directory.CreateDirectory(modelFolderPath);
+            }
+
+
 
             // ⭐ 6. 최종 명령어 조립 (python train.py -> donkey train 으로 변경)
-            string windowsCommand = $"cd /d \"{mycarPath}\" && \"..\\env\\Scripts\\activate\" && {cudaCommand}donkey train --tub \"{tubPath}\" --model \"models\\{modelName}\" --type {selectedType}{transferCommand}";
+            string windowsCommand = $"cd /d \"{mycarPath}\" && \"..\\env\\Scripts\\activate\" && {cudaCommand}donkey train --tub \"{tubPath}\" --model \"models\\{modelName}\\{modelName}\" --type {selectedType}{transferCommand}";
 
+            
             // 7. 백그라운드 프로세스 세팅
             ProcessStartInfo psi = new ProcessStartInfo();
             psi.FileName = "cmd.exe";
@@ -321,6 +399,7 @@ namespace DataManager.UserControls
             psi.CreateNoWindow = true;
             psi.RedirectStandardOutput = true;
             psi.RedirectStandardError = true;
+            string pythonErrorMessage = "";
 
             Process process = new Process();
             process.StartInfo = psi;
@@ -357,20 +436,46 @@ namespace DataManager.UserControls
                 }
             };
 
-            // 파이썬 에러 가로채기 (경고 메시지도 포함되어 출력될 수 있습니다)
-            process.ErrorDataReceived += (s, args) => {};
+            process.ErrorDataReceived += (s, args) =>
+            {
+                if (!string.IsNullOrEmpty(args.Data))
+                {
+                    // 파일에 안 쓰고 메모리(변수)에 바로 누적시킵니다.
+                    pythonErrorMessage += args.Data + Environment.NewLine;
+                }
+            };
 
             // 9. 파이썬 학습 종료 이벤트 
             process.EnableRaisingEvents = true;
             process.Exited += (s, args) =>
             {
-                // 🚨 [방어막] 비정상 종료 시(에러 등) 여기서 컷!
+                // 🚨 [방어막] 비정상 종료 시(에러 등)
                 if (process.ExitCode != 0)
                 {
                     this.BeginInvoke((MethodInvoker)delegate
                     {
-                        ReportLog("Error", "훈련 중 문제가 발생하여 종료되었습니다. 로그를 확인하세요.");
+                        // 1. 화면의 로그 기록에는 에러 코드만 깔끔하게 남기기
+                        ReportLog("오류", $"학습 중 오류 발생! (종료 코드: {process.ExitCode})");
+
+                        // 2. 팝업창에는 파이썬이 비명 지른 '진짜 이유'만 보여주기
+                        string displayError = string.IsNullOrWhiteSpace(pythonErrorMessage)
+                                              ? "알 수 없는 이유로 프로세스가 강제 종료되었습니다. (메모리 부족 등)"
+                                              : pythonErrorMessage.Trim();
+
+                        MessageBox.Show(
+                            displayError,
+                            "훈련 실패 원인",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error
+                        );
+
                         prgTrain.Value = 0;
+
+                        // 3. 껍데기 폴더는 예정대로 미련 없이 삭제
+                        if (Directory.Exists(modelFolderPath))
+                        {
+                            try { Directory.Delete(modelFolderPath, true); } catch { }
+                        }
 
                         btnTrain.Enabled = true;
                         btnTrain.Text = "학습 시작";
@@ -382,7 +487,6 @@ namespace DataManager.UserControls
                 // 정상 종료 시 마무리 작업
                 this.BeginInvoke((MethodInvoker)async delegate
                 {
-
                     int step = 200;
                     for (int i = prgTrain.Value; i <= prgTrain.Maximum; i += step)
                     {
@@ -392,7 +496,7 @@ namespace DataManager.UserControls
                     }
                     prgTrain.Value = prgTrain.Maximum;
 
-                    ReportLog("Success", $"학습 완료! '{modelName}' 이름으로 저장되었습니다.");
+                    ReportLog("알림", $"학습 완료! '{modelName}' 이름으로 저장되었습니다.");
 
                     // (기존 코드) 4줄 영수증 기록
                     string curDataset = Path.GetFileName(tubPath);
@@ -403,7 +507,7 @@ namespace DataManager.UserControls
                     catch { }
 
                     // ==========================================================
-                    // ⭐ [영구 박제 로직] 방금 만든 스마트 엔진을 사용해서 에러 없이 병합!
+                    // [영구 박제 로직] 방금 만든 스마트 엔진을 사용해서 에러 없이 병합!
                     string baseConfigPath = Path.Combine(mycarPath, "config.py");
                     string myConfigPath = Path.Combine(mycarPath, "myconfig.py");
                     string savedConfigPath = Path.Combine(modelFolder, "final_config.txt");
@@ -423,7 +527,6 @@ namespace DataManager.UserControls
                         // 3. 병합된 결과를 텍스트 파일로 예쁘게 저장
                         List<string> saveLines = new List<string>();
 
-                        // 항목 이름(A-Z) 순서대로 정렬해서 텍스트 파일에 박제하면 더 보기 좋습니다.
                         var sortedKeys = finalConfig.Keys.ToList();
                         sortedKeys.Sort();
 
@@ -455,7 +558,6 @@ namespace DataManager.UserControls
                     cboSelectTransferModel.SelectedIndex = 0;
                     cboSelectModelType.SelectedIndex = 0;
 
-                    // ⭐ 다음 훈련을 위해 잠가뒀던 모델 종류 콤보박스 다시 풀기
                     cboSelectModelType.Enabled = true;
                     lblTransferWarning.Visible = false;
 
@@ -476,37 +578,24 @@ namespace DataManager.UserControls
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
 
-                ReportLog("Info", $"'{modelName}' 모델 학습 엔진 가동을 시작했습니다.");
+                ReportLog("알림", $"'{modelName}' 모델 학습 엔진 가동을 시작했습니다.");
             }
             catch (Exception ex)
             {
-                ReportLog("Error", $"훈련 엔진 가동 실패: {ex.Message}");
+                ReportLog("오류", $"훈련 엔진 가동 실패: {ex.Message}");
+
+                // ⭐ [추가된 로직] 애초에 엔진 가동조차 실패했을 때도 껍데기 폴더 삭제!
+                if (Directory.Exists(modelFolderPath))
+                {
+                    try { Directory.Delete(modelFolderPath, true); } catch { }
+                }
 
                 btnTrain.Enabled = true;
                 btnTrain.Text = "학습 시작";
             }
         }
 
-        private void TrainerUI_Load(object sender, EventArgs e)
-        {
-            // 1. 모델 종류 콤보박스 세팅
-            cboSelectModelType.Items.Clear();
-            cboSelectModelType.Items.Add("기본 주행 (Linear)");
-            cboSelectModelType.Items.Add("분류형 주행 (Categorical)");
-            cboSelectModelType.Items.Add("기억형 주행 (RNN)");
-            cboSelectModelType.Items.Add("지시형 주행 (Behavior)");
-            cboSelectModelType.Items.Add("센서 융합 주행 (IMU)");
-            cboSelectModelType.Items.Add("입체 시각 주행 (3D)");
-            cboSelectModelType.SelectedIndex = 0;
-            lblTransferWarning.Visible = false; // 전이학습 경고 메시지 숨기기
 
-            // 2. 기존 학습된 모델 불러오기 (리스트뷰 & 전이학습 콤보박스 세팅)
-            LoadExistingModels();
-
-            rdoUseCPU.Checked = true; // 기본값은 안전하게 CPU 모드로 켜지게 세팅
-
-            LoadConfigToUI();
-        }
 
         private void LoadExistingModels()
         {
@@ -531,18 +620,24 @@ namespace DataManager.UserControls
             DirectoryInfo di = new DirectoryInfo(modelsPath);
             foreach (DirectoryInfo dir in di.GetDirectories())
             {
-                string pbFilePath = Path.Combine(dir.FullName, "saved_model.pb");
+                string modelName = dir.Name;
 
-                if (File.Exists(pbFilePath))
+                // ⭐ 핵심 수정 부분: 모델 폴더 안에 똑같은 이름의 중첩 폴더 경로 생성
+                // 예: mycar\models\테스트모델\테스트모델
+                string nestedFolderPath = Path.Combine(dir.FullName, modelName);
+
+                // 안쪽 방(중첩 폴더)에 saved_model.pb가 있는지, 혹은 폴더 자체가 존재하는지 검사
+                string pbFilePath = Path.Combine(nestedFolderPath, "saved_model.pb");
+
+                // 만약 중첩 구조로 저장되었거나, 기존 방식대로 바깥에 pb가 있는 경우 모두 커버
+                if (Directory.Exists(nestedFolderPath) || File.Exists(Path.Combine(dir.FullName, "saved_model.pb")))
                 {
-                    string modelName = dir.Name;
-
-                    // ⭐ 기본값 설정 (종류도 이제 변수로 관리합니다)
                     string dataset = "알 수 없음";
-                    string modelType = "기본 주행 (Linear)"; // 기본값은 Linear
+                    string modelType = "기본 주행 (Linear)"; // 기본값
                     string isTransfer = "-";
                     string memo = "저장되어 있던 모델";
 
+                    // 영수증(meta.txt)은 보통 바깥 폴더(dir.FullName)에 있으므로 유지
                     string metaFilePath = Path.Combine(dir.FullName, "meta.txt");
                     if (File.Exists(metaFilePath))
                     {
@@ -550,18 +645,18 @@ namespace DataManager.UserControls
                         {
                             string[] lines = File.ReadAllLines(metaFilePath);
 
-                            // 옛날에 저장된 3줄짜리 영수증 파일일 경우
+                            // 3줄짜리 구형 영수증
                             if (lines.Length == 3)
                             {
                                 dataset = lines[0];
                                 isTransfer = lines[1];
                                 memo = lines[2];
                             }
-                            // ⭐ 새롭게 저장될 4줄짜리 영수증 파일일 경우 (종류 포함)
+                            // 4줄짜리 신형 영수증 (종류 포함)
                             else if (lines.Length >= 4)
                             {
                                 dataset = lines[0];
-                                modelType = lines[1]; // 2번째 줄에서 모델 종류를 쏙 읽어옵니다!
+                                modelType = lines[1]; // 2번째 줄에서 종류 읽어오기
                                 isTransfer = lines[2];
                                 memo = lines[3];
                             }
@@ -571,7 +666,7 @@ namespace DataManager.UserControls
 
                     ListViewItem item = new ListViewItem(modelName);
                     item.SubItems.Add(modelName);
-                    item.SubItems.Add(modelType); // ⬅️ 하드코딩 대신 파일에서 읽어온 진짜 종류 적용!
+                    item.SubItems.Add(modelType);
                     item.SubItems.Add(dataset);
                     item.SubItems.Add(dir.CreationTime.ToString("yy-MM-dd HH:mm"));
                     item.SubItems.Add(isTransfer);
@@ -625,7 +720,7 @@ namespace DataManager.UserControls
             // 1. [UX 방어막] 리스트뷰에서 아무것도 선택하지 않고 버튼을 눌렀을 때 컷!
             if (lvwModel.SelectedItems.Count == 0)
             {
-                ReportLog("Error", "삭제할 모델이 선택되지 않았습니다.");
+                ReportLog("오류", "삭제할 모델이 선택되지 않았습니다.");
                 return;
             }
 
@@ -645,7 +740,7 @@ namespace DataManager.UserControls
 
             try
             {
-                // 4. 실제 컴퓨터의 모델 폴더 경로 추적 (mycar\models\모델명)
+                // 4. 실제 컴퓨터의 모델 폴더 경로 추적
                 string currentPath = Application.StartupPath;
                 while (!Directory.Exists(Path.Combine(currentPath, "env")))
                 {
@@ -653,16 +748,19 @@ namespace DataManager.UserControls
                     if (parentInfo == null) break;
                     currentPath = parentInfo.FullName;
                 }
+
+                // 바깥쪽 폴더 경로 (mycar\models\모델명)
                 string modelFolderPath = Path.Combine(currentPath, "mycar", "models", modelName);
 
-                // 5. 하드디스크에서 폴더 통째로 완전 삭제 (기존 코드)
+                // 5. 하드디스크에서 폴더 통째로 완전 삭제
                 if (Directory.Exists(modelFolderPath))
                 {
+                    // ⭐ true 옵션: 바깥 폴더를 지우면 그 안의 meta.txt와 '중첩된 모델 폴더'까지 한 방에 날아갑니다.
                     Directory.Delete(modelFolderPath, true);
                 }
 
                 // ==========================================================
-                // ⭐ [추가할 부분] 폴더 옆에 숨어있는 보너스 파일(.tflite, .png)도 추적해서 암살!
+                // 5-1. 폴더 밖(models)에 숨어있는 보너스 파일(.tflite, .png)도 추적해서 암살!
                 string tflitePath = Path.Combine(currentPath, "mycar", "models", $"{modelName}.tflite");
                 string pngPath = Path.Combine(currentPath, "mycar", "models", $"{modelName}.png");
 
@@ -676,7 +774,7 @@ namespace DataManager.UserControls
                 }
                 // ==========================================================
 
-                // 6. 화면의 리스트뷰(표)에서 해당 줄 지우기 (기존 코드)
+                // 6. 화면의 리스트뷰(표)에서 해당 줄 지우기
                 lvwModel.Items.Remove(selectedItem);
 
                 // 7. 전이학습 선택 콤보박스 목록에서도 똑같이 지워줘서 동기화하기!
@@ -685,12 +783,12 @@ namespace DataManager.UserControls
                     cboSelectTransferModel.Items.Remove(modelName);
                 }
 
-                ReportLog("Info", "모델이 성공적으로 삭제되었습니다.");
+                ReportLog("알림", $"'{modelName}' 모델이 성공적으로 삭제되었습니다.");
             }
             catch (Exception ex)
             {
-                // 파일이 다른 프로그램이나 가상환경 프로세스에 의해 잠겨있을 때 안전하게 예외 처리
-                ReportLog("Error", "모델 삭제 중 문제가 발생하여 종료되었습니다. 로그를 확인하세요.");
+                // ⭐ 수정된 부분: 파일이 잠겨서 못 지웠는지, 경로를 못 찾았는지 진짜 에러 이유(ex.Message)를 띄워줍니다.
+                ReportLog("오류", $"삭제 실패: {ex.Message}");
             }
         }
 
@@ -699,7 +797,7 @@ namespace DataManager.UserControls
             // 1. 리스트뷰에서 아무것도 선택하지 않았을 때 컷!
             if (lvwModel.SelectedItems.Count == 0)
             {
-                ReportLog("Error", "메모를 수정할 모델이 선택되지 않았습니다.");
+                ReportLog("오류", "메모를 수정할 모델이 선택되지 않았습니다.");
                 return;
             }
 
@@ -707,7 +805,7 @@ namespace DataManager.UserControls
             ListViewItem selectedItem = lvwModel.SelectedItems[0];
             string modelName = selectedItem.Text;
 
-            // ⭐ 메모는 정상적으로 6번째 칸(index 6)에서 가져옵니다.
+            // 6번째 칸(index 6)에서 가져옵니다.
             string currentMemo = selectedItem.SubItems[6].Text;
 
             // 3. 수제 팝업창을 띄워서 새로운 메모 입력받기
@@ -726,13 +824,15 @@ namespace DataManager.UserControls
                         if (parentInfo == null) break;
                         currentPath = parentInfo.FullName;
                     }
+
+                    // ⭐ 원래 사용자님 코드 그대로! 바깥쪽 폴더의 meta.txt를 정확히 조준합니다.
                     string metaFilePath = Path.Combine(currentPath, "mycar", "models", modelName, "meta.txt");
 
                     if (File.Exists(metaFilePath))
                     {
                         string[] lines = File.ReadAllLines(metaFilePath);
 
-                        // ⭐ 새 모델들은 무조건 4줄이므로, 군더더기 없이 바로 덮어씁니다!
+                        // 4줄 이상일 때 4번째 줄(인덱스 3) 덮어쓰기
                         if (lines.Length >= 4)
                         {
                             lines[3] = newMemo;
@@ -744,11 +844,11 @@ namespace DataManager.UserControls
                     selectedItem.SubItems[6].Text = newMemo;
                     selectedItem.ToolTipText = newMemo;
 
-                    ReportLog("Info", "메모가 성공적으로 수정되었습니다.");
+                    ReportLog("알림", "메모가 성공적으로 수정되었습니다.");
                 }
                 catch (Exception ex)
                 {
-                    ReportLog("Error", "메모 수정 중 문제가 발생하여 종료되었습니다. 로그를 확인하세요.");
+                    ReportLog("오류", $"메모 수정 실패: {ex.Message}");
                 }
             }
         }
@@ -805,7 +905,7 @@ namespace DataManager.UserControls
             // 1. 리스트뷰에서 모델 선택 확인
             if (lvwModel.SelectedItems.Count == 0)
             {
-                ReportLog("Error", "설정을 확인할 모델을 먼저 선택해주세요.");
+                ReportLog("오류", "설정을 확인할 모델을 먼저 선택해주세요.");
                 return;
             }
 
@@ -825,7 +925,7 @@ namespace DataManager.UserControls
 
             if (!File.Exists(savedConfigPath))
             {
-                ReportLog("Error", "이 모델은 예전 방식이라 통합 설정 파일(final_config.txt)이 존재하지 않습니다.\n다시 훈련된 모델부터 적용됩니다.");
+                ReportLog("오류", "이 모델은 예전 방식이라 통합 설정 파일(final_config.txt)이 존재하지 않습니다.\n다시 훈련된 모델부터 적용됩니다.");
                 return;
             }
 
@@ -1004,7 +1104,7 @@ namespace DataManager.UserControls
             // 1. 리스트뷰에서 모델 선택 확인
             if (lvwModel.SelectedItems.Count == 0)
             {
-                ReportLog("Error", "그래프를 확인할 모델을 먼저 선택해주세요.");
+                ReportLog("오류", "그래프를 확인할 모델을 먼저 선택해주세요.");
                 return;
             }
 
@@ -1019,18 +1119,27 @@ namespace DataManager.UserControls
                 currentPath = parentInfo.FullName;
             }
 
-            // 모델 폴더 바깥에 있는 성적표 사진(모델명.png) 경로
-            string pngPath = Path.Combine(currentPath, "mycar", "models", $"{modelName}.png");
+            // ⭐ 수정된 부분: 바뀐 훈련 명령어(--model)에 맞춰 png 파일의 위치를 안쪽으로 조준합니다.
+            // 새 경로: mycar\models\모델명\모델명.png
+            string pngPath = Path.Combine(currentPath, "mycar", "models", modelName, $"{modelName}.png");
 
-            // 3. 사진 파일이 있으면 뷰어 띄우기
+            // [호환성] 예전에 바깥에 저장했던 구형 모델들의 사진 경로도 남겨둡니다.
+            // 옛날 경로: mycar\models\모델명.png
+            string oldPngPath = Path.Combine(currentPath, "mycar", "models", $"{modelName}.png");
+
+            // 3. 사진 파일이 있으면 뷰어 띄우기 (새 경로 먼저 찾고, 없으면 옛날 경로 찾기)
             if (File.Exists(pngPath))
             {
                 ShowGraphViewer(modelName, pngPath);
             }
+            else if (File.Exists(oldPngPath))
+            {
+                ShowGraphViewer(modelName, oldPngPath);
+            }
             else
             {
                 // 훈련 중 에러가 났거나, 사용자가 폴더에서 사진만 실수로 지운 경우
-                ReportLog("Error", "이 모델의 훈련 그래프(png) 파일이 존재하지 않습니다.");
+                ReportLog("오류", "이 모델의 훈련 그래프(png) 파일이 존재하지 않습니다.");
             }
         }
 
