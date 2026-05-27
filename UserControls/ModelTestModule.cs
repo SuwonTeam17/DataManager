@@ -461,7 +461,7 @@ namespace DataManager.UserControls
             StopPythonProcess();
 
             string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\"));
-            string pythonExePath = Path.GetFullPath(Path.Combine(projectRoot, "..", ".venv", "Scripts", "python.exe"));
+            string pythonExePath = Path.GetFullPath(Path.Combine(projectRoot, "..", "env", "Scripts", "python.exe"));
 
             if (!File.Exists(pythonExePath))
             {
