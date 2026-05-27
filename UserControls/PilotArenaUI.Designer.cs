@@ -80,7 +80,23 @@
             btnLoadTub.UseVisualStyleBackColor = false;
             btnLoadTub.Cursor = Cursors.Hand;
             btnLoadTub.Click += btnLoadTub_Click;
-            // 
+            //
+            // btnFullGraph
+            //
+            btnFullGraph.BackColor = Color.FromArgb(130, 100, 200);
+            btnFullGraph.FlatStyle = FlatStyle.Flat;
+            btnFullGraph.FlatAppearance.BorderSize = 0;
+            btnFullGraph.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnFullGraph.ForeColor = Color.White;
+            btnFullGraph.Location = new Point(196, 44);
+            btnFullGraph.Name = "btnFullGraph";
+            btnFullGraph.Size = new Size(90, 24);
+            btnFullGraph.TabIndex = 22;
+            btnFullGraph.Text = "전체 그래프";
+            btnFullGraph.UseVisualStyleBackColor = false;
+            btnFullGraph.Cursor = Cursors.Hand;
+            btnFullGraph.Click += btnFullGraph_Click;
+            //
             // lblBlur
             // 
             lblBlur.Font = new Font("맑은 고딕", 9.5F);

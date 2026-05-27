@@ -15,13 +15,13 @@ namespace DataManager.Forms
 
         private static readonly Color[] PilotColors =
         {
-            Color.OrangeRed,
-            Color.MediumSeaGreen,
-            Color.MediumPurple,
+            Color.DodgerBlue,
+            Color.CornflowerBlue,
+            Color.SteelBlue,
         };
 
-        private static readonly Color[] AngleErrorColors   = { Color.Coral,          Color.OrangeRed,    Color.DarkSalmon };
-        private static readonly Color[] ThrottleErrorColors = { Color.MediumSeaGreen, Color.CornflowerBlue, Color.MediumPurple };
+        private static readonly Color[] AngleErrorColors    = { Color.OrangeRed,  Color.Tomato,       Color.Coral };
+        private static readonly Color[] ThrottleErrorColors = { Color.MediumPurple, Color.SlateBlue, Color.MediumOrchid };
 
         public FullGraphForm(
             List<(int Index, double Angle, double Throttle)> userFrames,
@@ -175,8 +175,8 @@ namespace DataManager.Forms
             SetAxisRange(chartError,    minIdx, maxIdx);
 
             // 사용자 데이터
-            var userAngleSeries    = MakeSeries("사용자 조향각", Color.SteelBlue, 2, "Main");
-            var userThrottleSeries = MakeSeries("사용자 가속값", Color.SteelBlue, 2, "Main");
+            var userAngleSeries    = MakeSeries("사용자 조향각", Color.FromArgb(34, 177, 76), 2, "Main");
+            var userThrottleSeries = MakeSeries("사용자 가속값", Color.FromArgb(34, 177, 76), 2, "Main");
 
             foreach (var f in userFrames)
             {
