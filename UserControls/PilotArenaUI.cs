@@ -18,6 +18,8 @@ namespace DataManager.UserControls
             public double Throttle { get; set; }
         }
 
+        public event Action<string, string, string> OnLogReported;
+
         private List<FrameData> frames = new List<FrameData>();
         private string tubFolderPath = string.Empty;
         private int currentFrameIndex = 0;
@@ -252,32 +254,18 @@ namespace DataManager.UserControls
             ShowCurrentFrame();
         }
 
-        private string CreateTransformedImage(string originalImagePath)
+        // 파일 저장 대신 가공된 Bitmap 자체를 메모리에서 반환하는 메서드
+        // 파일로 저장하지 않고, 가공된 비트맵 객체 자체를 메모리 상에서 반환하는 메서드
+        // [변경] 하드디스크에 임시 파일을 쓰지 않고, 가공된 원본 비트맵 객체 자체를 리턴하도록 수정
+        private Bitmap? GetTransformedBitmap(string originalImagePath)
         {
-            if (!File.Exists(originalImagePath)) return originalImagePath;
+            if (!File.Exists(originalImagePath)) return null;
 
             int bright = trkBright.Value;
             int blur = trkBlur.Value;
 
-            if (bright == 0 && blur == 0) return originalImagePath;
-
-            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-            // 프로젝트 루트 또는 BaseDirectory 기준 EditedData 폴더 (여기서는 BaseDirectory와 부모 경로 고려)
-            string editedFolder = Path.GetFullPath(Path.Combine(baseDir, @"..\..\..\EditedData"));
-            if (!Directory.Exists(editedFolder))
-            {
-                // 부모 경로에 없으면 실행 폴더 바로 밑에 생성
-                try { Directory.CreateDirectory(editedFolder); }
-                catch { editedFolder = Path.Combine(baseDir, "EditedData"); Directory.CreateDirectory(editedFolder); }
-            }
-
-            string fileNameOnly = Path.GetFileNameWithoutExtension(originalImagePath);
-            string ext = Path.GetExtension(originalImagePath);
-            string newFileName = $"{fileNameOnly}_bright_{bright}_blur_{blur}{ext}";
-            string newPath = Path.Combine(editedFolder, newFileName);
-
-            // 캐시 처리
-            if (File.Exists(newPath)) return newPath;
+            // 둘 다 원본 상태(0)라면 null을 반환하여 원본 처리를 유도합니다.
+            if (bright == 0 && blur == 0) return null;
 
             try
             {
@@ -286,14 +274,13 @@ namespace DataManager.UserControls
                     Bitmap transformed = original.Clone(new Rectangle(0, 0, original.Width, original.Height), System.Drawing.Imaging.PixelFormat.Format32bppArgb);
                     int width = transformed.Width;
                     int height = transformed.Height;
-
                     var rect = new Rectangle(0, 0, width, height);
-                    var data = transformed.LockBits(rect, System.Drawing.Imaging.ImageLockMode.ReadWrite, transformed.PixelFormat);
 
+                    var data = transformed.LockBits(rect, System.Drawing.Imaging.ImageLockMode.ReadWrite, transformed.PixelFormat);
                     int stride = data.Stride;
                     int bytes = Math.Abs(stride) * height;
-                    byte[] rgbValues = new byte[bytes];
 
+                    byte[] rgbValues = new byte[bytes];
                     System.Runtime.InteropServices.Marshal.Copy(data.Scan0, rgbValues, 0, bytes);
 
                     // 밝기 처리
@@ -301,9 +288,9 @@ namespace DataManager.UserControls
                     {
                         for (int i = 0; i < rgbValues.Length; i += 4)
                         {
-                            rgbValues[i] = (byte)Math.Clamp(rgbValues[i] + bright, 0, 255);         // B
-                            rgbValues[i + 1] = (byte)Math.Clamp(rgbValues[i + 1] + bright, 0, 255); // G
-                            rgbValues[i + 2] = (byte)Math.Clamp(rgbValues[i + 2] + bright, 0, 255); // R
+                            rgbValues[i] = (byte)Math.Clamp(rgbValues[i] + bright, 0, 255);
+                            rgbValues[i + 1] = (byte)Math.Clamp(rgbValues[i + 1] + bright, 0, 255);
+                            rgbValues[i + 2] = (byte)Math.Clamp(rgbValues[i + 2] + bright, 0, 255);
                         }
                     }
 
@@ -319,13 +306,12 @@ namespace DataManager.UserControls
                             for (int x = 0; x < width; x++)
                             {
                                 int rSum = 0, gSum = 0, bSum = 0, count = 0;
-
                                 for (int dy = -d; dy <= d; dy++)
                                 {
                                     int ny = y + dy;
                                     if (ny < 0 || ny >= height) continue;
-
                                     int nyOffset = ny * stride;
+
                                     for (int dx = -d; dx <= d; dx++)
                                     {
                                         int nx = x + dx;
@@ -352,59 +338,59 @@ namespace DataManager.UserControls
                     System.Runtime.InteropServices.Marshal.Copy(rgbValues, 0, data.Scan0, bytes);
                     transformed.UnlockBits(data);
 
-                    transformed.Save(newPath);
-                    transformed.Dispose();
+                    // [주요 수정] 하드디스크 저장(Save) 코드 전면 제거! 순수 인메모리 비트맵 오브젝트 반환
+                    return transformed;
                 }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"이미지 변환 에러: {ex.Message}");
-                return originalImagePath;
+                System.Diagnostics.Debug.WriteLine($"이미지 실시간 가공 변환 에러: {ex.Message}");
+                return null;
             }
-
-            return newPath;
         }
 
         private void ShowCurrentFrame()
         {
             if (frames.Count == 0) return;
-
             if (currentFrameIndex < 0) currentFrameIndex = 0;
             if (currentFrameIndex >= frames.Count) currentFrameIndex = frames.Count - 1;
 
             var currentFrame = frames[currentFrameIndex];
             string rawImagePath = Path.Combine(tubFolderPath, "images", currentFrame.ImageFileName);
 
-            System.Diagnostics.Debug.WriteLine(
-                $"[ShowFrame] idx={currentFrameIndex} | img={currentFrame.ImageFileName} | user/angle={currentFrame.Angle:F4} | user/throttle={currentFrame.Throttle:F4}");
-
-            string finalImagePath = CreateTransformedImage(rawImagePath);
-            if (finalImagePath != rawImagePath)
-                System.Diagnostics.Debug.WriteLine($"[ShowFrame] 이미지 변환 적용됨 → {finalImagePath}");
-
-            foreach (Control control in flpModule.Controls)
+            // [수정] 중심 프레임의 실시간 메모리 필터 이미지 추출
+            using (Bitmap? finalMemoryBitmap = GetTransformedBitmap(rawImagePath))
             {
-                if (control is ModelTestModule module)
+                foreach (Control control in flpModule.Controls)
                 {
-                    // ±5 윈도우 범위의 이미지 경로 + user 데이터를 미리 등록
-                    // → ModelTestModule이 오른쪽 프레임도 예측할 수 있게 됨
-                    for (int offset = -5; offset <= 5; offset++)
+                    if (control is ModelTestModule module)
                     {
-                        int idx = currentFrameIndex + offset;
-                        if (idx < 0 || idx >= frames.Count) continue;
-                        var f = frames[idx];
-                        string wRaw  = Path.Combine(tubFolderPath, "images", f.ImageFileName);
-                        string wPath = CreateTransformedImage(wRaw);
-                        module.SetFrameContext(idx, wPath, f.Angle, f.Throttle);
-                    }
+                        // ±5 윈도우 데이터 컨텍스트 동기화
+                        for (int offset = -5; offset <= 5; offset++)
+                        {
+                            int idx = currentFrameIndex + offset;
+                            if (idx < 0 || idx >= frames.Count) continue;
 
-                    module.UpdateFrame(finalImagePath, currentFrame.Angle, currentFrame.Throttle, currentFrameIndex);
+                            var f = frames[idx];
+                            string wRaw = Path.Combine(tubFolderPath, "images", f.ImageFileName);
+
+                            // 각 서브 프레임도 하드디스크 저장 없이 메모리 비트맵으로 생성해서 주입
+                            using (Bitmap? windowMemoryBitmap = GetTransformedBitmap(wRaw))
+                            {
+                                module.SetFrameContext(idx, wRaw, windowMemoryBitmap, f.Angle, f.Throttle);
+                            }
+                        }
+
+                        // 모듈 화면 출력 갱신 (메모리 비트맵 직접 전달)
+                        module.UpdateFrame(rawImagePath, finalMemoryBitmap, currentFrame.Angle, currentFrame.Throttle, currentFrameIndex);
+                    }
                 }
             }
 
             if (_fullGraphForm != null && !_fullGraphForm.IsDisposed)
                 _fullGraphForm.UpdateCurrentFrame(currentFrameIndex);
         }
+
 
         private void RefreshModuleLayout()
         {
@@ -440,8 +426,6 @@ namespace DataManager.UserControls
 
         // SizeChanged 이벤트 → 창 리사이즈 시 호출
         private void FlpModule_SizeChanged(object? sender, EventArgs e) => RefreshModuleLayout();
-
-        public event Action<string, string, string> OnLogReported;
 
         private void ReportLog(string type, string message)
         {
@@ -561,32 +545,19 @@ namespace DataManager.UserControls
 
         private void btnLoadTub_Click(object sender, EventArgs e)
         {
-            try
-            {
-                using (var dialog = new Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog())
-                {
-                    dialog.IsFolderPicker = true;
-                    dialog.Title = "Tub 데이터 폴더를 선택하세요";
+            string root = AppPaths.EditedData;
+            if (!Directory.Exists(root))
+                Directory.CreateDirectory(root);
 
-                    if (dialog.ShowDialog() == Microsoft.WindowsAPICodePack.Dialogs.CommonFileDialogResult.Ok)
-                    {
-                        LoadTubFolder(dialog.FileName);
-                    }
-                }
-            }
-            catch
-            {
-                using (FolderBrowserDialog fbd = new FolderBrowserDialog())
-                {
-                    fbd.Description = "Tub 데이터 폴더를 선택하세요";
-                    fbd.UseDescriptionForTitle = true;
 
-                    if (fbd.ShowDialog() == DialogResult.OK)
-                    {
-                        LoadTubFolder(fbd.SelectedPath);
-                    }
-                }
+            using (var browser = new CustomFolderBrowser(root, "Tub 데이터 폴더 선택"))
+            {
+                browser.AllowFileSelection = true;
+
+                if (browser.ShowDialog(this) == DialogResult.OK)
+                    LoadTubFolder(browser.SelectedPath);
             }
+
         }
     }
 }
