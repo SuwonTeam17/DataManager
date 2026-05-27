@@ -25,6 +25,8 @@
             lblAddConfSetter = new Label();
             lblConfEditor = new Label();
             pnlTrainer = new Panel();
+            lblSetModelName = new Label();
+            txtModelName = new TextBox();
             grpSetTrainSetting = new GroupBox();
             rdoUseCPU = new RadioButton();
             rdoUseGPU = new RadioButton();
@@ -42,7 +44,6 @@
             pnlListView = new Panel();
             lvwModel = new ListView();
             colName = new ColumnHeader();
-            colPilot = new ColumnHeader();
             colType = new ColumnHeader();
             colTubs = new ColumnHeader();
             colTime = new ColumnHeader();
@@ -51,6 +52,7 @@
             pnlLabel = new Panel();
             lblViewerAndEditor = new Label();
             pnlButton = new Panel();
+            btnRename = new Button();
             btnTrainningHistory = new Button();
             btnShowConf = new Button();
             btnChgComment = new Button();
@@ -188,6 +190,9 @@
             // 
             // pnlTrainer
             // 
+            pnlTrainer.BorderStyle = BorderStyle.FixedSingle;
+            pnlTrainer.Controls.Add(lblSetModelName);
+            pnlTrainer.Controls.Add(txtModelName);
             pnlTrainer.BackColor = Color.FromArgb(250, 251, 253);
             pnlTrainer.Controls.Add(grpSetTrainSetting);
             pnlTrainer.Controls.Add(lblTransferWarning);
@@ -205,6 +210,23 @@
             pnlTrainer.Name = "pnlTrainer";
             pnlTrainer.Size = new Size(950, 131);
             pnlTrainer.TabIndex = 1;
+            // 
+            // lblSetModelName
+            // 
+            lblSetModelName.Location = new Point(164, 8);
+            lblSetModelName.Margin = new Padding(5, 0, 5, 0);
+            lblSetModelName.Name = "lblSetModelName";
+            lblSetModelName.Size = new Size(191, 46);
+            lblSetModelName.TabIndex = 11;
+            lblSetModelName.Text = "모델 이름 (선택) : ";
+            lblSetModelName.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // txtModelName
+            // 
+            txtModelName.Location = new Point(363, 13);
+            txtModelName.Name = "txtModelName";
+            txtModelName.Size = new Size(346, 35);
+            txtModelName.TabIndex = 10;
             // 
             // grpSetTrainSetting
             // 
@@ -411,22 +433,17 @@
             // colName
             // 
             colName.Text = "모델 이름";
-            colName.Width = 180;
-            // 
-            // colPilot
-            // 
-            colPilot.Text = "모델 파일명";
-            colPilot.Width = 175;
+            colName.Width = 240;
             // 
             // colType
             // 
             colType.Text = "모델 종류";
-            colType.Width = 175;
+            colType.Width = 200;
             // 
             // colTubs
             // 
             colTubs.Text = "사용한 데이터셋";
-            colTubs.Width = 180;
+            colTubs.Width = 200;
             // 
             // colTime
             // 
@@ -436,12 +453,12 @@
             // colTransfer
             // 
             colTransfer.Text = "전이학습 여부";
-            colTransfer.Width = 150;
+            colTransfer.Width = 180;
             // 
             // colComment
             // 
             colComment.Text = "메모";
-            colComment.Width = 200;
+            colComment.Width = 240;
             // 
             // pnlLabel
             // 
@@ -466,6 +483,7 @@
             // 
             // pnlButton
             // 
+            pnlButton.Controls.Add(btnRename);
             pnlButton.BackColor = Color.FromArgb(250, 251, 253);
             pnlButton.Controls.Add(btnTrainningHistory);
             pnlButton.Controls.Add(btnShowConf);
@@ -476,6 +494,17 @@
             pnlButton.Name = "pnlButton";
             pnlButton.Size = new Size(950, 40);
             pnlButton.TabIndex = 9;
+            // 
+            // btnRename
+            // 
+            btnRename.Location = new Point(296, 11);
+            btnRename.Margin = new Padding(34, 10, 9, 10);
+            btnRename.Name = "btnRename";
+            btnRename.Size = new Size(184, 60);
+            btnRename.TabIndex = 4;
+            btnRename.Text = "이름 변경";
+            btnRename.UseVisualStyleBackColor = true;
+            btnRename.Click += btnRename_Click;
             // 
             // btnTrainningHistory
             // 
@@ -603,7 +632,6 @@
         private Panel pnlListView;
         private ListView lvwModel;
         private ColumnHeader colName;
-        private ColumnHeader colPilot;
         private ColumnHeader colType;
         private ColumnHeader colTubs;
         private ColumnHeader colTime;
