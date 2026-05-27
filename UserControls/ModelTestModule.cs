@@ -12,6 +12,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using DataManager.Forms;
 
 namespace DataManager.UserControls
 {
@@ -68,8 +69,8 @@ namespace DataManager.UserControls
             cboModelType.Visible = false;
             lblModelType = new Label
             {
-                Location = cboModelType.Location,
-                Size = cboModelType.Size,
+                Location = new Point(cboModelType.Location.X, cboModelType.Location.Y),
+                Size = new Size(72, 26),
                 BorderStyle = BorderStyle.FixedSingle,
                 TextAlign = ContentAlignment.MiddleLeft,
                 Text = "-",
@@ -82,6 +83,7 @@ namespace DataManager.UserControls
             lblAngle.Text = "조향각\n-";
             lblThrottle.Text = "가속값\n-";
             pnlData.Resize += PnlData_Resize;
+            pnlSetting.Resize += PnlSetting_Resize;
             Disposed += (s, e) => StopPythonProcess();
 
             SetupCharts();
@@ -190,6 +192,65 @@ namespace DataManager.UserControls
         }
 
         public event EventHandler CloseRequested;
+
+        private FullGraphForm? _fullGraphForm;
+
+        // PilotArenaUI가 주입하는 콜백 — 현재 사용자 프레임 목록을 반환
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public Func<List<(int Index, double Angle, double Throttle)>>? UserFramesProvider { get; set; }
+
+        private void btnFullGraph_Click(object sender, EventArgs e)
+        {
+            var userFrames = UserFramesProvider?.Invoke();
+            if (userFrames == null || userFrames.Count == 0)
+            {
+                MessageBox.Show("먼저 Tub 데이터를 로드하세요.", "안내", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            if (_fullGraphForm != null && !_fullGraphForm.IsDisposed)
+            {
+                RefreshOwnGraph(userFrames);
+                _fullGraphForm.BringToFront();
+                _fullGraphForm.Focus();
+                return;
+            }
+
+            var (angles, throttles) = GetAllPredictions();
+            var pilotData = new List<(string ModelName, Dictionary<int, double> Angles, Dictionary<int, double> Throttles)>
+            {
+                (ModelName, angles, throttles)
+            };
+
+            _fullGraphForm = new FullGraphForm(userFrames, pilotData);
+            _fullGraphForm.FormClosed += (s, _) => _fullGraphForm = null;
+            _fullGraphForm.Show(this.FindForm());
+        }
+
+        public void RefreshOwnGraph()
+        {
+            if (_fullGraphForm == null || _fullGraphForm.IsDisposed) return;
+            var userFrames = UserFramesProvider?.Invoke();
+            if (userFrames == null) return;
+            RefreshOwnGraph(userFrames);
+        }
+
+        private void RefreshOwnGraph(List<(int Index, double Angle, double Throttle)> userFrames)
+        {
+            if (_fullGraphForm == null || _fullGraphForm.IsDisposed) return;
+            var (angles, throttles) = GetAllPredictions();
+            var pilotData = new List<(string ModelName, Dictionary<int, double> Angles, Dictionary<int, double> Throttles)>
+            {
+                (ModelName, angles, throttles)
+            };
+            _fullGraphForm.RefreshData(userFrames, pilotData);
+        }
+
+        public void UpdateOwnGraphFrame(int frameIndex)
+        {
+            if (_fullGraphForm == null || _fullGraphForm.IsDisposed) return;
+            _fullGraphForm.UpdateCurrentFrame(frameIndex);
+        }
 
         private void ReportLog(string type, string message)
         {
@@ -712,8 +773,27 @@ namespace DataManager.UserControls
 
         public void UpdateLayout()
         {
+            PnlSetting_Resize(this, EventArgs.Empty);
             PnlData_Resize(this, EventArgs.Empty);
             PositionErrorLabels();
+        }
+
+        private void PnlSetting_Resize(object? sender, EventArgs e)
+        {
+            const int m = 4;
+            const int lblTypeW = 72; // "linear" 등 모델 유형 고정 너비
+            int w = pnlSetting.ClientSize.Width;
+            if (w <= 0) return;
+
+            const int btnY = 5, btnH = 26;
+
+            // 창 닫기: 항상 오른쪽 끝
+            btnDelModel.SetBounds(w - m - btnDelModel.Width, btnY, btnDelModel.Width, btnH);
+            // 전체 그래프: 창 닫기 바로 왼쪽
+            btnFullGraph.SetBounds(btnDelModel.Left - m - btnFullGraph.Width, btnY, btnFullGraph.Width, btnH);
+            // 모델 타입 레이블: 고정 너비 — 모델 가져오기 오른쪽에 고정
+            int lblLeft = m + btnLoadModel.Width + m;
+            lblModelType?.SetBounds(lblLeft, btnY, lblTypeW, btnH);
         }
 
         private void PnlData_Resize(object? sender, EventArgs e)
@@ -735,7 +815,11 @@ namespace DataManager.UserControls
         // BeginInvoke로 레이아웃 확정 후 실행해야 두 번째 모듈도 동일하게 배치됨
         private void ModelTestModule_Load(object sender, EventArgs e)
         {
-            BeginInvoke(new Action(() => PnlData_Resize(this, EventArgs.Empty)));
+            BeginInvoke(new Action(() =>
+            {
+                PnlSetting_Resize(this, EventArgs.Empty);
+                PnlData_Resize(this, EventArgs.Empty);
+            }));
         }
 
         private static string FormatVal(double v) => v < 0 ? $"{v:F3}" : $" {v:F3}";
