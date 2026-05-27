@@ -51,7 +51,7 @@
             colComment = new ColumnHeader();
             pnlLabel = new Panel();
             lblViewerAndEditor = new Label();
-            pnlButton = new Panel();
+            tblButton = new TableLayoutPanel();
             btnRename = new Button();
             btnTrainningHistory = new Button();
             btnShowConf = new Button();
@@ -64,7 +64,7 @@
             pnlViewerAndEditor.SuspendLayout();
             pnlListView.SuspendLayout();
             pnlLabel.SuspendLayout();
-            pnlButton.SuspendLayout();
+            tblButton.SuspendLayout();
             SuspendLayout();
             // 
             // pnlConfEditor
@@ -397,7 +397,7 @@
             pnlViewerAndEditor.BackColor = Color.White;
             pnlViewerAndEditor.Controls.Add(pnlListView);
             pnlViewerAndEditor.Controls.Add(pnlLabel);
-            pnlViewerAndEditor.Controls.Add(pnlButton);
+            pnlViewerAndEditor.Controls.Add(tblButton);
             pnlViewerAndEditor.Dock = DockStyle.Fill;
             pnlViewerAndEditor.Location = new Point(0, 311);
             pnlViewerAndEditor.Name = "pnlViewerAndEditor";
@@ -482,109 +482,108 @@
             lblViewerAndEditor.TabIndex = 8;
             lblViewerAndEditor.Text = "파일럿 뷰어 및 편집기";
             lblViewerAndEditor.TextAlign = ContentAlignment.MiddleCenter;
-            // 
-            // pnlButton
-            // 
-            pnlButton.BackColor = Color.FromArgb(250, 251, 253);
-            pnlButton.Controls.Add(btnRename);
-            pnlButton.Controls.Add(btnTrainningHistory);
-            pnlButton.Controls.Add(btnShowConf);
-            pnlButton.Controls.Add(btnChgComment);
-            pnlButton.Controls.Add(btnDelete);
-            pnlButton.Dock = DockStyle.Bottom;
-            pnlButton.Location = new Point(0, 415);
-            pnlButton.Name = "pnlButton";
-            pnlButton.Size = new Size(950, 40);
-            pnlButton.TabIndex = 9;
-            // 
-            // btnRename
-            // 
-            btnRename.Anchor = AnchorStyles.Top | AnchorStyles.Bottom;
-            btnRename.BackColor = Color.FromArgb(72, 175, 120);
-            btnRename.Cursor = Cursors.Hand;
-            btnRename.FlatStyle = FlatStyle.Flat;
-            btnRename.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
-            btnRename.ForeColor = Color.White;
-            btnRename.Location = new Point(214, 5);
-            btnRename.Margin = new Padding(5);
-            btnRename.Name = "btnRename";
-            btnRename.Size = new Size(133, 30);
-            btnRename.TabIndex = 4;
-            btnRename.Text = "이름 변경";
-            btnRename.UseVisualStyleBackColor = false;
-            btnRename.Click += btnRename_Click;
-            // 
-            // btnTrainningHistory
-            // 
-            btnTrainningHistory.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Right;
-            btnTrainningHistory.BackColor = Color.FromArgb(130, 90, 200);
-            btnTrainningHistory.Cursor = Cursors.Hand;
-            btnTrainningHistory.FlatAppearance.BorderSize = 0;
-            btnTrainningHistory.FlatStyle = FlatStyle.Flat;
-            btnTrainningHistory.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
-            btnTrainningHistory.ForeColor = Color.White;
-            btnTrainningHistory.Location = new Point(798, 5);
-            btnTrainningHistory.Margin = new Padding(5, 5, 20, 5);
-            btnTrainningHistory.Name = "btnTrainningHistory";
-            btnTrainningHistory.Size = new Size(133, 30);
-            btnTrainningHistory.TabIndex = 3;
-            btnTrainningHistory.Text = "훈련 기록";
-            btnTrainningHistory.UseVisualStyleBackColor = false;
-            btnTrainningHistory.Click += btnTrainningHistory_Click;
-            // 
-            // btnShowConf
-            // 
-            btnShowConf.Anchor = AnchorStyles.Top | AnchorStyles.Bottom;
-            btnShowConf.BackColor = Color.FromArgb(67, 130, 220);
-            btnShowConf.Cursor = Cursors.Hand;
-            btnShowConf.FlatAppearance.BorderSize = 0;
-            btnShowConf.FlatStyle = FlatStyle.Flat;
-            btnShowConf.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
-            btnShowConf.ForeColor = Color.White;
-            btnShowConf.Location = new Point(603, 5);
-            btnShowConf.Margin = new Padding(5);
-            btnShowConf.Name = "btnShowConf";
-            btnShowConf.Size = new Size(133, 30);
-            btnShowConf.TabIndex = 2;
-            btnShowConf.Text = "구성 표시";
-            btnShowConf.UseVisualStyleBackColor = false;
-            btnShowConf.Click += btnShowConf_Click;
-            // 
-            // btnChgComment
-            // 
-            btnChgComment.Anchor = AnchorStyles.Top | AnchorStyles.Bottom;
-            btnChgComment.BackColor = Color.FromArgb(210, 140, 40);
-            btnChgComment.Cursor = Cursors.Hand;
-            btnChgComment.FlatAppearance.BorderSize = 0;
-            btnChgComment.FlatStyle = FlatStyle.Flat;
-            btnChgComment.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
-            btnChgComment.ForeColor = Color.White;
-            btnChgComment.Location = new Point(409, 5);
-            btnChgComment.Margin = new Padding(5);
-            btnChgComment.Name = "btnChgComment";
-            btnChgComment.Size = new Size(133, 30);
-            btnChgComment.TabIndex = 1;
-            btnChgComment.Text = "메모 변경";
-            btnChgComment.UseVisualStyleBackColor = false;
-            btnChgComment.Click += btnChgComment_Click;
-            // 
+            //
+            // tblButton
+            //
+            tblButton.BackColor = Color.FromArgb(250, 251, 253);
+            tblButton.ColumnCount = 5;
+            tblButton.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
+            tblButton.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
+            tblButton.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
+            tblButton.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
+            tblButton.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
+            tblButton.Controls.Add(btnDelete, 0, 0);
+            tblButton.Controls.Add(btnRename, 1, 0);
+            tblButton.Controls.Add(btnChgComment, 2, 0);
+            tblButton.Controls.Add(btnShowConf, 3, 0);
+            tblButton.Controls.Add(btnTrainningHistory, 4, 0);
+            tblButton.Dock = DockStyle.Bottom;
+            tblButton.Location = new Point(0, 415);
+            tblButton.Name = "tblButton";
+            tblButton.Padding = new Padding(5, 5, 5, 5);
+            tblButton.RowCount = 1;
+            tblButton.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            tblButton.Size = new Size(950, 40);
+            tblButton.TabIndex = 9;
+            //
             // btnDelete
-            // 
-            btnDelete.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+            //
             btnDelete.BackColor = Color.FromArgb(210, 70, 70);
             btnDelete.Cursor = Cursors.Hand;
+            btnDelete.Dock = DockStyle.Fill;
             btnDelete.FlatAppearance.BorderSize = 0;
             btnDelete.FlatStyle = FlatStyle.Flat;
             btnDelete.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnDelete.ForeColor = Color.White;
-            btnDelete.Location = new Point(20, 5);
-            btnDelete.Margin = new Padding(20, 5, 5, 5);
+            btnDelete.Margin = new Padding(5, 0, 5, 0);
             btnDelete.Name = "btnDelete";
-            btnDelete.Size = new Size(133, 30);
             btnDelete.TabIndex = 0;
             btnDelete.Text = "삭제";
             btnDelete.UseVisualStyleBackColor = false;
             btnDelete.Click += btnDelete_Click;
+            //
+            // btnRename
+            //
+            btnRename.BackColor = Color.FromArgb(72, 175, 120);
+            btnRename.Cursor = Cursors.Hand;
+            btnRename.Dock = DockStyle.Fill;
+            btnRename.FlatStyle = FlatStyle.Flat;
+            btnRename.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnRename.ForeColor = Color.White;
+            btnRename.Margin = new Padding(5, 0, 5, 0);
+            btnRename.Name = "btnRename";
+            btnRename.TabIndex = 4;
+            btnRename.Text = "이름 변경";
+            btnRename.UseVisualStyleBackColor = false;
+            btnRename.Click += btnRename_Click;
+            //
+            // btnChgComment
+            //
+            btnChgComment.BackColor = Color.FromArgb(210, 140, 40);
+            btnChgComment.Cursor = Cursors.Hand;
+            btnChgComment.Dock = DockStyle.Fill;
+            btnChgComment.FlatAppearance.BorderSize = 0;
+            btnChgComment.FlatStyle = FlatStyle.Flat;
+            btnChgComment.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnChgComment.ForeColor = Color.White;
+            btnChgComment.Margin = new Padding(5, 0, 5, 0);
+            btnChgComment.Name = "btnChgComment";
+            btnChgComment.TabIndex = 1;
+            btnChgComment.Text = "메모 변경";
+            btnChgComment.UseVisualStyleBackColor = false;
+            btnChgComment.Click += btnChgComment_Click;
+            //
+            // btnShowConf
+            //
+            btnShowConf.BackColor = Color.FromArgb(67, 130, 220);
+            btnShowConf.Cursor = Cursors.Hand;
+            btnShowConf.Dock = DockStyle.Fill;
+            btnShowConf.FlatAppearance.BorderSize = 0;
+            btnShowConf.FlatStyle = FlatStyle.Flat;
+            btnShowConf.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnShowConf.ForeColor = Color.White;
+            btnShowConf.Margin = new Padding(5, 0, 5, 0);
+            btnShowConf.Name = "btnShowConf";
+            btnShowConf.TabIndex = 2;
+            btnShowConf.Text = "구성 표시";
+            btnShowConf.UseVisualStyleBackColor = false;
+            btnShowConf.Click += btnShowConf_Click;
+            //
+            // btnTrainningHistory
+            //
+            btnTrainningHistory.BackColor = Color.FromArgb(130, 90, 200);
+            btnTrainningHistory.Cursor = Cursors.Hand;
+            btnTrainningHistory.Dock = DockStyle.Fill;
+            btnTrainningHistory.FlatAppearance.BorderSize = 0;
+            btnTrainningHistory.FlatStyle = FlatStyle.Flat;
+            btnTrainningHistory.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnTrainningHistory.ForeColor = Color.White;
+            btnTrainningHistory.Margin = new Padding(5, 0, 5, 0);
+            btnTrainningHistory.Name = "btnTrainningHistory";
+            btnTrainningHistory.TabIndex = 3;
+            btnTrainningHistory.Text = "훈련 기록";
+            btnTrainningHistory.UseVisualStyleBackColor = false;
+            btnTrainningHistory.Click += btnTrainningHistory_Click;
             // 
             // TrainerUI
             // 
@@ -607,7 +606,8 @@
             pnlViewerAndEditor.ResumeLayout(false);
             pnlListView.ResumeLayout(false);
             pnlLabel.ResumeLayout(false);
-            pnlButton.ResumeLayout(false);
+            tblButton.ResumeLayout(false);
+            tblButton.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -647,7 +647,7 @@
         private ColumnHeader colComment;
         private Panel pnlLabel;
         private Label lblViewerAndEditor;
-        private Panel pnlButton;
+        private TableLayoutPanel tblButton;
         private Button btnTrainningHistory;
         private Button btnShowConf;
         private Button btnChgComment;
