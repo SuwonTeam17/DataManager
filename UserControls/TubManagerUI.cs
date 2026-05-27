@@ -429,18 +429,16 @@ namespace DataManager.UserControls
 
                 if (_isContinue)
                 {
-                    // 기존 images 폴더에서 이미 저장된 프레임 수 파악
                     if (Directory.Exists(_saveImagesDir))
                     {
                         int _existingCount = Directory.GetFiles(_saveImagesDir).Length;
-                        _startIndex = _existingCount; // 101번째면 _startIndex = 100
+                        _startIndex = _existingCount;
                     }
                     else
                     {
                         Directory.CreateDirectory(_saveImagesDir);
                     }
 
-                    // 기존 catalog 내용 불러오기 (이어쓰기)
                     if (File.Exists(_catalogPath))
                     {
                         _catalogLines.AddRange(File.ReadAllLines(_catalogPath));
@@ -448,25 +446,32 @@ namespace DataManager.UserControls
                 }
                 else
                 {
-                    // 기존 데이터 초기화 후 새로 저장
                     if (Directory.Exists(_saveImagesDir))
                         Directory.Delete(_saveImagesDir, true);
-
                     Directory.CreateDirectory(_saveImagesDir);
                 }
 
                 int _savedCount = 0;
 
+                // 각 라인의 바이트 길이를 저장할 리스트
+                List<int> _lineLengths = new List<int>();
+
+                // 이어쓰기 모드일 경우 기존 카탈로그 파일의 라인 바이트 수 계산
+                if (_isContinue && _catalogLines.Count > 0)
+                {
+                    foreach (var line in _catalogLines)
+                    {
+                        _lineLengths.Add(System.Text.Encoding.UTF8.GetByteCount(line) + 1);
+                    }
+                }
+
                 for (int _i = 0; _i < drivingData.Count; _i++)
                 {
                     if (filteredHideSet.Contains(_i))
                         continue;
-
                     var _frame = drivingData[_i];
 
-                    // ── 재정렬 인덱스: 이어쓰기면 기존 개수부터 시작 ────
                     int _newIndex = _startIndex + _savedCount;
-
                     string _ext = Path.GetExtension(_frame.ImagePath);
                     string _newFileName = $"{_newIndex}_cam_image_array_{_ext}";
                     string _destPath = Path.Combine(_saveImagesDir, _newFileName);
@@ -489,24 +494,24 @@ namespace DataManager.UserControls
                         File.Copy(_frame.ImagePath, _destPath, true);
                     }
 
-                    // ── catalog JSON 라인 ─────────────────────────────────
+                    // ── catalog JSON 라인 조립 (콜론과 콤마 뒤 띄어쓰기 수동 추가) ─────────────────
                     var _ordered = new System.Collections.Specialized.OrderedDictionary
-            {
-                { "_index",          _newIndex },
-                { "_session_id",     _frame.SessionId ?? string.Empty },
-                { "_timestamp_ms",   _frame.TimestampMs },
-                { "cam/image_array", _newFileName },
-                { "user/angle",      _frame.Angle },
-                { "user/mode",       _frame.Mode ?? "user" },
-                { "user/throttle",   _frame.Throttle }
-            };
+                    {
+                        { "_index",          _newIndex },
+                        { "_session_id",     _frame.SessionId ?? string.Empty },
+                        { "_timestamp_ms",   _frame.TimestampMs },
+                        { "cam/image_array", _newFileName },
+                        { "user/angle",      _frame.Angle },
+                        { "user/mode",       _frame.Mode ?? "user" },
+                        { "user/throttle",   _frame.Throttle }
+                    };
 
                     var _sb = new System.Text.StringBuilder();
                     _sb.Append("{");
                     bool _first = true;
                     foreach (System.Collections.DictionaryEntry _kv in _ordered)
                     {
-                        if (!_first) _sb.Append(", ");
+                        if (!_first) _sb.Append(", "); // 콤마 뒤 공백 한 칸 추가
                         _first = false;
 
                         string _key = JsonSerializer.Serialize(_kv.Key.ToString());
@@ -518,20 +523,55 @@ namespace DataManager.UserControls
                             case double v: _val = JsonSerializer.Serialize(v); break;
                             default: _val = JsonSerializer.Serialize(_kv.Value?.ToString() ?? ""); break;
                         }
-                        _sb.Append($"{_key}: {_val}");
+                        _sb.Append($"{_key}: {_val}"); // 콜론 뒤 공백 한 칸 추가
                     }
                     _sb.Append("}");
 
-                    _catalogLines.Add(_sb.ToString());
+                    string _jsonLine = _sb.ToString();
+                    _catalogLines.Add(_jsonLine);
+
+                    // 현재 라인의 UTF-8 바이트 크기 계산 (+1은 줄바꿈 문자 \n 값 반영)
+                    int _lineByteCount = System.Text.Encoding.UTF8.GetByteCount(_jsonLine) + 1;
+                    _lineLengths.Add(_lineByteCount);
+
                     _savedCount++;
                 }
 
-                // ── 부속 파일 저장 ────────────────────────────────────────
+                // ── 파일 최종 저장 ────────────────────────────────────────
                 File.WriteAllLines(_catalogPath, _catalogLines);
-                File.WriteAllText(_catalogManifestPath,
-                    "{\"path\": \"catalog_0.catalog\", \"idx\": 0}");
-                File.WriteAllText(_manifestJsonPath,
-                    "{\"format\": \"donkey_car\", \"version\": \"4.3.0\"}");
+
+                // 현재 Unix Timestamp 계산
+                double _unixTimestamp = (DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+
+                // 1. [catalog_0.catalog_manifest] 파일 띄어쓰기 규칙에 맞춰 직접 조립
+                var _mb = new System.Text.StringBuilder();
+                _mb.Append("{");
+                _mb.Append($"\"created_at\": {_unixTimestamp}, ");
+
+                _mb.Append("\"line_lengths\": [");
+                _mb.Append(string.Join(", ", _lineLengths));
+                _mb.Append("], ");
+
+                _mb.Append("\"path\": \"catalog_0.catalog\", ");
+                _mb.Append("\"start_index\": 0");
+                _mb.Append("}");
+
+                File.WriteAllText(_catalogManifestPath, _mb.ToString());
+
+
+                // 2. [manifest.json] 원본 다중 행 포맷 및 띄어쓰기 완벽 반영하여 작성
+                var _manifestLines = new List<string>
+                {
+                    "[\"cam/image_array\", \"user/angle\", \"user/throttle\", \"user/mode\"]",
+                    "[\"image_array\", \"float\", \"float\", \"str\"]",
+                    "{}",
+                    $"{{\"created_at\": {_unixTimestamp}}}",
+                    $"{{\"paths\": [\"catalog_0.catalog\"], \"current_index\": {_startIndex + _savedCount}, \"max_len\": 1000, \"deleted_indexes\": []}}"
+                };
+
+                // 줄바꿈(\n) 형태로 manifest.json 최종 저장
+                File.WriteAllLines(_manifestJsonPath, _manifestLines);
+
 
                 string _modeText = _isContinue ? "이어쓰기" : "새로 저장";
                 ReportLog("정보", $"데이터 저장 완료 [{_modeText}] (총 {_savedCount} 프레임, {_startIndex}번부터 시작)");
