@@ -169,7 +169,7 @@
             Controls.Add(pnlLog);
             Controls.Add(pnlChgForm);
             Name = "MainForm";
-            Text = "Donkey UI";
+            Text = "Data Manager";
             pnlChgForm.ResumeLayout(false);
             pnlLog.ResumeLayout(false);
             ResumeLayout(false);
