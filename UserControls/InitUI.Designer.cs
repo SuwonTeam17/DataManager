@@ -28,25 +28,23 @@
         /// </summary>
         private void InitializeComponent()
         {
-            txtTemp = new TextBox();
+            label1 = new Label();
             SuspendLayout();
             // 
-            // txtTemp
+            // label1
             // 
-            txtTemp.Font = new Font("맑은 고딕", 20F);
-            txtTemp.Location = new Point(185, 208);
-            txtTemp.Multiline = true;
-            txtTemp.Name = "txtTemp";
-            txtTemp.Size = new Size(377, 92);
-            txtTemp.TabIndex = 4;
-            txtTemp.Text = "Init UI\r\n작업할때 이건 삭제하고 작업";
-            txtTemp.TextAlign = HorizontalAlignment.Center;
+            label1.AutoSize = true;
+            label1.Location = new Point(271, 215);
+            label1.Name = "label1";
+            label1.Size = new Size(48, 15);
+            label1.TabIndex = 0;
+            label1.Text = "team17";
             // 
             // InitUI
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            Controls.Add(txtTemp);
+            Controls.Add(label1);
             Name = "InitUI";
             Size = new Size(750, 520);
             ResumeLayout(false);
@@ -54,6 +52,7 @@
         }
 
         #endregion
-        private TextBox txtTemp;
+
+        private Label label1;
     }
 }
