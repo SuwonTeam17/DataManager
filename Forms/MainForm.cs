@@ -32,10 +32,6 @@ namespace DataManager
             {
                 pilotArenaUI.OnLogReported += AppendLogToListView;
             }
-            else if (ui is ModelTestModule modelTestModule)
-            {
-                modelTestModule.OnLogReported += AppendLogToListView;
-            }
 
             pnlMain.Controls.Add(ui);
         }
@@ -57,18 +53,32 @@ namespace DataManager
             lvwLogBox.EnsureVisible(lvwLogBox.Items.Count - 1);
         }
 
+        private void SetActiveTab(Button activeBtn)
+        {
+            // 모든 탭 버튼을 비활성 색으로 초기화
+            btnChgTubForm.BackColor = Color.FromArgb(100, 110, 130);
+            btnChgTrainerForm.BackColor = Color.FromArgb(100, 110, 130);
+            btnChgPilotForm.BackColor = Color.FromArgb(100, 110, 130);
+
+            // 클릭된 버튼만 활성 색으로
+            activeBtn.BackColor = Color.FromArgb(67, 130, 220);
+        }
+
         private void btnChgTubForm_Click(object sender, EventArgs e)
         {
+            SetActiveTab(btnChgTubForm);
             ShowUI(new TubManagerUI());
         }
 
         private void btnChgTrainerForm_Click(object sender, EventArgs e)
         {
+            SetActiveTab(btnChgTrainerForm);
             ShowUI(new TrainerUI());
         }
 
         private void btnChgPilotForm_Click(object sender, EventArgs e)
         {
+            SetActiveTab(btnChgPilotForm);
             ShowUI(new PilotArenaUI());
         }
     }

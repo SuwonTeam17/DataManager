@@ -2,30 +2,17 @@
 {
     partial class PilotArenaUI
     {
-        /// <summary> 
-        /// 필수 디자이너 변수입니다.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary> 
-        /// 사용 중인 모든 리소스를 정리합니다.
-        /// </summary>
-        /// <param name="disposing">관리되는 리소스를 삭제해야 하면 true이고, 그렇지 않으면 false입니다.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
-            {
                 components.Dispose();
-            }
             base.Dispose(disposing);
         }
 
         #region 구성 요소 디자이너에서 생성한 코드
 
-        /// <summary> 
-        /// 디자이너 지원에 필요한 메서드입니다. 
-        /// 이 메서드의 내용을 코드 편집기로 수정하지 마세요.
-        /// </summary>
         private void InitializeComponent()
         {
             lblPilotTest = new Label();
@@ -37,6 +24,7 @@
             btnFrameLeft = new Button();
             pnlSetting = new Panel();
             btnLoadTub = new Button();
+            btnFullGraph = new Button();
             comboBox1 = new ComboBox();
             btnModelAdd = new Button();
             trkBlur = new TrackBar();
@@ -45,7 +33,7 @@
             lblBright = new Label();
             trkProgress = new TrackBar();
             lblSpeed = new Label();
-            flpModule = new FlowLayoutPanel();
+            flpModule = new Panel();
             pnlSetting.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)trkBlur).BeginInit();
             ((System.ComponentModel.ISupportInitialize)trkBright).BeginInit();
@@ -55,71 +43,216 @@
             // lblPilotTest
             // 
             lblPilotTest.Font = new Font("맑은 고딕", 20F, FontStyle.Bold);
-            lblPilotTest.Location = new Point(0, 0);
-            lblPilotTest.Margin = new Padding(3);
+            lblPilotTest.Location = new Point(4, 4);
             lblPilotTest.Name = "lblPilotTest";
-            lblPilotTest.Size = new Size(161, 39);
+            lblPilotTest.Size = new Size(200, 38);
             lblPilotTest.TabIndex = 0;
             lblPilotTest.Text = "모델 테스트";
             // 
-            // btnStop
+            // btnModelAdd
             // 
-            btnStop.Location = new Point(693, 3);
-            btnStop.Name = "btnStop";
-            btnStop.Size = new Size(52, 32);
-            btnStop.TabIndex = 12;
-            btnStop.Text = "중지";
-            btnStop.UseVisualStyleBackColor = true;
+            btnModelAdd.BackColor = Color.FromArgb(72, 175, 120);
+            btnModelAdd.FlatStyle = FlatStyle.Flat;
+            btnModelAdd.FlatAppearance.BorderSize = 0;
+            btnModelAdd.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnModelAdd.ForeColor = Color.White;
+            btnModelAdd.Location = new Point(4, 44);
+            btnModelAdd.Name = "btnModelAdd";
+            btnModelAdd.Size = new Size(90, 24);
+            btnModelAdd.TabIndex = 18;
+            btnModelAdd.Text = "모델 추가";
+            btnModelAdd.UseVisualStyleBackColor = false;
+            btnModelAdd.Cursor = Cursors.Hand;
+            btnModelAdd.Click += btnModelAdd_Click;
+            // 
+            // btnLoadTub
+            // 
+            btnLoadTub.BackColor = Color.FromArgb(100, 150, 210);
+            btnLoadTub.FlatStyle = FlatStyle.Flat;
+            btnLoadTub.FlatAppearance.BorderSize = 0;
+            btnLoadTub.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnLoadTub.ForeColor = Color.White;
+            btnLoadTub.Location = new Point(100, 44);
+            btnLoadTub.Name = "btnLoadTub";
+            btnLoadTub.Size = new Size(90, 24);
+            btnLoadTub.TabIndex = 21;
+            btnLoadTub.Text = "Tub 열기";
+            btnLoadTub.UseVisualStyleBackColor = false;
+            btnLoadTub.Cursor = Cursors.Hand;
+            btnLoadTub.Click += btnLoadTub_Click;
+            // 
+            // lblBlur
+            // 
+            lblBlur.Font = new Font("맑은 고딕", 9.5F);
+            lblBlur.ForeColor = Color.FromArgb(60, 72, 92);
+            lblBlur.Location = new Point(200, 8);
+            lblBlur.Name = "lblBlur";
+            lblBlur.Size = new Size(80, 22);
+            lblBlur.TabIndex = 16;
+            lblBlur.Text = "흐림 : 0.00";
+            lblBlur.TextAlign = ContentAlignment.MiddleRight;
+            // 
+            // trkBlur
+            // 
+            trkBlur.AutoSize = false;
+            trkBlur.LargeChange = 1;
+            trkBlur.Location = new Point(284, 6);
+            trkBlur.Name = "trkBlur";
+            trkBlur.Size = new Size(184, 22);
+            trkBlur.TabIndex = 17;
+            trkBlur.TickStyle = TickStyle.None;
+            // 
+            // lblBright
+            // 
+            lblBright.Font = new Font("맑은 고딕", 9.5F);
+            lblBright.ForeColor = Color.FromArgb(60, 72, 92);
+            lblBright.Location = new Point(200, 40);
+            lblBright.Name = "lblBright";
+            lblBright.Size = new Size(80, 22);
+            lblBright.TabIndex = 14;
+            lblBright.Text = "밝기 : 0.00";
+            lblBright.TextAlign = ContentAlignment.MiddleRight;
+            // 
+            // trkBright
+            // 
+            trkBright.AutoSize = false;
+            trkBright.LargeChange = 1;
+            trkBright.Location = new Point(284, 38);
+            trkBright.Name = "trkBright";
+            trkBright.Size = new Size(184, 22);
+            trkBright.TabIndex = 15;
+            trkBright.TickStyle = TickStyle.None;
+            // 
+            // lblSpeed
+            // 
+            lblSpeed.AutoSize = true;
+            lblSpeed.Font = new Font("맑은 고딕", 9.5F);
+            lblSpeed.ForeColor = Color.FromArgb(60, 72, 92);
+            lblSpeed.Location = new Point(476, 42);
+            lblSpeed.Name = "lblSpeed";
+            lblSpeed.TabIndex = 20;
+            lblSpeed.Text = "배속";
+            lblSpeed.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // comboBox1
+            // 
+            comboBox1.BackColor = Color.White;
+            comboBox1.FlatStyle = FlatStyle.Flat;
+            comboBox1.Font = new Font("맑은 고딕", 9.5F);
+            comboBox1.FormattingEnabled = true;
+            comboBox1.Items.AddRange(new object[] { "0.25", "0.50", "1.00", "2.00", "3.00", "5.00", "10.00" });
+            comboBox1.Location = new Point(514, 38);
+            comboBox1.Name = "comboBox1";
+            comboBox1.Size = new Size(62, 25);
+            comboBox1.TabIndex = 19;
+            comboBox1.Text = "1.00";
+            // 
+            // trkProgress
+            // 
+            trkProgress.AutoSize = false;
+            trkProgress.LargeChange = 1;
+            trkProgress.Location = new Point(582, 38);
+            trkProgress.Name = "trkProgress";
+            trkProgress.Size = new Size(213, 22);
+            trkProgress.TabIndex = 13;
+            trkProgress.TickStyle = TickStyle.None;
+            // 
+            // btnFrameLeft  "<"
+            // 
+            btnFrameLeft.BackColor = Color.FromArgb(100, 150, 210);
+            btnFrameLeft.FlatStyle = FlatStyle.Flat;
+            btnFrameLeft.FlatAppearance.BorderSize = 0;
+            btnFrameLeft.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnFrameLeft.ForeColor = Color.White;
+            btnFrameLeft.Location = new Point(476, 4);
+            btnFrameLeft.Name = "btnFrameLeft";
+            btnFrameLeft.Size = new Size(52, 30);
+            btnFrameLeft.TabIndex = 7;
+            btnFrameLeft.Text = "<";
+            btnFrameLeft.UseVisualStyleBackColor = false;
+            btnFrameLeft.Cursor = Cursors.Hand;
+            // 
+            // btn5FrameLeft  "<<<"
+            // 
+            btn5FrameLeft.BackColor = Color.FromArgb(80, 130, 195);
+            btn5FrameLeft.FlatStyle = FlatStyle.Flat;
+            btn5FrameLeft.FlatAppearance.BorderSize = 0;
+            btn5FrameLeft.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btn5FrameLeft.ForeColor = Color.White;
+            btn5FrameLeft.Location = new Point(532, 4);
+            btn5FrameLeft.Name = "btn5FrameLeft";
+            btn5FrameLeft.Size = new Size(52, 30);
+            btn5FrameLeft.TabIndex = 9;
+            btn5FrameLeft.Text = "<<<";
+            btn5FrameLeft.UseVisualStyleBackColor = false;
+            btn5FrameLeft.Cursor = Cursors.Hand;
+            // 
+            // btnFrameRight  ">"
+            // 
+            btnFrameRight.BackColor = Color.FromArgb(100, 150, 210);
+            btnFrameRight.FlatStyle = FlatStyle.Flat;
+            btnFrameRight.FlatAppearance.BorderSize = 0;
+            btnFrameRight.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnFrameRight.ForeColor = Color.White;
+            btnFrameRight.Location = new Point(588, 4);
+            btnFrameRight.Name = "btnFrameRight";
+            btnFrameRight.Size = new Size(52, 30);
+            btnFrameRight.TabIndex = 8;
+            btnFrameRight.Text = ">";
+            btnFrameRight.UseVisualStyleBackColor = false;
+            btnFrameRight.Cursor = Cursors.Hand;
+            // 
+            // btn5FrameRight  ">>>"
+            // 
+            btn5FrameRight.BackColor = Color.FromArgb(80, 130, 195);
+            btn5FrameRight.FlatStyle = FlatStyle.Flat;
+            btn5FrameRight.FlatAppearance.BorderSize = 0;
+            btn5FrameRight.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btn5FrameRight.ForeColor = Color.White;
+            btn5FrameRight.Location = new Point(644, 4);
+            btn5FrameRight.Name = "btn5FrameRight";
+            btn5FrameRight.Size = new Size(52, 30);
+            btn5FrameRight.TabIndex = 10;
+            btn5FrameRight.Text = ">>>";
+            btn5FrameRight.UseVisualStyleBackColor = false;
+            btn5FrameRight.Cursor = Cursors.Hand;
             // 
             // btnPlay
             // 
-            btnPlay.Location = new Point(642, 3);
+            btnPlay.BackColor = Color.FromArgb(72, 175, 120);
+            btnPlay.FlatStyle = FlatStyle.Flat;
+            btnPlay.FlatAppearance.BorderSize = 0;
+            btnPlay.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnPlay.ForeColor = Color.White;
+            btnPlay.Location = new Point(700, 4);
             btnPlay.Name = "btnPlay";
-            btnPlay.Size = new Size(48, 32);
+            btnPlay.Size = new Size(70, 30);
             btnPlay.TabIndex = 11;
-            btnPlay.Text = "재생";
-            btnPlay.UseVisualStyleBackColor = true;
+            btnPlay.Text = "▶ 재생";
+            btnPlay.UseVisualStyleBackColor = false;
+            btnPlay.Cursor = Cursors.Hand;
             // 
-            // btn5FrameRight
+            // btnStop
             // 
-            btn5FrameRight.Location = new Point(532, 3);
-            btn5FrameRight.Name = "btn5FrameRight";
-            btn5FrameRight.Size = new Size(52, 32);
-            btn5FrameRight.TabIndex = 10;
-            btn5FrameRight.Text = ">>>";
-            btn5FrameRight.UseVisualStyleBackColor = true;
-            // 
-            // btn5FrameLeft
-            // 
-            btn5FrameLeft.Location = new Point(481, 3);
-            btn5FrameLeft.Name = "btn5FrameLeft";
-            btn5FrameLeft.Size = new Size(48, 32);
-            btn5FrameLeft.TabIndex = 9;
-            btn5FrameLeft.Text = "<<<";
-            btn5FrameLeft.UseVisualStyleBackColor = true;
-            // 
-            // btnFrameRight
-            // 
-            btnFrameRight.Location = new Point(587, 3);
-            btnFrameRight.Name = "btnFrameRight";
-            btnFrameRight.Size = new Size(52, 32);
-            btnFrameRight.TabIndex = 8;
-            btnFrameRight.Text = ">";
-            btnFrameRight.UseVisualStyleBackColor = true;
-            // 
-            // btnFrameLeft
-            // 
-            btnFrameLeft.Location = new Point(430, 3);
-            btnFrameLeft.Name = "btnFrameLeft";
-            btnFrameLeft.Size = new Size(48, 32);
-            btnFrameLeft.TabIndex = 7;
-            btnFrameLeft.Text = "<";
-            btnFrameLeft.UseVisualStyleBackColor = true;
+            btnStop.BackColor = Color.FromArgb(210, 70, 70);
+            btnStop.FlatStyle = FlatStyle.Flat;
+            btnStop.FlatAppearance.BorderSize = 0;
+            btnStop.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnStop.ForeColor = Color.White;
+            btnStop.Location = new Point(774, 4);
+            btnStop.Name = "btnStop";
+            btnStop.Size = new Size(70, 30);
+            btnStop.TabIndex = 12;
+            btnStop.Text = "■ 중지";
+            btnStop.UseVisualStyleBackColor = false;
+            btnStop.Cursor = Cursors.Hand;
             // 
             // pnlSetting
             // 
-            pnlSetting.BorderStyle = BorderStyle.FixedSingle;
+            pnlSetting.BackColor = Color.FromArgb(250, 251, 253);
+            pnlSetting.BorderStyle = BorderStyle.None;
             pnlSetting.Controls.Add(btnLoadTub);
+            pnlSetting.Controls.Add(btnFullGraph);
             pnlSetting.Controls.Add(comboBox1);
             pnlSetting.Controls.Add(btnModelAdd);
             pnlSetting.Controls.Add(trkBlur);
@@ -139,114 +272,27 @@
             pnlSetting.Location = new Point(0, 0);
             pnlSetting.Margin = new Padding(0);
             pnlSetting.Name = "pnlSetting";
-            pnlSetting.Size = new Size(750, 63);
+            pnlSetting.Size = new Size(950, 70);
             pnlSetting.TabIndex = 5;
-            // 
-            // btnLoadTub
-            // 
-            btnLoadTub.Location = new Point(81, 38);
-            btnLoadTub.Name = "btnLoadTub";
-            btnLoadTub.Size = new Size(68, 23);
-            btnLoadTub.TabIndex = 21;
-            btnLoadTub.Text = "Tub 열기";
-            btnLoadTub.UseVisualStyleBackColor = true;
-            btnLoadTub.Click += btnLoadTub_Click;
-            // 
-            // comboBox1
-            // 
-            comboBox1.FormattingEnabled = true;
-            comboBox1.Items.AddRange(new object[] { "0.25", "0.50", "1.00", "1.50", "2.00", "3.00", "4.00" });
-            comboBox1.Location = new Point(479, 36);
-            comboBox1.Name = "comboBox1";
-            comboBox1.Size = new Size(50, 23);
-            comboBox1.TabIndex = 19;
-            comboBox1.Text = "1.00";
-            // 
-            // btnModelAdd
-            // 
-            btnModelAdd.Location = new Point(3, 38);
-            btnModelAdd.Name = "btnModelAdd";
-            btnModelAdd.Size = new Size(73, 23);
-            btnModelAdd.TabIndex = 18;
-            btnModelAdd.Text = "모델 추가";
-            btnModelAdd.UseVisualStyleBackColor = true;
-            btnModelAdd.Click += btnModelAdd_Click;
-            // 
-            // trkBlur
-            // 
-            trkBlur.AutoSize = false;
-            trkBlur.LargeChange = 1;
-            trkBlur.Location = new Point(228, 11);
-            trkBlur.Name = "trkBlur";
-            trkBlur.Size = new Size(184, 21);
-            trkBlur.TabIndex = 17;
-            trkBlur.TickStyle = TickStyle.None;
-            // 
-            // lblBlur
-            // 
-            lblBlur.Location = new Point(158, 11);
-            lblBlur.Name = "lblBlur";
-            lblBlur.Size = new Size(71, 22);
-            lblBlur.TabIndex = 16;
-            lblBlur.Text = "흐림 : 0.00";
-            lblBlur.TextAlign = ContentAlignment.MiddleRight;
-            // 
-            // trkBright
-            // 
-            trkBright.AutoSize = false;
-            trkBright.LargeChange = 1;
-            trkBright.Location = new Point(228, 38);
-            trkBright.Name = "trkBright";
-            trkBright.Size = new Size(184, 21);
-            trkBright.TabIndex = 15;
-            trkBright.TickStyle = TickStyle.None;
-            // 
-            // lblBright
-            // 
-            lblBright.Location = new Point(158, 38);
-            lblBright.Name = "lblBright";
-            lblBright.Size = new Size(71, 22);
-            lblBright.TabIndex = 14;
-            lblBright.Text = "밝기 : 0.00";
-            lblBright.TextAlign = ContentAlignment.MiddleRight;
-            // 
-            // trkProgress
-            // 
-            trkProgress.AutoSize = false;
-            trkProgress.LargeChange = 1;
-            trkProgress.Location = new Point(532, 37);
-            trkProgress.Name = "trkProgress";
-            trkProgress.Size = new Size(213, 21);
-            trkProgress.TabIndex = 13;
-            trkProgress.TickStyle = TickStyle.None;
-            // 
-            // lblSpeed
-            // 
-            lblSpeed.AutoSize = true;
-            lblSpeed.Location = new Point(442, 39);
-            lblSpeed.Name = "lblSpeed";
-            lblSpeed.Size = new Size(31, 15);
-            lblSpeed.TabIndex = 20;
-            lblSpeed.Text = "배속";
-            lblSpeed.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // flpModule
             // 
+            flpModule.BackColor = Color.FromArgb(235, 238, 244);
             flpModule.Dock = DockStyle.Fill;
-            flpModule.Location = new Point(0, 63);
+            flpModule.Location = new Point(0, 70);
             flpModule.Margin = new Padding(0);
             flpModule.Name = "flpModule";
-            flpModule.Size = new Size(750, 537);
             flpModule.TabIndex = 6;
             // 
             // PilotArenaUI
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
+            BackColor = Color.FromArgb(245, 247, 250);
             Controls.Add(flpModule);
             Controls.Add(pnlSetting);
             Name = "PilotArenaUI";
-            Size = new Size(750, 600);
+            Size = new Size(950, 766);
             pnlSetting.ResumeLayout(false);
             pnlSetting.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)trkBlur).EndInit();
@@ -267,7 +313,7 @@
         private Button btnFrameLeft;
         private Panel pnlSetting;
         private TrackBar trkProgress;
-        private FlowLayoutPanel flpModule;
+        private Panel flpModule;
         private Label lblBright;
         private TrackBar trkBright;
         private TrackBar trkBlur;
@@ -275,6 +321,7 @@
         private Button btnModelAdd;
         private Label lblSpeed;
         private ComboBox comboBox1;
-            private Button btnLoadTub;
-        }
+        private Button btnLoadTub;
+        private Button btnFullGraph;
     }
+}
