@@ -18,6 +18,8 @@ namespace DataManager.UserControls
             public double Throttle { get; set; }
         }
 
+        public event Action<string, string, string> OnLogReported;
+
         private List<FrameData> frames = new List<FrameData>();
         private string tubFolderPath = string.Empty;
         private int currentFrameIndex = 0;
@@ -441,8 +443,6 @@ namespace DataManager.UserControls
         // SizeChanged 이벤트 → 창 리사이즈 시 호출
         private void FlpModule_SizeChanged(object? sender, EventArgs e) => RefreshModuleLayout();
 
-        public event Action<string, string, string> OnLogReported;
-
         private void ReportLog(string type, string message)
         {
             string currentTime = DateTime.Now.ToString("HH:mm:ss");
@@ -561,31 +561,14 @@ namespace DataManager.UserControls
 
         private void btnLoadTub_Click(object sender, EventArgs e)
         {
-            try
-            {
-                using (var dialog = new Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog())
-                {
-                    dialog.IsFolderPicker = true;
-                    dialog.Title = "Tub 데이터 폴더를 선택하세요";
+            string root = AppPaths.EditedData;
+            if (!Directory.Exists(root))
+                Directory.CreateDirectory(root);
 
-                    if (dialog.ShowDialog() == Microsoft.WindowsAPICodePack.Dialogs.CommonFileDialogResult.Ok)
-                    {
-                        LoadTubFolder(dialog.FileName);
-                    }
-                }
-            }
-            catch
+            using (var browser = new CustomFolderBrowser(root, "Tub 데이터 폴더 선택"))
             {
-                using (FolderBrowserDialog fbd = new FolderBrowserDialog())
-                {
-                    fbd.Description = "Tub 데이터 폴더를 선택하세요";
-                    fbd.UseDescriptionForTitle = true;
-
-                    if (fbd.ShowDialog() == DialogResult.OK)
-                    {
-                        LoadTubFolder(fbd.SelectedPath);
-                    }
-                }
+                if (browser.ShowDialog(this) == DialogResult.OK)
+                    LoadTubFolder(browser.SelectedPath);
             }
         }
     }

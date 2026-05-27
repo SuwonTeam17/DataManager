@@ -2,30 +2,17 @@ namespace DataManager.UserControls
 {
     partial class ModelTestModule
     {
-        /// <summary>
-        /// 필수 디자이너 변수입니다.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary>
-        /// 사용 중인 모든 리소스를 정리합니다.
-        /// </summary>
-        /// <param name="disposing">관리되는 리소스를 삭제해야 하면 true이고, 그렇지 않으면 false입니다.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
-            {
                 components.Dispose();
-            }
             base.Dispose(disposing);
         }
 
         #region 구성 요소 디자이너에서 생성한 코드
 
-        /// <summary>
-        /// 디자이너 지원에 필요한 메서드입니다.
-        /// 이 메서드의 내용을 코드 편집기로 수정하지 마세요.
-        /// </summary>
         private void InitializeComponent()
         {
             System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
@@ -60,27 +47,36 @@ namespace DataManager.UserControls
             // 
             // cboModelType
             // 
+            cboModelType.BackColor = Color.White;
+            cboModelType.FlatStyle = FlatStyle.Flat;
+            cboModelType.Font = new Font("맑은 고딕", 9.5F);
             cboModelType.FormattingEnabled = true;
             cboModelType.Items.AddRange(new object[] { "linear" });
-            cboModelType.Location = new Point(101, 4);
+            cboModelType.Location = new Point(110, 5);
             cboModelType.Name = "cboModelType";
-            cboModelType.Size = new Size(112, 23);
+            cboModelType.Size = new Size(120, 25);
             cboModelType.TabIndex = 5;
             cboModelType.Text = "linear";
             // 
             // btnLoadModel
             // 
-            btnLoadModel.Location = new Point(3, 3);
+            btnLoadModel.BackColor = Color.FromArgb(67, 130, 220);
+            btnLoadModel.Cursor = Cursors.Hand;
+            btnLoadModel.FlatAppearance.BorderSize = 0;
+            btnLoadModel.FlatStyle = FlatStyle.Flat;
+            btnLoadModel.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnLoadModel.ForeColor = Color.White;
+            btnLoadModel.Location = new Point(4, 5);
             btnLoadModel.Name = "btnLoadModel";
-            btnLoadModel.Size = new Size(92, 24);
+            btnLoadModel.Size = new Size(100, 26);
             btnLoadModel.TabIndex = 4;
             btnLoadModel.Text = "모델 가져오기";
-            btnLoadModel.UseVisualStyleBackColor = true;
+            btnLoadModel.UseVisualStyleBackColor = false;
             btnLoadModel.Click += btnLoadModel_Click;
             // 
             // pnlSetting
             // 
-            pnlSetting.BorderStyle = BorderStyle.FixedSingle;
+            pnlSetting.BackColor = Color.FromArgb(250, 251, 253);
             pnlSetting.Controls.Add(btnDelModel);
             pnlSetting.Controls.Add(lblModelRoute);
             pnlSetting.Controls.Add(btnLoadModel);
@@ -88,44 +84,54 @@ namespace DataManager.UserControls
             pnlSetting.Dock = DockStyle.Top;
             pnlSetting.Location = new Point(0, 0);
             pnlSetting.Name = "pnlSetting";
-            pnlSetting.Size = new Size(375, 52);
+            pnlSetting.Size = new Size(375, 54);
             pnlSetting.TabIndex = 6;
             // 
             // btnDelModel
             // 
             btnDelModel.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            btnDelModel.Location = new Point(311, 4);
+            btnDelModel.BackColor = Color.FromArgb(210, 70, 70);
+            btnDelModel.Cursor = Cursors.Hand;
+            btnDelModel.FlatAppearance.BorderSize = 0;
+            btnDelModel.FlatStyle = FlatStyle.Flat;
+            btnDelModel.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnDelModel.ForeColor = Color.White;
+            btnDelModel.Location = new Point(305, 5);
             btnDelModel.Name = "btnDelModel";
-            btnDelModel.Size = new Size(61, 24);
+            btnDelModel.Size = new Size(66, 26);
             btnDelModel.TabIndex = 7;
             btnDelModel.Text = "창 닫기";
-            btnDelModel.UseVisualStyleBackColor = true;
+            btnDelModel.UseVisualStyleBackColor = false;
             btnDelModel.Click += btnDelModel_Click;
             // 
             // lblModelRoute
             // 
             lblModelRoute.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            lblModelRoute.Location = new Point(3, 30);
+            lblModelRoute.Font = new Font("맑은 고딕", 9F);
+            lblModelRoute.ForeColor = Color.FromArgb(120, 130, 150);
+            lblModelRoute.Location = new Point(4, 34);
             lblModelRoute.Margin = new Padding(3);
             lblModelRoute.Name = "lblModelRoute";
-            lblModelRoute.Size = new Size(369, 19);
+            lblModelRoute.Size = new Size(369, 16);
             lblModelRoute.TabIndex = 6;
             lblModelRoute.Text = "(Route)";
             lblModelRoute.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // pnlChart
             // 
-            pnlChart.BorderStyle = BorderStyle.FixedSingle;
+            pnlChart.BackColor = Color.FromArgb(250, 251, 253);
             pnlChart.Controls.Add(chart2);
             pnlChart.Controls.Add(chart1);
             pnlChart.Dock = DockStyle.Bottom;
-            pnlChart.Location = new Point(0, 289);
+            pnlChart.Location = new Point(0, 296);
             pnlChart.Name = "pnlChart";
             pnlChart.Size = new Size(375, 248);
             pnlChart.TabIndex = 7;
             // 
             // chart2
             // 
+            chart2.BackColor = Color.FromArgb(250, 251, 253);
+            chartArea1.BackColor = Color.FromArgb(250, 251, 253);
             chartArea1.Name = "ChartArea1";
             chart2.ChartAreas.Add(chartArea1);
             chart2.Dock = DockStyle.Fill;
@@ -136,15 +142,18 @@ namespace DataManager.UserControls
             chart2.Name = "chart2";
             series1.ChartArea = "ChartArea1";
             series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series1.Color = Color.FromArgb(67, 130, 220);
             series1.Legend = "Legend1";
             series1.Name = "각도 오차";
             chart2.Series.Add(series1);
-            chart2.Size = new Size(373, 123);
+            chart2.Size = new Size(375, 125);
             chart2.TabIndex = 1;
             chart2.Text = "chart2";
             // 
             // chart1
             // 
+            chart1.BackColor = Color.FromArgb(250, 251, 253);
+            chartArea2.BackColor = Color.FromArgb(250, 251, 253);
             chartArea2.Name = "ChartArea1";
             chart1.ChartAreas.Add(chartArea2);
             chart1.Dock = DockStyle.Top;
@@ -155,37 +164,39 @@ namespace DataManager.UserControls
             chart1.Name = "chart1";
             series2.ChartArea = "ChartArea1";
             series2.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series2.Color = Color.FromArgb(72, 175, 120);
             series2.Legend = "Legend1";
             series2.Name = "속도 오차";
             chart1.Series.Add(series2);
-            chart1.Size = new Size(373, 123);
+            chart1.Size = new Size(375, 123);
             chart1.TabIndex = 0;
             chart1.Text = "chart1";
             // 
             // pnlImage
             // 
+            pnlImage.BackColor = Color.FromArgb(20, 20, 30);
             pnlImage.Controls.Add(picImage);
             pnlImage.Controls.Add(pnlData);
             pnlImage.Dock = DockStyle.Fill;
-            pnlImage.Location = new Point(0, 52);
+            pnlImage.Location = new Point(0, 54);
             pnlImage.Name = "pnlImage";
-            pnlImage.Size = new Size(375, 237);
+            pnlImage.Size = new Size(375, 242);
             pnlImage.TabIndex = 8;
             // 
             // picImage
             // 
-            picImage.BackColor = Color.Black;
+            picImage.BackColor = Color.FromArgb(20, 20, 30);
             picImage.Dock = DockStyle.Fill;
             picImage.Location = new Point(0, 0);
             picImage.Name = "picImage";
-            picImage.Size = new Size(375, 187);
+            picImage.Size = new Size(375, 212);
+            picImage.SizeMode = PictureBoxSizeMode.StretchImage;
             picImage.TabIndex = 1;
             picImage.TabStop = false;
-            picImage.Click += picImage_Click;
             // 
             // pnlData
             // 
-            pnlData.BorderStyle = BorderStyle.FixedSingle;
+            pnlData.BackColor = Color.FromArgb(250, 251, 253);
             pnlData.Controls.Add(gaugeBar2);
             pnlData.Controls.Add(gaugeBar1);
             pnlData.Controls.Add(lblThrottle);
@@ -193,38 +204,42 @@ namespace DataManager.UserControls
             pnlData.Dock = DockStyle.Bottom;
             pnlData.Location = new Point(0, 187);
             pnlData.Name = "pnlData";
-            pnlData.Size = new Size(375, 50);
+            pnlData.Size = new Size(375, 30);
             pnlData.TabIndex = 0;
             // 
             // gaugeBar2
             // 
-            gaugeBar2.Location = new Point(225, 4);
+            gaugeBar2.Location = new Point(227, 6);
             gaugeBar2.Name = "gaugeBar2";
-            gaugeBar2.Size = new Size(138, 15);
+            gaugeBar2.Size = new Size(138, 16);
             gaugeBar2.TabIndex = 2;
             // 
             // gaugeBar1
             // 
-            gaugeBar1.Location = new Point(42, 4);
+            gaugeBar1.Location = new Point(42, 6);
             gaugeBar1.Name = "gaugeBar1";
-            gaugeBar1.Size = new Size(138, 15);
+            gaugeBar1.Size = new Size(138, 16);
             gaugeBar1.TabIndex = 0;
             // 
             // lblThrottle
             // 
-            lblThrottle.Location = new Point(188, 4);
+            lblThrottle.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            lblThrottle.ForeColor = Color.FromArgb(72, 175, 120);
+            lblThrottle.Location = new Point(188, 6);
             lblThrottle.Margin = new Padding(5, 3, 3, 3);
             lblThrottle.Name = "lblThrottle";
-            lblThrottle.Size = new Size(31, 15);
+            lblThrottle.Size = new Size(40, 18);
             lblThrottle.TabIndex = 1;
             lblThrottle.Text = "속도";
             // 
             // lblAngle
             // 
-            lblAngle.Location = new Point(5, 4);
+            lblAngle.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            lblAngle.ForeColor = Color.FromArgb(67, 130, 220);
+            lblAngle.Location = new Point(5, 6);
             lblAngle.Margin = new Padding(5, 3, 3, 3);
             lblAngle.Name = "lblAngle";
-            lblAngle.Size = new Size(31, 15);
+            lblAngle.Size = new Size(39, 18);
             lblAngle.TabIndex = 0;
             lblAngle.Text = "각도";
             // 
@@ -232,12 +247,13 @@ namespace DataManager.UserControls
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
+            BackColor = Color.FromArgb(245, 247, 250);
             Controls.Add(pnlImage);
             Controls.Add(pnlChart);
             Controls.Add(pnlSetting);
             Margin = new Padding(0);
             Name = "ModelTestModule";
-            Size = new Size(375, 537);
+            Size = new Size(375, 544);
             Load += ModelTestModule_Load;
             pnlSetting.ResumeLayout(false);
             pnlChart.ResumeLayout(false);
