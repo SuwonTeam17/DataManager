@@ -87,7 +87,7 @@ namespace DataManager.UserControls
             comboBox1.SelectedIndexChanged += ComboBox1_SelectedIndexChanged;
             trkProgress.Scroll += TrkProgress_Scroll;
 
-            // ── [추가] 타임라인 패널 깜빡임 방지 (더블 버퍼링 켜기) ──
+            // 타임라인 패널 깜빡임 방지 (더블 버퍼링 켜기)
             if (pnlTimeStamp != null)
             {
                 System.Reflection.PropertyInfo aProp = typeof(System.Windows.Forms.Control)
@@ -102,6 +102,9 @@ namespace DataManager.UserControls
                 pnlTimeStamp.MouseDown += PnlTimeStamp_MouseDown;
                 pnlTimeStamp.MouseMove += PnlTimeStamp_MouseMove;
                 pnlTimeStamp.MouseUp += PnlTimeStamp_MouseUp;
+
+                // ⭐ [추가] 화면 확장/축소 시 타임라인을 다시 그리도록 이벤트 연결
+                pnlTimeStamp.Resize += PnlTimeStamp_Resize;
             }
         }
 
@@ -1132,7 +1135,7 @@ namespace DataManager.UserControls
 
             // ── 기존 로직 3. 현재 재생 위치(Playhead) 표시 (빨간색이나 파란색 선) ──
             int currentX = (int)((double)currentFrameIndex / (totalFrames - 1) * width);
-            using (Pen playheadPen = new Pen(Color.Red, 2)) // 이미지 위에 잘 보이도록 빨간색 추천
+            using (Pen playheadPen = new Pen(Color.Blue, 3)) // 이미지 위에 잘 보이도록 빨간색 추천
             {
                 g.DrawLine(playheadPen, currentX, 0, currentX, height);
             }
@@ -1192,5 +1195,12 @@ namespace DataManager.UserControls
                 picImage?.Refresh();
             }
         }
+
+        private void PnlTimeStamp_Resize(object sender, EventArgs e)
+        {
+            // 패널의 크기가 가로/세로로 확장되면 전체 영역을 무효화하여 Paint 내용을 새로 갱신합니다.
+            pnlTimeStamp?.Invalidate();
+        }
+
     }
 }
