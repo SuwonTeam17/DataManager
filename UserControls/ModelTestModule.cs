@@ -40,6 +40,8 @@ namespace DataManager.UserControls
         private Dictionary<int, double> frameThrottleUser = new();
         private Dictionary<int, double> frameThrottlePilot = new();
         private Dictionary<int, string> frameImagePaths = new();
+        // [추가] 실시간 메모리 필터 이미지 보관소 (키: 프레임 인덱스, 값: 가공된 Bitmap)
+        private Dictionary<int, Bitmap> frameMemoryBitmaps = new();
 
         // 가장 최근에 요청된 중심 프레임 — 사용자가 다른 프레임으로 이동하면 창 예측을 중단하는 데 사용
         private volatile int _latestWindowCenter = -1;
@@ -353,21 +355,52 @@ namespace DataManager.UserControls
         {
             frameAnglePilot.Clear();
             frameThrottlePilot.Clear();
+
+            // [추가] 필터 초기화 시 보관 중인 가공 비트맵 해제 및 클리어
+            foreach (var bmp in frameMemoryBitmaps.Values)
+            {
+                bmp?.Dispose();
+            }
+            frameMemoryBitmaps.Clear();
         }
 
-        /// <summary>이미지 경로와 user 값을 함께 저장. PilotArenaUI가 ±5 윈도우 전체에 호출.</summary>
+        /// <summary>이미지 경로, 가공 비트맵 및 user 값을 함께 저장.</summary>
+        // 1. [기존 호출부 호환용] Bitmap이 넘어오지 않는 기존 코드들을 위한 오버로딩 메서드 추가
         public void SetFrameContext(int frameIndex, string imagePath, double angle, double throttle)
+        {
+            // 내부적으로 새로 만든 메서드를 호출하되, Bitmap 자리에 null을 전달합니다.
+            SetFrameContext(frameIndex, imagePath, null, angle, throttle);
+        }
+
+        // 2. [실시간 가공용] 새로 수정하신 매개변수 5개짜리 메서드
+        public void SetFrameContext(int frameIndex, string imagePath, Bitmap? memoryBitmap, double angle, double throttle)
         {
             frameImagePaths[frameIndex] = imagePath;
             frameAngleUser[frameIndex] = angle;
             frameThrottleUser[frameIndex] = throttle;
+
+            // 기존에 보관 중이던 비트맵이 있다면 메모리 누수 방지를 위해 해제
+            if (frameMemoryBitmaps.TryGetValue(frameIndex, out var oldBmp))
+            {
+                oldBmp?.Dispose();
+            }
+
+            // 새 가공 비트맵 보관
+            if (memoryBitmap != null)
+            {
+                frameMemoryBitmaps[frameIndex] = new Bitmap(memoryBitmap);
+            }
+            else
+            {
+                frameMemoryBitmaps.Remove(frameIndex);
+            }
         }
 
-        public void UpdateFrame(string imagePath, double actualAngle, double actualThrottle, int frameIndex = 0, double? predictedAngle = null, double? predictedThrottle = null)
+        public void UpdateFrame(string imagePath, Bitmap? memoryBitmap, double actualAngle, double actualThrottle, int frameIndex = 0, double? predictedAngle = null, double? predictedThrottle = null)
         {
             currentActualAngle = actualAngle;
             currentActualThrottle = actualThrottle;
-            currentImagePath = imagePath;
+            currentImagePath = imagePath; // 기본값은 원본 경로
             currentFrameIndex = frameIndex;
 
             frameAngleUser[frameIndex] = actualAngle;
@@ -375,11 +408,35 @@ namespace DataManager.UserControls
             frameImagePaths[frameIndex] = imagePath;
             _latestWindowCenter = frameIndex;
 
-            if (imagePath != lastLoadedImagePath)
+            var oldImage = picImage.Image;
+            var oldStream = currentImageStream;
+
+            try
             {
-                var oldImage = picImage.Image;
-                var oldStream = currentImageStream;
-                try
+                // 실시간 가공된 비트맵이 들어온 경우
+                if (memoryBitmap != null)
+                {
+                    picImage.Image = new Bitmap(memoryBitmap);
+                    oldImage?.Dispose();
+                    oldStream?.Dispose();
+                    currentImageStream = null;
+
+                    // [보완 핵심] 파이썬 AI도 흐림/밝기가 적용된 이미지를 보게 만듭니다.
+                    // EditedData 대신 윈도우 임시 폴더를 사용해 컴퓨터에 찌꺼기 파일이 남지 않습니다.
+                    string tempDir = Path.Combine(Path.GetTempPath(), "PilotArenaCache");
+                    if (!Directory.Exists(tempDir)) Directory.CreateDirectory(tempDir);
+
+                    string tempImagePath = Path.Combine(tempDir, $"temp_frame_{frameIndex}.jpg");
+
+                    // 메모리 비트맵을 임시 파일로 딱 한 장만 저장 (기존 파일에 덮어쓰기 되므로 용량 차지 X)
+                    memoryBitmap.Save(tempImagePath, System.Drawing.Imaging.ImageFormat.Jpeg);
+
+                    // 파이썬 프로세스가 읽어갈 경로를 임시 파일 경로로 교체!
+                    currentImagePath = tempImagePath;
+                    frameImagePaths[frameIndex] = tempImagePath;
+                    lastLoadedImagePath = "memory_transformed_" + frameIndex;
+                }
+                else if (imagePath != lastLoadedImagePath)
                 {
                     var newStream = new MemoryStream(File.ReadAllBytes(imagePath));
                     picImage.Image = new Bitmap(newStream);
@@ -388,8 +445,8 @@ namespace DataManager.UserControls
                     oldImage?.Dispose();
                     oldStream?.Dispose();
                 }
-                catch { }
             }
+            catch { }
 
             lblAngle.Text = $"조향각\n{FormatVal(actualAngle)}";
             lblThrottle.Text = $"가속값\n{FormatVal(actualThrottle)}";
@@ -397,9 +454,11 @@ namespace DataManager.UserControls
             gaugeBar1.Value = Math.Clamp(actualAngle, -1.0, 1.0);
             gaugeBar2.Value = Math.Clamp(actualThrottle, -1.0, 1.0);
 
+            // 하단 그래프 다시 그리기
             RedrawCharts();
             UpdateErrorLabels();
 
+            // AI 예측 실행 및 그래프 반영
             if (predictedAngle.HasValue && predictedThrottle.HasValue)
             {
                 UpdatePrediction(predictedAngle.Value, predictedThrottle.Value);
