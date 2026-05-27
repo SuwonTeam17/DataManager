@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Text;
 using System.Windows.Forms;
 using System.IO;
@@ -10,6 +11,7 @@ using System.Windows.Forms.DataVisualization.Charting;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace DataManager.UserControls
 {
@@ -49,28 +51,39 @@ namespace DataManager.UserControls
 
         private string lastLoadedImagePath = string.Empty;
         private MemoryStream? currentImageStream;
+        private Label lblModelType = null!;
+        private Label? lblAngleError;
+        private Label? lblThrottleError;
 
         public ModelTestModule()
         {
             InitializeComponent();
 
             picImage.SizeMode = PictureBoxSizeMode.Zoom;
+            picImage.Paint += PicImage_Paint;
 
-            if (!cboModelType.Items.Contains("linear"))
+            // 콤보박스 자리에 meta.txt에서 읽은 모델 유형 레이블 배치
+            cboModelType.Visible = false;
+            lblModelType = new Label
             {
-                cboModelType.Items.Add("linear");
-            }
-            cboModelType.SelectedItem = "linear";
+                Location = cboModelType.Location,
+                Size = cboModelType.Size,
+                BorderStyle = BorderStyle.FixedSingle,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Text = "-",
+                Padding = new Padding(3, 0, 0, 0),
+            };
+            pnlSetting.Controls.Add(lblModelType);
 
             lblAngle.Font = new Font("Consolas", 9f, FontStyle.Bold);
             lblThrottle.Font = new Font("Consolas", 9f, FontStyle.Bold);
-            lblAngle.Text = "Angle\n-";
-            lblThrottle.Text = "Throttle\n-";
+            lblAngle.Text = "조향각\n-";
+            lblThrottle.Text = "가속값\n-";
             pnlData.Resize += PnlData_Resize;
-            Resize += (s, e) => PnlData_Resize(s, e);
             Disposed += (s, e) => StopPythonProcess();
 
             SetupCharts();
+            SetupErrorPanel();
         }
 
         private void SetupCharts()
@@ -111,15 +124,60 @@ namespace DataManager.UserControls
             string c1Area = chart1.ChartAreas[0].Name;
             string c2Area = chart2.ChartAreas[0].Name;
 
-            seriesAngleUser = new Series("user/angle") { ChartType = SeriesChartType.Line, MarkerStyle = MarkerStyle.Circle, MarkerSize = 5, BorderWidth = 3, ChartArea = c1Area, Color = Color.SteelBlue };
-            seriesAnglePilot = new Series("pilot/angle") { ChartType = SeriesChartType.Line, MarkerStyle = MarkerStyle.Circle, MarkerSize = 5, BorderWidth = 3, ChartArea = c1Area, Color = Color.OrangeRed };
+            seriesAngleUser = new Series("사용자 조향각") { ChartType = SeriesChartType.Line, MarkerStyle = MarkerStyle.Circle, MarkerSize = 5, BorderWidth = 3, ChartArea = c1Area, Color = Color.FromArgb(34, 177, 76) };
+            seriesAnglePilot = new Series("자율 조향각") { ChartType = SeriesChartType.Line, MarkerStyle = MarkerStyle.Circle, MarkerSize = 5, BorderWidth = 3, ChartArea = c1Area, Color = Color.DodgerBlue };
             chart1.Series.Add(seriesAngleUser);
             chart1.Series.Add(seriesAnglePilot);
 
-            seriesThrottleUser = new Series("user/throttle") { ChartType = SeriesChartType.Line, MarkerStyle = MarkerStyle.Circle, MarkerSize = 5, BorderWidth = 3, ChartArea = c2Area, Color = Color.SteelBlue };
-            seriesThrottlePilot = new Series("pilot/throttle") { ChartType = SeriesChartType.Line, MarkerStyle = MarkerStyle.Circle, MarkerSize = 5, BorderWidth = 3, ChartArea = c2Area, Color = Color.OrangeRed };
+            seriesThrottleUser = new Series("사용자 가속값") { ChartType = SeriesChartType.Line, MarkerStyle = MarkerStyle.Circle, MarkerSize = 5, BorderWidth = 3, ChartArea = c2Area, Color = Color.FromArgb(34, 177, 76) };
+            seriesThrottlePilot = new Series("자율 가속값") { ChartType = SeriesChartType.Line, MarkerStyle = MarkerStyle.Circle, MarkerSize = 5, BorderWidth = 3, ChartArea = c2Area, Color = Color.DodgerBlue };
             chart2.Series.Add(seriesThrottleUser);
             chart2.Series.Add(seriesThrottlePilot);
+        }
+
+        private void SetupErrorPanel()
+        {
+            lblAngleError = new Label
+            {
+                AutoSize = false,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Font = new Font("Consolas", 8f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(34, 177, 76),
+                BackColor = Color.White,
+                Text = "조향각 오차\n-",
+                BorderStyle = BorderStyle.FixedSingle,
+            };
+
+            lblThrottleError = new Label
+            {
+                AutoSize = false,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Font = new Font("Consolas", 8f, FontStyle.Bold),
+                ForeColor = Color.DodgerBlue,
+                BackColor = Color.White,
+                Text = "가속값 오차\n-",
+                BorderStyle = BorderStyle.FixedSingle,
+            };
+
+            pnlData.Controls.Add(lblAngleError);
+            pnlData.Controls.Add(lblThrottleError);
+        }
+
+        private void UpdateErrorLabels()
+        {
+            if (lblAngleError == null || lblThrottleError == null) return;
+
+            if (frameAnglePilot.TryGetValue(currentFrameIndex, out double pa) &&
+                frameAngleUser.TryGetValue(currentFrameIndex, out double ua))
+                lblAngleError.Text = $"조향각 오차\n{Math.Abs(ua - pa):F4}";
+            else
+                lblAngleError.Text = "조향각 오차\n-";
+
+            if (frameThrottlePilot.TryGetValue(currentFrameIndex, out double pt) &&
+                frameThrottleUser.TryGetValue(currentFrameIndex, out double ut))
+                lblThrottleError.Text = $"가속값 오차\n{Math.Abs(ut - pt):F4}";
+            else
+                lblThrottleError.Text = "가속값 오차\n-";
         }
 
         public event EventHandler CloseRequested;
@@ -188,7 +246,103 @@ namespace DataManager.UserControls
             if (isModelLoaded)
             {
                 lblModelRoute.Text += " (로드 중...)";
+                lblModelType.Text = ReadModelTypeFromMeta(folderPath);
                 _ = StartPythonProcessAsync();
+            }
+            else
+            {
+                lblModelType.Text = "-";
+            }
+        }
+
+        private static string ReadModelTypeFromMeta(string folderPath)
+        {
+            try
+            {
+                string metaPath = Path.Combine(folderPath, "meta.txt");
+                if (!File.Exists(metaPath)) return "-";
+
+                string content = File.ReadAllText(metaPath);
+                var match = Regex.Match(content, @"\(([^)]+)\)");
+                return match.Success ? match.Groups[1].Value : "-";
+            }
+            catch
+            {
+                return "-";
+            }
+        }
+
+        public event EventHandler? ModelReady;
+        public event EventHandler? PredictionUpdated;
+
+        public bool IsModelReady => _pythonReady;
+
+        public string ModelName => string.IsNullOrEmpty(selectedModelFolderPath)
+            ? string.Empty
+            : System.IO.Path.GetFileName(selectedModelFolderPath);
+
+        public (Dictionary<int, double> Angles, Dictionary<int, double> Throttles) GetAllPredictions()
+            => (new Dictionary<int, double>(frameAnglePilot), new Dictionary<int, double>(frameThrottlePilot));
+
+        public async Task RunAllFramePredictionsAsync()
+        {
+            if (!_pythonReady || _pythonStdin == null || _pythonStdout == null) return;
+            if (isPredicting) return;
+            isPredicting = true;
+
+            var indices = frameImagePaths.Keys
+                .OrderBy(idx => Math.Abs(idx - currentFrameIndex))
+                .ToList();
+
+            try
+            {
+                foreach (var idx in indices)
+                {
+                    if (!_pythonReady) break;
+                    if (frameAnglePilot.ContainsKey(idx)) continue;
+                    if (!frameImagePaths.TryGetValue(idx, out string? imgPath)) continue;
+                    if (!File.Exists(imgPath)) continue;
+
+                    await _pythonStdin.WriteLineAsync(imgPath);
+                    await _pythonStdin.FlushAsync();
+
+                    string? response = await _pythonStdout.ReadLineAsync();
+                    if (string.IsNullOrEmpty(response)) { _pythonReady = false; break; }
+
+                    using var doc = JsonDocument.Parse(response);
+                    var root = doc.RootElement;
+                    if (!root.TryGetProperty("angle", out var aElem) ||
+                        !root.TryGetProperty("throttle", out var tElem)) continue;
+
+                    double pa = aElem.GetDouble();
+                    double pt = tElem.GetDouble();
+                    int capturedIdx = idx;
+
+                    this.Invoke((MethodInvoker)delegate
+                    {
+                        frameAnglePilot[capturedIdx] = pa;
+                        frameThrottlePilot[capturedIdx] = pt;
+
+                        if (capturedIdx == currentFrameIndex)
+                        {
+                            lblAngle.Text = $"조향각\n사용자:{FormatVal(currentActualAngle)} 자율:{FormatVal(pa)}";
+                            lblThrottle.Text = $"가속값\n사용자:{FormatVal(currentActualThrottle)} 자율:{FormatVal(pt)}";
+                            picImage.Invalidate();
+                            UpdateErrorLabels();
+                        }
+                        RedrawCharts();
+                        PredictionUpdated?.Invoke(this, EventArgs.Empty);
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                _pythonReady = false;
+                Debug.WriteLine($"[RunAllFramePredictionsAsync] {ex.Message}");
+            }
+            finally
+            {
+                isPredicting = false;
             }
         }
 
@@ -235,13 +389,14 @@ namespace DataManager.UserControls
                 catch { }
             }
 
-            lblAngle.Text = $"Angle\n{FormatVal(actualAngle)}";
-            lblThrottle.Text = $"Throttle\n{FormatVal(actualThrottle)}";
+            lblAngle.Text = $"조향각\n{FormatVal(actualAngle)}";
+            lblThrottle.Text = $"가속값\n{FormatVal(actualThrottle)}";
 
             gaugeBar1.Value = Math.Clamp(actualAngle, -1.0, 1.0);
             gaugeBar2.Value = Math.Clamp(actualThrottle, -1.0, 1.0);
 
             RedrawCharts();
+            UpdateErrorLabels();
 
             if (predictedAngle.HasValue && predictedThrottle.HasValue)
             {
@@ -259,13 +414,15 @@ namespace DataManager.UserControls
             Debug.WriteLine($"[UpdatePrediction] currentActualAngle={currentActualAngle:F4} | currentActualThrottle={currentActualThrottle:F4}");
             Debug.WriteLine($"[UpdatePrediction] diff angle={predictedAngle - currentActualAngle:F4} | diff throttle={predictedThrottle - currentActualThrottle:F4}");
 
-            lblAngle.Text = $"Angle\nu:{FormatVal(currentActualAngle)} p:{FormatVal(predictedAngle)}";
-            lblThrottle.Text = $"Throttle\nu:{FormatVal(currentActualThrottle)} p:{FormatVal(predictedThrottle)}";
+            lblAngle.Text = $"조향각\n사용자:{FormatVal(currentActualAngle)} 자율:{FormatVal(predictedAngle)}";
+            lblThrottle.Text = $"가속값\n사용자:{FormatVal(currentActualThrottle)} 자율:{FormatVal(predictedThrottle)}";
 
             frameAnglePilot[currentFrameIndex] = predictedAngle;
             frameThrottlePilot[currentFrameIndex] = predictedThrottle;
 
+            picImage.Invalidate();
             RedrawCharts();
+            UpdateErrorLabels();
         }
 
         private void RedrawCharts()
@@ -357,10 +514,8 @@ namespace DataManager.UserControls
                         string cur = lblModelRoute.Text.Replace(" (로드 중...)", "");
                         lblModelRoute.Text = cur + " ✓";
                         ReportLog("정보", "Python 모델 로드 완료. 추론 준비됨.");
+                        ModelReady?.Invoke(this, EventArgs.Empty);
                     }));
-
-                    if (!string.IsNullOrEmpty(currentImagePath) && File.Exists(currentImagePath))
-                        this.Invoke((MethodInvoker)(() => { _ = RunPredictionWindowAsync(currentFrameIndex); }));
                 }
                 else
                 {
@@ -453,14 +608,17 @@ namespace DataManager.UserControls
                         frameAnglePilot[capturedIdx] = pa;
                         frameThrottlePilot[capturedIdx] = pt;
 
-                        // 현재 보여주는 프레임이 center인 경우에만 레이블 갱신
+                        // 현재 보여주는 프레임이 center인 경우에만 레이블/오버레이 갱신
                         if (capturedIdx == centerFrame && _latestWindowCenter == centerFrame)
                         {
-                            lblAngle.Text = $"Angle\nu:{FormatVal(currentActualAngle)} p:{FormatVal(pa)}";
-                            lblThrottle.Text = $"Throttle\nu:{FormatVal(currentActualThrottle)} p:{FormatVal(pt)}";
+                            lblAngle.Text = $"조향각\n사용자:{FormatVal(currentActualAngle)} 자율:{FormatVal(pa)}";
+                            lblThrottle.Text = $"가속값\n사용자:{FormatVal(currentActualThrottle)} 자율:{FormatVal(pt)}";
+                            picImage.Invalidate();
+                            UpdateErrorLabels();
                         }
 
                         RedrawCharts();
+                        PredictionUpdated?.Invoke(this, EventArgs.Empty);
                     });
 
                     Debug.WriteLine($"[Window] center={centerFrame} offset={offset:+0;-0;0} frame={capturedIdx} angle={pa:F4} throttle={pt:F4}");
@@ -509,5 +667,41 @@ namespace DataManager.UserControls
         }
 
         private static string FormatVal(double v) => v < 0 ? $"{v:F3}" : $" {v:F3}";
+
+        private void picImage_Click(object sender, EventArgs e) { }
+
+        private void PicImage_Paint(object? sender, PaintEventArgs e)
+        {
+            if (picImage.Width <= 0 || picImage.Height <= 0) return;
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            DrawSteeringLine(e.Graphics, picImage.Width, picImage.Height, currentActualAngle, Color.FromArgb(220, 0, 210, 0));
+            if (frameAnglePilot.TryGetValue(currentFrameIndex, out double pa))
+                DrawSteeringLine(e.Graphics, picImage.Width, picImage.Height, pa, Color.FromArgb(220, 30, 144, 255));
+        }
+
+        private static void DrawSteeringLine(Graphics g, int w, int h, double angle, Color color)
+        {
+            float startX = w / 2f;
+            float startY = h * 0.9f;
+            float length = h * 0.36f;
+
+            double radians = angle * 45.0 * Math.PI / 180.0;
+            float endX = startX + (float)(Math.Sin(radians) * length);
+            float endY = startY - (float)(Math.Cos(radians) * length);
+
+            using var pen = new Pen(color, 4.5f) { EndCap = System.Drawing.Drawing2D.LineCap.Round, StartCap = System.Drawing.Drawing2D.LineCap.Round };
+            g.DrawLine(pen, startX, startY, endX, endY);
+
+            // 화살촉
+            double lineAngle = Math.Atan2(endY - startY, endX - startX);
+            float arrowLen = 18f;
+            double spread = 25.0 * Math.PI / 180.0;
+            g.DrawLine(pen, endX, endY,
+                endX - (float)(Math.Cos(lineAngle + spread) * arrowLen),
+                endY - (float)(Math.Sin(lineAngle + spread) * arrowLen));
+            g.DrawLine(pen, endX, endY,
+                endX - (float)(Math.Cos(lineAngle - spread) * arrowLen),
+                endY - (float)(Math.Sin(lineAngle - spread) * arrowLen));
+        }
     }
 }

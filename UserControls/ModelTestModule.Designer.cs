@@ -202,7 +202,7 @@ namespace DataManager.UserControls
             pnlData.Controls.Add(lblThrottle);
             pnlData.Controls.Add(lblAngle);
             pnlData.Dock = DockStyle.Bottom;
-            pnlData.Location = new Point(0, 212);
+            pnlData.Location = new Point(0, 187);
             pnlData.Name = "pnlData";
             pnlData.Size = new Size(375, 30);
             pnlData.TabIndex = 0;

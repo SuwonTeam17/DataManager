@@ -24,6 +24,7 @@
             btnFrameLeft = new Button();
             pnlSetting = new Panel();
             btnLoadTub = new Button();
+            btnFullGraph = new Button();
             comboBox1 = new ComboBox();
             btnModelAdd = new Button();
             trkBlur = new TrackBar();
@@ -251,6 +252,7 @@
             pnlSetting.BackColor = Color.FromArgb(250, 251, 253);
             pnlSetting.BorderStyle = BorderStyle.None;
             pnlSetting.Controls.Add(btnLoadTub);
+            pnlSetting.Controls.Add(btnFullGraph);
             pnlSetting.Controls.Add(comboBox1);
             pnlSetting.Controls.Add(btnModelAdd);
             pnlSetting.Controls.Add(trkBlur);
@@ -320,5 +322,6 @@
         private Label lblSpeed;
         private ComboBox comboBox1;
         private Button btnLoadTub;
+        private Button btnFullGraph;
     }
 }
