@@ -131,7 +131,7 @@ namespace DataManager.UserControls
             chart2.Dock = DockStyle.Fill;
             legend1.Name = "Legend1";
             chart2.Legends.Add(legend1);
-            chart2.Location = new Point(0, 123);
+            chart2.Location = new Point(0, 132);
             chart2.Margin = new Padding(0);
             chart2.Name = "chart2";
             series1.ChartArea = "ChartArea1";
@@ -191,7 +191,7 @@ namespace DataManager.UserControls
             pnlData.Controls.Add(lblThrottle);
             pnlData.Controls.Add(lblAngle);
             pnlData.Dock = DockStyle.Bottom;
-            pnlData.Location = new Point(0, 187);
+            pnlData.Location = new Point(0, 212);
             pnlData.Name = "pnlData";
             pnlData.Size = new Size(375, 50);
             pnlData.TabIndex = 0;

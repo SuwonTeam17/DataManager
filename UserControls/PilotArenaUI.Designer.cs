@@ -74,14 +74,37 @@
             // 
             // btnPlay
             // 
-            btnPlay.Location = new Point(642, 3);
-            btnPlay.Name = "btnPlay";
-            btnPlay.Size = new Size(48, 32);
-            btnPlay.TabIndex = 11;
-            btnPlay.Text = "재생";
-            btnPlay.UseVisualStyleBackColor = true;
-            // 
-            // btn5FrameRight
+            btnLoadTub.BackColor = Color.FromArgb(100, 150, 210);
+            btnLoadTub.FlatStyle = FlatStyle.Flat;
+            btnLoadTub.FlatAppearance.BorderSize = 0;
+            btnLoadTub.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnLoadTub.ForeColor = Color.White;
+            btnLoadTub.Location = new Point(100, 44);
+            btnLoadTub.Name = "btnLoadTub";
+            btnLoadTub.Size = new Size(90, 24);
+            btnLoadTub.TabIndex = 21;
+            btnLoadTub.Text = "Tub 열기";
+            btnLoadTub.UseVisualStyleBackColor = false;
+            btnLoadTub.Cursor = Cursors.Hand;
+            btnLoadTub.Click += btnLoadTub_Click;
+            //
+            // btnFullGraph
+            //
+            btnFullGraph.BackColor = Color.FromArgb(130, 100, 200);
+            btnFullGraph.FlatStyle = FlatStyle.Flat;
+            btnFullGraph.FlatAppearance.BorderSize = 0;
+            btnFullGraph.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnFullGraph.ForeColor = Color.White;
+            btnFullGraph.Location = new Point(196, 44);
+            btnFullGraph.Name = "btnFullGraph";
+            btnFullGraph.Size = new Size(90, 24);
+            btnFullGraph.TabIndex = 22;
+            btnFullGraph.Text = "전체 그래프";
+            btnFullGraph.UseVisualStyleBackColor = false;
+            btnFullGraph.Cursor = Cursors.Hand;
+            btnFullGraph.Click += btnFullGraph_Click;
+            //
+            // lblBlur
             // 
             btn5FrameRight.Location = new Point(532, 3);
             btn5FrameRight.Name = "btn5FrameRight";

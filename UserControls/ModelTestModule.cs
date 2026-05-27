@@ -50,8 +50,8 @@ namespace DataManager.UserControls
         private string lastLoadedImagePath = string.Empty;
         private MemoryStream? currentImageStream;
         private Label lblModelType = null!;
-        private Label? lblAngleError;
-        private Label? lblThrottleError;
+        private Label lblAngleError = null!;
+        private Label lblThrottleError = null!;
 
         public ModelTestModule()
         {
@@ -81,7 +81,7 @@ namespace DataManager.UserControls
             Disposed += (s, e) => StopPythonProcess();
 
             SetupCharts();
-            SetupErrorPanel();
+            SetupErrorLabels();
         }
 
         private void SetupCharts()
@@ -133,38 +133,8 @@ namespace DataManager.UserControls
             chart2.Series.Add(seriesThrottlePilot);
         }
 
-        private void SetupErrorPanel()
-        {
-            lblAngleError = new Label
-            {
-                AutoSize = false,
-                TextAlign = ContentAlignment.MiddleCenter,
-                Font = new Font("Consolas", 8f, FontStyle.Bold),
-                ForeColor = Color.FromArgb(34, 177, 76),
-                BackColor = Color.White,
-                Text = "조향각 오차\n-",
-                BorderStyle = BorderStyle.FixedSingle,
-            };
-
-            lblThrottleError = new Label
-            {
-                AutoSize = false,
-                TextAlign = ContentAlignment.MiddleCenter,
-                Font = new Font("Consolas", 8f, FontStyle.Bold),
-                ForeColor = Color.DodgerBlue,
-                BackColor = Color.White,
-                Text = "가속값 오차\n-",
-                BorderStyle = BorderStyle.FixedSingle,
-            };
-
-            pnlData.Controls.Add(lblAngleError);
-            pnlData.Controls.Add(lblThrottleError);
-        }
-
         private void UpdateErrorLabels()
         {
-            if (lblAngleError == null || lblThrottleError == null) return;
-
             if (frameAnglePilot.TryGetValue(currentFrameIndex, out double pa) &&
                 frameAngleUser.TryGetValue(currentFrameIndex, out double ua))
                 lblAngleError.Text = $"조향각 오차\n{Math.Abs(ua - pa):F4}";
@@ -176,6 +146,43 @@ namespace DataManager.UserControls
                 lblThrottleError.Text = $"가속값 오차\n{Math.Abs(ut - pt):F4}";
             else
                 lblThrottleError.Text = "가속값 오차\n-";
+        }
+
+        private void SetupErrorLabels()
+        {
+            lblAngleError = MakeErrorLabel("조향각 오차\n-", Color.FromArgb(34, 177, 76));
+            lblThrottleError = MakeErrorLabel("가속값 오차\n-", Color.DodgerBlue);
+            Controls.Add(lblAngleError);
+            Controls.Add(lblThrottleError);
+            lblAngleError.BringToFront();
+            lblThrottleError.BringToFront();
+            Resize += (s, e) => PositionErrorLabels();
+        }
+
+        private static Label MakeErrorLabel(string text, Color foreColor) => new Label
+        {
+            AutoSize = false,
+            Size = new Size(90, 34),
+            TextAlign = ContentAlignment.MiddleCenter,
+            Font = new Font("Consolas", 8f, FontStyle.Bold),
+            ForeColor = foreColor,
+            BackColor = Color.FromArgb(210, 245, 247, 250),
+            Text = text,
+            BorderStyle = BorderStyle.FixedSingle,
+        };
+
+        private void PositionErrorLabels()
+        {
+            const int chartTotalH = 248;
+            const int chart1H    = 132;
+            const int chart2H    = chartTotalH - chart1H;
+            const int lblW = 90, lblH = 34;
+
+            int chartTop = Height - chartTotalH;
+            int x = Width - lblW - 4;
+
+            lblAngleError.SetBounds(x, chartTop + (chart1H - lblH) / 2, lblW, lblH);
+            lblThrottleError.SetBounds(x, chartTop + chart1H + (chart2H - lblH) / 2, lblW, lblH);
         }
 
         public event EventHandler CloseRequested;
@@ -656,7 +663,11 @@ namespace DataManager.UserControls
             }
         }
 
-        public void UpdateLayout() => PnlData_Resize(this, EventArgs.Empty);
+        public void UpdateLayout()
+        {
+            PnlData_Resize(this, EventArgs.Empty);
+            PositionErrorLabels();
+        }
 
         private void PnlData_Resize(object? sender, EventArgs e)
         {
@@ -688,16 +699,19 @@ namespace DataManager.UserControls
         {
             if (picImage.Width <= 0 || picImage.Height <= 0) return;
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-            DrawSteeringLine(e.Graphics, picImage.Width, picImage.Height, currentActualAngle, Color.FromArgb(220, 0, 210, 0));
+            DrawSteeringLine(e.Graphics, picImage.Width, picImage.Height, currentActualAngle, currentActualThrottle, Color.FromArgb(220, 0, 210, 0));
             if (frameAnglePilot.TryGetValue(currentFrameIndex, out double pa))
-                DrawSteeringLine(e.Graphics, picImage.Width, picImage.Height, pa, Color.FromArgb(220, 30, 144, 255));
+            {
+                double pt = frameThrottlePilot.TryGetValue(currentFrameIndex, out double ptVal) ? ptVal : 0.0;
+                DrawSteeringLine(e.Graphics, picImage.Width, picImage.Height, pa, pt, Color.FromArgb(220, 30, 144, 255));
+            }
         }
 
-        private static void DrawSteeringLine(Graphics g, int w, int h, double angle, Color color)
+        private static void DrawSteeringLine(Graphics g, int w, int h, double angle, double throttle, Color color)
         {
             float startX = w / 2f;
             float startY = h * 0.9f;
-            float length = h * 0.36f;
+            float length = h * (0.15f + 0.30f * (float)Math.Abs(throttle));
 
             double radians = angle * 45.0 * Math.PI / 180.0;
             float endX = startX + (float)(Math.Sin(radians) * length);
