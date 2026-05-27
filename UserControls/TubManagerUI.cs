@@ -118,6 +118,8 @@ namespace DataManager.UserControls
             }
             using (var browser = new CustomFolderBrowser(root, "주행 데이터 폴더 선택"))
             {
+                browser.AllowFileSelection = true;
+
                 if (browser.ShowDialog(this) == DialogResult.OK)
                     LoadDonkeyCarData(browser.SelectedPath);
             }
@@ -340,6 +342,8 @@ namespace DataManager.UserControls
 
             using (var browser = new CustomFolderBrowser(root, "삭제할 폴더 선택 (EditedData 내부 폴더)"))
             {
+                browser.AllowFileSelection = true;
+
                 if (browser.ShowDialog(this) == DialogResult.OK)
                 {
                     string _targetDelPath = browser.SelectedPath;
@@ -385,6 +389,8 @@ namespace DataManager.UserControls
 
             using (var browser = new CustomFolderBrowser(root, "저장 경로 선택 (EditedData 내 하위 폴더)"))
             {
+                browser.AllowFileSelection = true;
+
                 if (browser.ShowDialog(this) == DialogResult.OK)
                 {
                     string chosen = browser.SelectedPath;

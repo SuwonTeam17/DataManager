@@ -333,6 +333,8 @@ namespace DataManager.UserControls
 
             using (var browser = new CustomFolderBrowser(trainRoot, "학습할 데이터(tub) 폴더 선택"))
             {
+                browser.AllowFileSelection = true;
+
                 if (browser.ShowDialog(this) == DialogResult.OK)
                 {
                     tubPath = browser.SelectedPath;

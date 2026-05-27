@@ -203,6 +203,8 @@ namespace DataManager.UserControls
             }
             using (var browser = new CustomFolderBrowser(root, "모델 폴더 선택"))
             {
+                browser.AllowFileSelection = true;
+
                 if (browser.ShowDialog(this) == DialogResult.OK)
                     ProcessSelectedModelFolder(browser.SelectedPath);
             }

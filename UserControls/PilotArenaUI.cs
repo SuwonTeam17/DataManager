@@ -565,8 +565,11 @@ namespace DataManager.UserControls
             if (!Directory.Exists(root))
                 Directory.CreateDirectory(root);
 
+
             using (var browser = new CustomFolderBrowser(root, "Tub 데이터 폴더 선택"))
             {
+                browser.AllowFileSelection = true;
+
                 if (browser.ShowDialog(this) == DialogResult.OK)
                     LoadTubFolder(browser.SelectedPath);
             }

@@ -234,8 +234,17 @@ namespace DataManager
             if (item.Tag == null) return;
 
             string path = (string)item.Tag;
+
             if (Directory.Exists(path))
+            {
                 Navigate(path);
+            }
+            else if (File.Exists(path))
+            {
+                SelectedPath = path;
+                DialogResult = DialogResult.OK;
+                Close();
+            }
         }
 
         private void GoUp()
