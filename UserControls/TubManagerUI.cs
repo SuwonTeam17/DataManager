@@ -248,7 +248,7 @@ namespace DataManager.UserControls
 
             pnlTimeStamp?.Invalidate();
 
-            ReportLog("정보", $"데이터 로드 완료 (총 {drivingData.Count} 프레임)");
+            ReportLog("알림", $"데이터 로드 완료 (총 {drivingData.Count} 프레임)");
         }
 
 
@@ -317,7 +317,7 @@ namespace DataManager.UserControls
                         targetSavePath = _finalNewFolderPath;
                         lblSaveRoute.Text = $"[저장 경로] {_folderName}";
 
-                        ReportLog("정보", $"새 폴더 생성 및 지정 완료: {_folderName}");
+                        ReportLog("알림", $"새 폴더 생성 및 지정 완료: {_folderName}");
                         MessageBox.Show($"[{_folderName}] 폴더가 성공적으로 생성되고 저장 경로로 지정되었습니다.", "성공");
                     }
                     else
@@ -362,7 +362,7 @@ namespace DataManager.UserControls
                         try
                         {
                             Directory.Delete(_targetDelPath, true);
-                            ReportLog("정보", $"편집 폴더 삭제 완료: {_folderName}");
+                            ReportLog("알림", $"편집 폴더 삭제 완료: {_folderName}");
 
                             if (targetSavePath == _targetDelPath)
                             {
@@ -401,7 +401,7 @@ namespace DataManager.UserControls
                     }
                     targetSavePath = chosen;
                     lblSaveRoute.Text = $"[저장 경로] {Path.GetFileName(targetSavePath)}";
-                    ReportLog("정보", $"데이터 저장 경로 지정됨: {targetSavePath}");
+                    ReportLog("알림", $"데이터 저장 경로 지정됨: {targetSavePath}");
                 }
             }
         }
@@ -703,14 +703,14 @@ namespace DataManager.UserControls
             if (drivingData.Count == 0) return;
             isPlaying = true;
             playTimer.Start();
-            ReportLog("정보", "데이터 재생을 시작합니다.");
+            ReportLog("알림", "데이터 재생을 시작합니다.");
         }
 
         private void btnStop_Click(object sender, EventArgs e)
         {
             isPlaying = false;
             playTimer.Stop();
-            ReportLog("정보", "데이터 재생을 일시 정지합니다.");
+            ReportLog("알림", "데이터 재생을 일시 정지합니다.");
         }
 
         private void ComboBox1_SelectedIndexChanged(object sender, EventArgs e)
@@ -745,7 +745,7 @@ namespace DataManager.UserControls
             }
 
             UpdateRangeLabel();
-            ReportLog("정보", $"시작 범위 지정: {drivingData[currentFrameIndex].Index}번 프레임");
+            ReportLog("알림", $"시작 범위 지정: {drivingData[currentFrameIndex].Index}번 프레임");
         }
 
         private void btnRightRange_Click(object sender, EventArgs e)
@@ -764,7 +764,7 @@ namespace DataManager.UserControls
             }
 
             UpdateRangeLabel();
-            ReportLog("정보", $"종료 범위 지정: {drivingData[currentFrameIndex].Index}번 프레임");
+            ReportLog("알림", $"종료 범위 지정: {drivingData[currentFrameIndex].Index}번 프레임");
         }
 
         private void btnAllRange_Click(object sender, EventArgs e)
@@ -773,7 +773,7 @@ namespace DataManager.UserControls
             {
                 selectedRange = new Tuple<int, int>(0, drivingData.Count - 1);
                 UpdateRangeLabel();
-                ReportLog("정보", "전체 범위가 선택되었습니다.");
+                ReportLog("알림", "전체 범위가 선택되었습니다.");
             }
         }
 
@@ -865,7 +865,7 @@ namespace DataManager.UserControls
 
             int _hiddenCount = filteredHideSet.Count(x => x >= _start && x <= _end);
             int _filteredCount = filteredFrameMap.Count(x => x.Key >= _start && x.Key <= _end);
-            ReportLog("정보", $"필터 적용 완료 — 숨김: {_hiddenCount}개, 이미지 변환: {_filteredCount}개 " +
+            ReportLog("알림", $"필터 적용 완료 — 숨김: {_hiddenCount}개, 이미지 변환: {_filteredCount}개 " +
                               $"(범위: {drivingData[_start].Index} ~ {drivingData[_end].Index})");
         }
 
@@ -884,7 +884,7 @@ namespace DataManager.UserControls
             // ── 타임라인 갱신 추가 ──
             pnlTimeStamp?.Invalidate();
 
-            ReportLog("정보", "임시 필터 결과가 모두 취소되었습니다.");
+            ReportLog("알림", "임시 필터 결과가 모두 취소되었습니다.");
         }
         private void btnInitFillterSet_Click(object sender, EventArgs e)
         {
@@ -896,7 +896,7 @@ namespace DataManager.UserControls
             chkSetBlur.Checked = false;
             trkSetBright.Value = trkSetBright.Minimum;
             trkSetBlur.Value = trkSetBlur.Minimum;
-            ReportLog("정보", "필터 설정이 초기화되었습니다.");
+            ReportLog("알림", "필터 설정이 초기화되었습니다.");
         }
 
         private void ApplyImageFiltersOnView()

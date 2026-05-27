@@ -582,7 +582,7 @@ namespace DataManager.UserControls
                     this.BeginInvoke((MethodInvoker)delegate
                     {
                         // 화면의 로그 기록에는 안전하게 빼둔 savedExitCode를 사용합니다.
-                        ReportLog("Error", $"학습 중 오류 발생! (종료 코드: {savedExitCode})");
+                        ReportLog("오류", $"학습 중 오류 발생! (종료 코드: {savedExitCode})");
 
                         string displayError = string.IsNullOrWhiteSpace(pythonErrorMessage)
                                               ? "알 수 없는 이유로 프로세스가 강제 종료되었습니다. (메모리 부족 등)"
@@ -624,7 +624,7 @@ namespace DataManager.UserControls
                     }
                     prgTrain.Value = prgTrain.Maximum;
 
-                    ReportLog("Success", $"학습 완료! '{modelName}' 이름으로 저장되었습니다.");
+                    ReportLog("알림", $"학습 완료! '{modelName}' 이름으로 저장되었습니다.");
 
                     // 4줄 영수증 기록
                     string curDataset = Path.GetFileName(tubPath);

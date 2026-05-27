@@ -171,7 +171,7 @@ namespace DataManager.UserControls
 
             if (File.Exists(catalogPath))
             {
-                ReportLog("정보", $"Tub 카탈로그 로드 시도 중: {catalogPath}");
+                ReportLog("알림", $"Tub 카탈로그 로드 시도 중: {catalogPath}");
                 var lines = File.ReadAllLines(catalogPath);
                 foreach (var line in lines)
                 {
@@ -215,14 +215,14 @@ namespace DataManager.UserControls
 
             if (frames.Count > 0)
             {
-                ReportLog("정보", $"총 {frames.Count} 프레임의 Tub 데이터가 성공적으로 로드되었습니다.");
+                ReportLog("알림", $"총 {frames.Count} 프레임의 Tub 데이터가 성공적으로 로드되었습니다.");
                 trkProgress.Minimum = 0;
                 trkProgress.Maximum = frames.Count - 1;
                 trkProgress.Value = 0;
             }
             else
             {
-                ReportLog("경고", "유효한 Tub 프레임 데이터가 없습니다.");
+                ReportLog("알림", "유효한 Tub 프레임 데이터가 없습니다.");
                 trkProgress.Minimum = 0;
                 trkProgress.Maximum = 0;
                 trkProgress.Value = 0;

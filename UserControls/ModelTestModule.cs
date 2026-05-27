@@ -642,7 +642,7 @@ namespace DataManager.UserControls
                     {
                         string cur = lblModelRoute.Text.Replace(" (로드 중...)", "");
                         lblModelRoute.Text = cur + " ✓";
-                        ReportLog("정보", "Python 모델 로드 완료. 추론 준비됨.");
+                        ReportLog("알림", "Python 모델 로드 완료. 추론 준비됨.");
                         ModelReady?.Invoke(this, EventArgs.Empty);
                     }));
                 }
