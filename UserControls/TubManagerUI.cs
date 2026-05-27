@@ -110,25 +110,16 @@ namespace DataManager.UserControls
 
         private void btnFileLoad_Click(object sender, EventArgs e)
         {
-
-            using (FolderBrowserDialog _dialog = new FolderBrowserDialog())
+            string root = AppPaths.MycarData;
+            if (!Directory.Exists(root))
             {
-
-                _dialog.AutoUpgradeEnabled = true;
-                _dialog.Description = "Donkey Car 주행 데이터를 선택하세요.";
-
-                _dialog.UseDescriptionForTitle = true;
-                _dialog.RootFolder = Environment.SpecialFolder.MyComputer;
-
-
-                if (_dialog.ShowDialog() == DialogResult.OK)
-                {
-                
-                    string _selectedFolderPath = _dialog.SelectedPath;
-                //    lblSaveRoute.Text = _selectedFolderPath;
-                    LoadDonkeyCarData(_selectedFolderPath);
-
-                }
+                MessageBox.Show($"mycar/data 폴더를 찾을 수 없습니다.\n경로: {root}", "알림");
+                return;
+            }
+            using (var browser = new CustomFolderBrowser(root, "주행 데이터 폴더 선택"))
+            {
+                if (browser.ShowDialog(this) == DialogResult.OK)
+                    LoadDonkeyCarData(browser.SelectedPath);
             }
         }
 
@@ -343,18 +334,17 @@ namespace DataManager.UserControls
 
         private void btnDelFolder_Click(object sender, EventArgs e)
         {
-            using (FolderBrowserDialog _dialog = new FolderBrowserDialog())
+            string root = AppPaths.EditedData;
+            if (!Directory.Exists(root))
+                Directory.CreateDirectory(root);
+
+            using (var browser = new CustomFolderBrowser(root, "삭제할 폴더 선택 (EditedData 내부 폴더)"))
             {
-                _dialog.AutoUpgradeEnabled = true;
-                _dialog.Description = "삭제할 가공 폴더를 선택하세요 (EditedData 내부 폴더)";
-                _dialog.SelectedPath = baseEditedPath;
-
-                if (_dialog.ShowDialog() == DialogResult.OK)
+                if (browser.ShowDialog(this) == DialogResult.OK)
                 {
-                    string _targetDelPath = _dialog.SelectedPath;
+                    string _targetDelPath = browser.SelectedPath;
 
-
-                    if (!_targetDelPath.Contains(baseEditedPath) || _targetDelPath == baseEditedPath)
+                    if (_targetDelPath.Equals(root, StringComparison.OrdinalIgnoreCase))
                     {
                         MessageBox.Show("EditedData 내부에 생성된 하위 가공 폴더만 삭제할 수 있습니다.", "보안 경고");
                         return;
@@ -389,23 +379,21 @@ namespace DataManager.UserControls
 
         private void btnSaveRoute_Click(object sender, EventArgs e)
         {
-            using (FolderBrowserDialog _dialog = new FolderBrowserDialog())
+            string root = AppPaths.EditedData;
+            if (!Directory.Exists(root))
+                Directory.CreateDirectory(root);
+
+            using (var browser = new CustomFolderBrowser(root, "저장 경로 선택 (EditedData 내 하위 폴더)"))
             {
-                _dialog.AutoUpgradeEnabled = true;
-                _dialog.Description = "편집된 데이터를 저장할 하위 폴더를 지정해 주세요.";
-                _dialog.SelectedPath = baseEditedPath;
-
-                if (_dialog.ShowDialog() == DialogResult.OK)
+                if (browser.ShowDialog(this) == DialogResult.OK)
                 {
-                    string _chosenPath = _dialog.SelectedPath;
-
-                    if (!_chosenPath.Contains(baseEditedPath) || _chosenPath == baseEditedPath)
+                    string chosen = browser.SelectedPath;
+                    if (chosen.Equals(root, StringComparison.OrdinalIgnoreCase))
                     {
-                        MessageBox.Show("반드시 EditedData 안에 존재하는 생성된 하위 폴더를 선택해야 합니다.", "알림");
+                        MessageBox.Show("EditedData 안에 있는 하위 폴더를 선택해야 합니다.", "알림");
                         return;
                     }
-
-                    targetSavePath = _chosenPath;
+                    targetSavePath = chosen;
                     lblSaveRoute.Text = $"[저장 경로] {Path.GetFileName(targetSavePath)}";
                     ReportLog("정보", $"데이터 저장 경로 지정됨: {targetSavePath}");
                 }

@@ -1,6 +1,4 @@
-﻿
-
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text.RegularExpressions;
 
 namespace DataManager.UserControls
@@ -250,17 +248,20 @@ namespace DataManager.UserControls
             string tubPath = "";
 
             // 1. 데이터 폴더 선택
-            using (FolderBrowserDialog fbd = new FolderBrowserDialog())
+            string trainRoot = AppPaths.EditedData;
+            if (!Directory.Exists(trainRoot))
+                Directory.CreateDirectory(trainRoot);
+
+            using (var browser = new CustomFolderBrowser(trainRoot, "학습할 데이터(tub) 폴더 선택"))
             {
-                fbd.Description = "학습시킬 주행 데이터(tub) 폴더를 선택해주세요.";
-                if (fbd.ShowDialog() == DialogResult.OK)
+                if (browser.ShowDialog(this) == DialogResult.OK)
                 {
-                    tubPath = fbd.SelectedPath;
+                    tubPath = browser.SelectedPath;
                 }
                 else
                 {
                     btnTrain.Enabled = true;
-                    btnTrain.Text = "학습 시작";
+                    btnTrain.Text = "▶ 훈련 시작";
                     return;
                 }
             }

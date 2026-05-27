@@ -156,7 +156,7 @@
             // 
             comboBox1.FormattingEnabled = true;
             comboBox1.Items.AddRange(new object[] { "0.25", "0.50", "1.00", "2.00", "3.00", "5.00", "10.00" });
-            comboBox1.Location = new Point(379, 36);
+            comboBox1.Location = new Point(480, 36);
             comboBox1.Name = "comboBox1";
             comboBox1.Size = new Size(50, 23);
             comboBox1.TabIndex = 19;

@@ -137,31 +137,16 @@ namespace DataManager.UserControls
 
         private void btnLoadModel_Click(object sender, EventArgs e)
         {
-            try
+            string root = AppPaths.MycarModels;
+            if (!Directory.Exists(root))
             {
-                using (var dialog = new Microsoft.WindowsAPICodePack.Dialogs.CommonOpenFileDialog())
-                {
-                    dialog.IsFolderPicker = true;
-                    dialog.Title = "모델 폴더를 선택하세요";
-
-                    if (dialog.ShowDialog() == Microsoft.WindowsAPICodePack.Dialogs.CommonFileDialogResult.Ok)
-                    {
-                        ProcessSelectedModelFolder(dialog.FileName);
-                    }
-                }
+                MessageBox.Show($"mycar/models 폴더를 찾을 수 없습니다.\n경로: {root}", "알림");
+                return;
             }
-            catch
+            using (var browser = new CustomFolderBrowser(root, "모델 폴더 선택"))
             {
-                using (FolderBrowserDialog fbd = new FolderBrowserDialog())
-                {
-                    fbd.Description = "모델 폴더를 선택하세요.";
-                    fbd.UseDescriptionForTitle = true;
-
-                    if (fbd.ShowDialog() == DialogResult.OK)
-                    {
-                        ProcessSelectedModelFolder(fbd.SelectedPath);
-                    }
-                }
+                if (browser.ShowDialog(this) == DialogResult.OK)
+                    ProcessSelectedModelFolder(browser.SelectedPath);
             }
         }
 
