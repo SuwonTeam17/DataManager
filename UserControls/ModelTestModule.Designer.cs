@@ -75,11 +75,8 @@ namespace DataManager.UserControls
             btnLoadModel.UseVisualStyleBackColor = false;
             btnLoadModel.Click += btnLoadModel_Click;
             // 
-            // pnlSetting
-            // 
-            //
             // btnFullGraph
-            //
+            // 
             btnFullGraph.BackColor = Color.FromArgb(130, 100, 200);
             btnFullGraph.Cursor = Cursors.Hand;
             btnFullGraph.FlatAppearance.BorderSize = 0;
@@ -93,9 +90,9 @@ namespace DataManager.UserControls
             btnFullGraph.Text = "전체 그래프";
             btnFullGraph.UseVisualStyleBackColor = false;
             btnFullGraph.Click += btnFullGraph_Click;
-            //
+            // 
             // pnlSetting
-            //
+            // 
             pnlSetting.BackColor = Color.FromArgb(250, 251, 253);
             pnlSetting.Controls.Add(btnDelModel);
             pnlSetting.Controls.Add(btnFullGraph);
@@ -158,7 +155,7 @@ namespace DataManager.UserControls
             chart2.Dock = DockStyle.Fill;
             legend1.Name = "Legend1";
             chart2.Legends.Add(legend1);
-            chart2.Location = new Point(0, 132);
+            chart2.Location = new Point(0, 123);
             chart2.Margin = new Padding(0);
             chart2.Name = "chart2";
             series1.ChartArea = "ChartArea1";
@@ -210,7 +207,7 @@ namespace DataManager.UserControls
             picImage.Dock = DockStyle.Fill;
             picImage.Location = new Point(0, 0);
             picImage.Name = "picImage";
-            picImage.Size = new Size(375, 212);
+            picImage.Size = new Size(375, 203);
             picImage.SizeMode = PictureBoxSizeMode.StretchImage;
             picImage.TabIndex = 1;
             picImage.TabStop = false;
@@ -223,9 +220,9 @@ namespace DataManager.UserControls
             pnlData.Controls.Add(lblThrottle);
             pnlData.Controls.Add(lblAngle);
             pnlData.Dock = DockStyle.Bottom;
-            pnlData.Location = new Point(0, 212);
+            pnlData.Location = new Point(0, 203);
             pnlData.Name = "pnlData";
-            pnlData.Size = new Size(375, 30);
+            pnlData.Size = new Size(375, 39);
             pnlData.TabIndex = 0;
             // 
             // gaugeBar2
