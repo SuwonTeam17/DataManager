@@ -94,7 +94,7 @@
             pnlLog.Location = new Point(0, 625);
             pnlLog.Margin = new Padding(0);
             pnlLog.Name = "pnlLog";
-            pnlLog.Size = new Size(750, 80);
+            pnlLog.Size = new Size(750, 112);
             pnlLog.TabIndex = 6;
             // 
             // lvwLogBox
@@ -105,7 +105,7 @@
             lvwLogBox.GridLines = true;
             lvwLogBox.Location = new Point(0, 0);
             lvwLogBox.Name = "lvwLogBox";
-            lvwLogBox.Size = new Size(750, 80);
+            lvwLogBox.Size = new Size(750, 112);
             lvwLogBox.TabIndex = 0;
             lvwLogBox.UseCompatibleStateImageBehavior = false;
             lvwLogBox.View = View.Details;
@@ -137,7 +137,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(750, 705);
+            ClientSize = new Size(750, 737);
             Controls.Add(pnlMain);
             Controls.Add(pnlLog);
             Controls.Add(pnlChgForm);
