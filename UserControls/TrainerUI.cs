@@ -142,7 +142,14 @@ namespace DataManager.UserControls
             // 1. 파일이 없을 때 메인 폼의 로그박스 원격 호출
             if (!File.Exists(filePath))
             {
-                ReportLog("오류", $"myconfig.py 파일을 찾을 수 없습니다. 경로: {filePath}");
+                // 1. 디버깅의 생명줄 (개발자를 위한 기록)
+                ReportLog("오류", $"설정 파일 누락: myconfig.py 파일을 찾을 수 없음. (탐색 경로: {filePath})");
+
+                // 2. 사용자에게 알림 (사용자를 위한 경고)
+                MessageBox.Show($"동키카 설정 파일(myconfig.py)을 찾을 수 없습니다.\n아래 경로에 파일이 존재하는지 확인해 주세요.\n\n경로: {filePath}",
+                                "설정 파일 누락",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
                 return;
             }
 
@@ -202,8 +209,16 @@ namespace DataManager.UserControls
             }
             catch (Exception ex)
             {
-                // 3. 예외 발생 시 메인 폼의 로그박스 원격 호출
-                ReportLog("오류", $"파일 저장 중 시스템 오류 발생: {ex.Message}");
+                // 1. 개발자용: 나중에 디버깅을 위해 상세한 예외 전체 경로를 기록합니다.
+                ReportLog("오류", $"파일 저장 중 시스템 오류 발생: {ex.ToString()}");
+
+                // 2. 사용자용: 저장이 안 되었음을 알리고, 흔한 원인을 짚어줍니다.
+                MessageBox.Show("파일을 저장하는 중에 시스템 오류가 발생했습니다.\n" +
+                                "디스크 용량이 부족하거나 저장할 폴더에 쓰기 권한이 없을 수 있습니다.\n\n" +
+                                $"[상세 원인] {ex.Message}",
+                                "파일 저장 실패",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
             }
         }
 
@@ -352,7 +367,14 @@ namespace DataManager.UserControls
                 DirectoryInfo parentInfo = Directory.GetParent(currentPath);
                 if (parentInfo == null)
                 {
-                    ReportLog("오류", "'env' 파이썬 엔진 폴더를 찾을 수 없습니다.");
+                    // 1. 디버깅을 위한 영구적인 증거(로그)를 남깁니다.
+                    ReportLog("치명적 오류", "파이썬 엔진 누락: 'env' 폴더를 찾을 수 없음. (경로 탐색 실패)");
+
+                    // 2. 사용자에게 가장 강력한(Error) 시각적 경고를 줍니다.
+                    MessageBox.Show("AI 훈련을 위한 핵심 파이썬 엔진('env' 폴더)을 찾을 수 없습니다.\n프로그램이 정상적으로 설치되었는지 확인해 주세요.",
+                                    "시스템 치명적 오류",
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Error); // ⬅️ Warning이나 Information이 아닌 Error(빨간 X) 사용!
                     return;
                 }
                 currentPath = parentInfo.FullName;
@@ -362,7 +384,22 @@ namespace DataManager.UserControls
 
             // 3. 자동 모델 이름 생성 및 메모 박제
             string timestamp = DateTime.Now.ToString("yyMMdd_HHmmss");
-            string curMemo = string.IsNullOrWhiteSpace(txtComment.Text) ? "새로 학습된 모델입니다." : txtComment.Text;
+            string defaultMemo = "";
+
+            // 1. 전이학습 콤보박스에서 특정 모델을 선택했다면? (0번 인덱스가 '선택 안 함'이라고 가정)
+            if (cboSelectTransferModel.SelectedIndex > 0)
+            {
+                string baseModel = cboSelectTransferModel.SelectedItem.ToString();
+                defaultMemo = $"[{DateTime.Now.ToString("MM/dd HH:mm")}] '{baseModel}' 기반 이어서 학습";
+            }
+            else
+            {
+                // 2. 아무것도 선택하지 않은 백지상태 학습이라면?
+                defaultMemo = $"[{DateTime.Now.ToString("MM/dd HH:mm")}] 신규 베이스 모델";
+            }
+
+            // 3. 최종 결정 (사용자가 쓴 글이 있으면 그걸 쓰고, 없으면 방금 조립한 defaultMemo를 씁니다)
+            string curMemo = string.IsNullOrWhiteSpace(txtComment.Text) ? defaultMemo : txtComment.Text.Trim();
 
             // 4. 모델 종류(--type) 파라미터 번역
             string selectedType = "linear";
@@ -378,13 +415,40 @@ namespace DataManager.UserControls
             string curTransfer = "X";
             string transferCommand = "";
 
-            if (cboSelectTransferModel.SelectedItem != null && cboSelectTransferModel.SelectedItem.ToString() != "None")
+            // 2. 콤보박스에서 1번째 이상(실제 모델)을 선택했을 때만 경로 탐색을 시작합니다.
+            if (cboSelectTransferModel.SelectedIndex > 0)
             {
                 string selectedBaseModel = cboSelectTransferModel.SelectedItem.ToString();
-                curTransfer = selectedBaseModel;
+                string modelsBaseDir = Path.Combine(mycarPath, "models");
 
-                // 폴더 복사 꼼수 대신 파이썬 명령어에 직접 --transfer 옵션을 추가합니다.
-                transferCommand = $" --transfer \"models\\{selectedBaseModel}\"";
+                string nestedPath = Path.Combine(modelsBaseDir, selectedBaseModel, selectedBaseModel);
+                string flatPath = Path.Combine(modelsBaseDir, selectedBaseModel);
+
+                string targetTransferPath = "";
+
+                // 3. 모델 구조 탐색 (아까 작성한 3중 방어막)
+                if (Directory.Exists(nestedPath) || File.Exists(nestedPath))
+                {
+                    targetTransferPath = $"models\\{selectedBaseModel}\\{selectedBaseModel}";
+                }
+                else if (Directory.Exists(flatPath) || File.Exists(flatPath))
+                {
+                    targetTransferPath = $"models\\{selectedBaseModel}";
+                }
+                else if (File.Exists(flatPath + ".h5"))
+                {
+                    targetTransferPath = $"models\\{selectedBaseModel}.h5";
+                }
+                else
+                {
+                    MessageBox.Show($"'{selectedBaseModel}' 베이스 모델 파일을 찾을 수 없습니다.",
+                                    "모델 찾기 실패", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return; // 훈련 중단
+                }
+
+                // 4. 전이학습을 한다고 했으니 명령어를 채워줍니다.
+                transferCommand = $" --transfer \"{targetTransferPath}\"";
+                curTransfer = selectedBaseModel;
             }
 
             // CPU 모드일 때는 CUDA와 DML 양쪽 모두에게 -1을 주어 GPU를 완벽하게 숨깁니다.
@@ -401,6 +465,10 @@ namespace DataManager.UserControls
                 // ⭐ 새로 추가된 강력한 방어막 (영어, 숫자, 언더바만 허용)
                 if (!Regex.IsMatch(customName, @"^[a-zA-Z0-9_]+$"))
                 {
+                    // 1. 백그라운드 로그 기록 (어떤 글자 때문에 막혔는지 증거를 남김)
+                    ReportLog("경고", $"이름 형식 오류 차단됨: 입력값 '{customName}' (영문, 숫자, 언더바 이외 문자 포함)");
+
+                    // 2. 사용자에게는 팝업창 띄우기
                     MessageBox.Show("안정적인 AI 훈련을 위해 모델 이름은\n영어, 숫자, 언더바(_)만 사용할 수 있습니다.",
                                     "이름 형식 오류", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     btnTrain.Enabled = true;
@@ -419,7 +487,14 @@ namespace DataManager.UserControls
             string modelFolderPath = Path.Combine(mycarPath, "models", modelName);
             if (Directory.Exists(modelFolderPath))
             {
-                ReportLog("오류", $"'{modelName}'(이)라는 모델이 이미 존재합니다. 다른 이름을 지정해주세요.");
+                // 1. 시스템 기록용으로 로그를 조용히 남깁니다.
+                ReportLog("오류", $"이름 중복: '{modelName}' 모델이 이미 존재함.");
+
+                // 2. 사용자에게는 강력하게 경고창을 띄워 행동을 멈춥니다.
+                MessageBox.Show($"'{modelName}'(이)라는 모델이 이미 존재합니다.\n다른 이름을 지정해주세요.",
+                                "이름 중복",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Warning);
                 btnTrain.Enabled = true;
                 btnTrain.Text = "학습 시작";
                 return; // 훈련 중단
@@ -630,6 +705,12 @@ namespace DataManager.UserControls
             {
                 ReportLog("오류", $"훈련 엔진 가동 실패: {ex.Message}");
 
+                MessageBox.Show($"훈련 엔진을 시작하는 중에 에러가 발생했습니다.\n" +
+                    $"파이썬 가상환경(env)이나 데이터 폴더에 문제가 있을 수 있습니다.",
+                    "훈련 가동 실패",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+
                 // ⭐ [추가된 로직] 애초에 엔진 가동조차 실패했을 때도 껍데기 폴더 삭제!
                 if (Directory.Exists(modelFolderPath))
                 {
@@ -717,7 +798,8 @@ namespace DataManager.UserControls
                     item.SubItems.Add(isTransfer);
                     item.SubItems.Add(memo);
 
-                    item.ToolTipText = memo;
+                    // 🛠️ 수정된 코드
+                    item.ToolTipText = modelName;
                     lvwModel.Items.Add(item);
 
                     cboSelectTransferModel.Items.Add(modelName);
@@ -742,7 +824,7 @@ namespace DataManager.UserControls
             {
                 if (item.Text == selectedBaseModel)
                 {
-                    string originalType = item.SubItems[2].Text;
+                    string originalType = item.SubItems[1].Text;
 
                     for (int i = 0; i < cboSelectModelType.Items.Count; i++)
                     {
@@ -765,7 +847,8 @@ namespace DataManager.UserControls
             // 1. [UX 방어막] 리스트뷰에서 아무것도 선택하지 않고 버튼을 눌렀을 때 컷!
             if (lvwModel.SelectedItems.Count == 0)
             {
-                ReportLog("오류", "삭제할 모델이 선택되지 않았습니다.");
+                MessageBox.Show("삭제할 모델을 먼저 선택해 주세요.", "선택 확인",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
@@ -832,8 +915,17 @@ namespace DataManager.UserControls
             }
             catch (Exception ex)
             {
-                // ⭐ 수정된 부분: 파일이 잠겨서 못 지웠는지, 경로를 못 찾았는지 진짜 에러 이유(ex.Message)를 띄워줍니다.
-                ReportLog("오류", $"삭제 실패: {ex.Message}");
+                // 1. 개발자용: 이번에도 역시 ex.Message가 아닌 ex.ToString()을 남겨서 어느 줄에서 터졌는지 기록합니다.
+                ReportLog("오류", $"모델 삭제 실패: {ex.ToString()}");
+
+                // 2. 사용자용: 윈도우에서 가장 자주 발생하는 에러 원인을 친절하게 짚어줍니다.
+                MessageBox.Show("모델을 삭제하는 중 에러가 발생했습니다.\n" +
+                                "해당 모델의 폴더가 열려있거나, 파이썬 백그라운드 프로세스가 파일을 사용 중일 수 있습니다.\n" +
+                                "폴더를 닫거나 잠시 후 다시 시도해 주세요.\n\n" +
+                                $"[상세 원인] {ex.Message}",
+                                "삭제 실패",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
             }
         }
 
@@ -842,7 +934,8 @@ namespace DataManager.UserControls
             // 1. 리스트뷰에서 아무것도 선택하지 않았을 때 컷!
             if (lvwModel.SelectedItems.Count == 0)
             {
-                ReportLog("오류", "메모를 수정할 모델이 선택되지 않았습니다.");
+                MessageBox.Show("메모를 수정할 모델을 먼저 선택해 주세요.", "선택 확인",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
@@ -850,8 +943,8 @@ namespace DataManager.UserControls
             ListViewItem selectedItem = lvwModel.SelectedItems[0];
             string modelName = selectedItem.Text;
 
-            // 6번째 칸(index 6)에서 가져옵니다.
-            string currentMemo = selectedItem.SubItems[6].Text;
+            // 5번째 칸(index 5)에서 가져옵니다.
+            string currentMemo = selectedItem.SubItems[5].Text;
 
             // 3. 수제 팝업창을 띄워서 새로운 메모 입력받기
             string newMemo = ShowInputBox("새로운 메모를 입력하세요:", "메모 수정", currentMemo);
@@ -886,14 +979,24 @@ namespace DataManager.UserControls
                     }
 
                     // 화면의 리스트뷰 표 업데이트
-                    selectedItem.SubItems[6].Text = newMemo;
+                    selectedItem.SubItems[5].Text = newMemo;
                     selectedItem.ToolTipText = newMemo;
 
                     ReportLog("알림", "메모가 성공적으로 수정되었습니다.");
                 }
                 catch (Exception ex)
                 {
-                    ReportLog("오류", $"메모 수정 실패: {ex.Message}");
+                    // 1. 개발자용: 이번에도 역시 ex.Message가 아닌 ex.ToString()을 남겨서 어느 줄에서 터졌는지 기록합니다.
+                    ReportLog("오류", $"메모 수정 실패: {ex.ToString()}");
+
+                    // 2. 사용자용: 윈도우에서 가장 자주 발생하는 에러 원인을 친절하게 짚어줍니다.
+                    MessageBox.Show("메모를 수정하는 중 에러가 발생했습니다.\n" +
+                                    "해당 모델의 폴더가 열려있거나, 파이썬 백그라운드 프로세스가 파일을 사용 중일 수 있습니다.\n" +
+                                    "폴더를 닫거나 잠시 후 다시 시도해 주세요.\n\n" +
+                                    $"[상세 원인] {ex.Message}",
+                                    "수정 실패",
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Error);
                 }
             }
         }
@@ -950,7 +1053,8 @@ namespace DataManager.UserControls
             // 1. 리스트뷰에서 모델 선택 확인
             if (lvwModel.SelectedItems.Count == 0)
             {
-                ReportLog("오류", "설정을 확인할 모델을 먼저 선택해주세요.");
+                MessageBox.Show("설정을 확인할 모델을 먼저 선택해주세요.", "선택 확인",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
@@ -970,7 +1074,14 @@ namespace DataManager.UserControls
 
             if (!File.Exists(savedConfigPath))
             {
-                ReportLog("오류", "이 모델은 예전 방식이라 통합 설정 파일(final_config.txt)이 존재하지 않습니다.\n다시 훈련된 모델부터 적용됩니다.");
+                // 1. 디버깅용 로그 남기기 (어떤 모델이 불량인지 정확히 기록!)
+                ReportLog("오류", $"설정 파일 누락: '{modelName}' 모델에 final_config.txt가 존재하지 않음.");
+
+                // 2. 사용자에게 알려주고 행동 멈추기
+                MessageBox.Show($"'{modelName}' 모델의 통합 설정 파일(final_config.txt)을 찾을 수 없습니다.\n파일이 삭제되었거나 손상되었을 수 있습니다.",
+                                "설정 파일 누락",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error); // 해당 모델을 당장 쓸 수 없으므로 Error 아이콘이 적절합니다.
                 return;
             }
 
@@ -1149,7 +1260,8 @@ namespace DataManager.UserControls
             // 1. 리스트뷰에서 모델 선택 확인
             if (lvwModel.SelectedItems.Count == 0)
             {
-                ReportLog("오류", "그래프를 확인할 모델을 먼저 선택해주세요.");
+                MessageBox.Show("그래프를 확인할 모델을 먼저 선택해주세요.", "선택 확인",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
@@ -1183,8 +1295,15 @@ namespace DataManager.UserControls
             }
             else
             {
-                // 훈련 중 에러가 났거나, 사용자가 폴더에서 사진만 실수로 지운 경우
-                ReportLog("오류", "이 모델의 훈련 그래프(png) 파일이 존재하지 않습니다.");
+                // 1. 어떤 모델의 그래프가 없는지 변수(modelName)를 넣어 로그를 남깁니다.
+                // 등급은 대형 에러가 아니므로 "경고" 또는 "정보"가 좋습니다.
+                ReportLog("경고", $"'{modelName}' 모델의 훈련 그래프 파일(png)이 존재하지 않습니다.");
+
+                // 2. 사용자에게는 경고 아이콘과 함께 안내합니다.
+                MessageBox.Show($"'{modelName}' 모델의 훈련 그래프(png) 파일이 존재하지 않습니다.\n학습이 도중에 중단되었거나 파일이 이동되었을 수 있습니다.",
+                                "그래프 파일 없음",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Warning);
             }
         }
 
@@ -1276,7 +1395,14 @@ namespace DataManager.UserControls
                 DirectoryInfo parentInfo = Directory.GetParent(currentPath);
                 if (parentInfo == null)
                 {
-                    ReportLog("오류", "env 폴더를 찾을 수 없습니다.");
+                    // 1. 디버깅을 위한 영구적인 증거(로그)를 남깁니다.
+                    ReportLog("치명적 오류", "파이썬 엔진 누락: 'env' 폴더를 찾을 수 없음. (경로 탐색 실패)");
+
+                    // 2. 사용자에게 가장 강력한(Error) 시각적 경고를 줍니다.
+                    MessageBox.Show("AI 훈련을 위한 핵심 파이썬 엔진('env' 폴더)을 찾을 수 없습니다.\n프로그램이 정상적으로 설치되었는지 확인해 주세요.",
+                                    "시스템 치명적 오류",
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Error); // ⬅️ Warning이나 Information이 아닌 Error(빨간 X) 사용!
                     return;
                 }
                 currentPath = parentInfo.FullName;
@@ -1295,6 +1421,10 @@ namespace DataManager.UserControls
             // ⭐ 강력한 방어막: 정규표현식으로 영어, 숫자, 언더바(_)만 통과시킵니다.
             if (!Regex.IsMatch(newName, @"^[a-zA-Z0-9_]+$"))
             {
+                // 1. 백그라운드 로그 기록 (어떤 글자 때문에 막혔는지 증거를 남김)
+                ReportLog("경고", $"이름 형식 오류 차단됨: 입력값 '{newName}' (영문, 숫자, 언더바 이외 문자 포함)");
+
+                // 2. 사용자에게는 팝업창 띄우기
                 MessageBox.Show("안정적인 AI 훈련을 위해 모델 이름은\n영어, 숫자, 언더바(_)만 사용할 수 있습니다.",
                                 "이름 형식 오류", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return; // 즉시 중단
@@ -1310,6 +1440,11 @@ namespace DataManager.UserControls
             if (Directory.Exists(newFullDir))
             {
                 ReportLog("오류", $"'{newName}'(이)라는 모델이 이미 존재합니다.");
+
+                MessageBox.Show($"'{newName}'(이)라는 모델이 이미 존재합니다.\n다른 이름을 지정해주세요.",
+                                "이름 중복",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Warning);
                 return;
             }
 
@@ -1342,7 +1477,17 @@ namespace DataManager.UserControls
             }
             catch (Exception ex)
             {
-                ReportLog("오류", $"이름 변경 중 오류 발생: {ex.Message}");
+                // 1. 개발자용: 이번에도 역시 ex.Message가 아닌 ex.ToString()을 남겨서 어느 줄에서 터졌는지 기록합니다.
+                ReportLog("오류", $"이름 변경 실패: {ex.ToString()}");
+
+                // 2. 사용자용: 윈도우에서 가장 자주 발생하는 에러 원인을 친절하게 짚어줍니다.
+                MessageBox.Show("모델 이름을 변경하는 중 에러가 발생했습니다.\n" +
+                                "해당 모델의 폴더가 열려있거나, 파이썬 백그라운드 프로세스가 파일을 사용 중일 수 있습니다.\n" +
+                                "폴더를 닫거나 잠시 후 다시 시도해 주세요.\n\n" +
+                                $"[상세 원인] {ex.Message}",
+                                "이름 변경 실패",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
             }
         }
 
@@ -1355,7 +1500,7 @@ namespace DataManager.UserControls
         // 회색 힌트 글씨를 현재 시간으로 새로고침 하는 함수
         private void UpdatePlaceholder()
         {
-            // 해리 님이 원하셨던 분 단위(yyMMddHHmm) 실시간 포맷
+            // 초 단위(yyMMddHHmm) 실시간 포맷
             txtModelName.PlaceholderText = $"mypilot_{DateTime.Now.ToString("yyMMdd_HHmmss")}";
         }
     }
