@@ -87,7 +87,7 @@ namespace DataManager.UserControls
             comboBox1.SelectedIndexChanged += ComboBox1_SelectedIndexChanged;
             trkProgress.Scroll += TrkProgress_Scroll;
 
-            // ── [추가] 타임라인 패널 깜빡임 방지 (더블 버퍼링 켜기) ──
+            // 타임라인 패널 깜빡임 방지 (더블 버퍼링 켜기)
             if (pnlTimeStamp != null)
             {
                 System.Reflection.PropertyInfo aProp = typeof(System.Windows.Forms.Control)
@@ -102,30 +102,24 @@ namespace DataManager.UserControls
                 pnlTimeStamp.MouseDown += PnlTimeStamp_MouseDown;
                 pnlTimeStamp.MouseMove += PnlTimeStamp_MouseMove;
                 pnlTimeStamp.MouseUp += PnlTimeStamp_MouseUp;
+
+                // ⭐ [추가] 화면 확장/축소 시 타임라인을 다시 그리도록 이벤트 연결
+                pnlTimeStamp.Resize += PnlTimeStamp_Resize;
             }
         }
 
         private void btnFileLoad_Click(object sender, EventArgs e)
         {
-
-            using (FolderBrowserDialog _dialog = new FolderBrowserDialog())
+            string root = AppPaths.MycarData;
+            if (!Directory.Exists(root))
             {
-
-                _dialog.AutoUpgradeEnabled = true;
-                _dialog.Description = "Donkey Car 주행 데이터를 선택하세요.";
-
-                _dialog.UseDescriptionForTitle = true;
-                _dialog.RootFolder = Environment.SpecialFolder.MyComputer;
-
-
-                if (_dialog.ShowDialog() == DialogResult.OK)
-                {
-                
-                    string _selectedFolderPath = _dialog.SelectedPath;
-                //    lblSaveRoute.Text = _selectedFolderPath;
-                    LoadDonkeyCarData(_selectedFolderPath);
-
-                }
+                MessageBox.Show($"mycar/data 폴더를 찾을 수 없습니다.\n경로: {root}", "알림");
+                return;
+            }
+            using (var browser = new CustomFolderBrowser(root, "주행 데이터 폴더 선택"))
+            {
+                if (browser.ShowDialog(this) == DialogResult.OK)
+                    LoadDonkeyCarData(browser.SelectedPath);
             }
         }
 
@@ -153,7 +147,7 @@ namespace DataManager.UserControls
             if (_catalogFiles.Length == 0)
             {
 
-                ReportLog("경고", "해당 폴더에 .catalog 파일이 존재하지 않습니다.");
+                ReportLog("오류", "해당 폴더에 .catalog 파일이 존재하지 않습니다.");
                 MessageBox.Show("해당 폴더 경로에 catalog 파일이 없습니다.", "알림");
 
                 return;
@@ -332,7 +326,7 @@ namespace DataManager.UserControls
                 catch (Exception _ex)
                 {
                     ReportLog("오류", $"폴더 생성 실패: {_ex.Message}");
-                    MessageBox.Show($"폴더 생성 중 오류 발생: {_ex.Message}", "에러");
+                    MessageBox.Show($"폴더 생성 중 오류 발생: {_ex.Message}", "오류");
                 }
             }
         }
@@ -340,18 +334,17 @@ namespace DataManager.UserControls
 
         private void btnDelFolder_Click(object sender, EventArgs e)
         {
-            using (FolderBrowserDialog _dialog = new FolderBrowserDialog())
+            string root = AppPaths.EditedData;
+            if (!Directory.Exists(root))
+                Directory.CreateDirectory(root);
+
+            using (var browser = new CustomFolderBrowser(root, "삭제할 폴더 선택 (EditedData 내부 폴더)"))
             {
-                _dialog.AutoUpgradeEnabled = true;
-                _dialog.Description = "삭제할 가공 폴더를 선택하세요 (EditedData 내부 폴더)";
-                _dialog.SelectedPath = baseEditedPath;
-
-                if (_dialog.ShowDialog() == DialogResult.OK)
+                if (browser.ShowDialog(this) == DialogResult.OK)
                 {
-                    string _targetDelPath = _dialog.SelectedPath;
+                    string _targetDelPath = browser.SelectedPath;
 
-
-                    if (!_targetDelPath.Contains(baseEditedPath) || _targetDelPath == baseEditedPath)
+                    if (_targetDelPath.Equals(root, StringComparison.OrdinalIgnoreCase))
                     {
                         MessageBox.Show("EditedData 내부에 생성된 하위 가공 폴더만 삭제할 수 있습니다.", "보안 경고");
                         return;
@@ -386,23 +379,21 @@ namespace DataManager.UserControls
 
         private void btnSaveRoute_Click(object sender, EventArgs e)
         {
-            using (FolderBrowserDialog _dialog = new FolderBrowserDialog())
+            string root = AppPaths.EditedData;
+            if (!Directory.Exists(root))
+                Directory.CreateDirectory(root);
+
+            using (var browser = new CustomFolderBrowser(root, "저장 경로 선택 (EditedData 내 하위 폴더)"))
             {
-                _dialog.AutoUpgradeEnabled = true;
-                _dialog.Description = "편집된 데이터를 저장할 하위 폴더를 지정해 주세요.";
-                _dialog.SelectedPath = baseEditedPath;
-
-                if (_dialog.ShowDialog() == DialogResult.OK)
+                if (browser.ShowDialog(this) == DialogResult.OK)
                 {
-                    string _chosenPath = _dialog.SelectedPath;
-
-                    if (!_chosenPath.Contains(baseEditedPath) || _chosenPath == baseEditedPath)
+                    string chosen = browser.SelectedPath;
+                    if (chosen.Equals(root, StringComparison.OrdinalIgnoreCase))
                     {
-                        MessageBox.Show("반드시 EditedData 안에 존재하는 생성된 하위 폴더를 선택해야 합니다.", "알림");
+                        MessageBox.Show("EditedData 안에 있는 하위 폴더를 선택해야 합니다.", "알림");
                         return;
                     }
-
-                    targetSavePath = _chosenPath;
+                    targetSavePath = chosen;
                     lblSaveRoute.Text = $"[저장 경로] {Path.GetFileName(targetSavePath)}";
                     ReportLog("정보", $"데이터 저장 경로 지정됨: {targetSavePath}");
                 }
@@ -549,7 +540,7 @@ namespace DataManager.UserControls
             catch (Exception _ex)
             {
                 ReportLog("오류", $"데이터 저장 실패: {_ex.Message}");
-                MessageBox.Show($"저장 중 오류 발생:\n{_ex.Message}", "에러");
+                MessageBox.Show($"저장 중 오류 발생:\n{_ex.Message}", "오류");
             }
         }
 
@@ -694,19 +685,40 @@ namespace DataManager.UserControls
 
         private void btnLeftRange_Click(object sender, EventArgs e)
         {
-            selectedRange = new Tuple<int, int>(currentFrameIndex, selectedRange.Item2);
+            // [방어 코드] 주행 데이터가 로드되지 않았다면 무시
+            if (drivingData == null || drivingData.Count == 0) return;
+
+            // 현재 프레임이 기존 종료 범위보다 뒤에 있다면, 종료 범위도 현재 프레임으로 맞춰서 오류를 방지합니다.
+            if (currentFrameIndex > selectedRange.Item2)
+            {
+                selectedRange = new Tuple<int, int>(currentFrameIndex, currentFrameIndex);
+            }
+            else
+            {
+                selectedRange = new Tuple<int, int>(currentFrameIndex, selectedRange.Item2);
+            }
+
             UpdateRangeLabel();
             ReportLog("정보", $"시작 범위 지정: {drivingData[currentFrameIndex].Index}번 프레임");
         }
 
         private void btnRightRange_Click(object sender, EventArgs e)
         {
-            if (currentFrameIndex >= selectedRange.Item1)
+            // [방어 코드] 주행 데이터가 로드되지 않았다면 무시
+            if (drivingData == null || drivingData.Count == 0) return;
+
+            // 현재 프레임이 기존 시작 범위보다 앞에 있다면, 시작 범위도 현재 프레임으로 맞춰서 오류를 방지합니다.
+            if (currentFrameIndex < selectedRange.Item1)
+            {
+                selectedRange = new Tuple<int, int>(currentFrameIndex, currentFrameIndex);
+            }
+            else
             {
                 selectedRange = new Tuple<int, int>(selectedRange.Item1, currentFrameIndex);
-                UpdateRangeLabel();
-                ReportLog("정보", $"종료 범위 지정: {drivingData[currentFrameIndex].Index}번 프레임");
             }
+
+            UpdateRangeLabel();
+            ReportLog("정보", $"종료 범위 지정: {drivingData[currentFrameIndex].Index}번 프레임");
         }
 
         private void btnAllRange_Click(object sender, EventArgs e)
@@ -721,21 +733,27 @@ namespace DataManager.UserControls
 
         private void UpdateRangeLabel()
         {
+            // [방어 코드] 주행 데이터가 없으면 실행 안 함
+            if (drivingData == null || drivingData.Count == 0) return;
+
             int _start = selectedRange.Item1;
             int _end = selectedRange.Item2;
 
-            // 범위 내 보이는 프레임 수 계산
+            // 혹시 모를 인덱스 초과 및 역전 현상 최종 방어
+            if (_start < 0) _start = 0;
+            if (_end >= drivingData.Count) _end = drivingData.Count - 1;
+            if (_start > _end) _start = _end;
+
+            // 범위 내 보이는 프레임 수 계산 (이제 무조건 0 이상의 개수가 보장됩니다)
             int _visibleInRange = Enumerable.Range(_start, _end - _start + 1)
                                             .Count(i => !filteredHideSet.Contains(i));
-
             int _startDisplayIdx = drivingData[_start].Index;
             int _endDisplayIdx = drivingData[_end].Index;
 
-            lblSelectedRange.Text = $"선택된 범위 ({_startDisplayIdx}, {_endDisplayIdx})  [유효: {_visibleInRange}]";
+            lblSelectedRange.Text = $"선택된 범위 ({_startDisplayIdx}, {_endDisplayIdx})";
 
             // ── 타임라인 갱신 추가 ──
             pnlTimeStamp?.Invalidate();
-
         }
 
         private void btnApplyFillter_Click(object sender, EventArgs e)
@@ -1105,7 +1123,7 @@ namespace DataManager.UserControls
 
             // ── 기존 로직 3. 현재 재생 위치(Playhead) 표시 (빨간색이나 파란색 선) ──
             int currentX = (int)((double)currentFrameIndex / (totalFrames - 1) * width);
-            using (Pen playheadPen = new Pen(Color.Red, 2)) // 이미지 위에 잘 보이도록 빨간색 추천
+            using (Pen playheadPen = new Pen(Color.Blue, 3)) // 이미지 위에 잘 보이도록 빨간색 추천
             {
                 g.DrawLine(playheadPen, currentX, 0, currentX, height);
             }
@@ -1165,5 +1183,12 @@ namespace DataManager.UserControls
                 picImage?.Refresh();
             }
         }
+
+        private void PnlTimeStamp_Resize(object sender, EventArgs e)
+        {
+            // 패널의 크기가 가로/세로로 확장되면 전체 영역을 무효화하여 Paint 내용을 새로 갱신합니다.
+            pnlTimeStamp?.Invalidate();
+        }
+
     }
 }
