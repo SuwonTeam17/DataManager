@@ -26,7 +26,6 @@ namespace DataManager.UserControls
         private System.Windows.Forms.Timer playbackTimer;
 
         private Label lblEmptyModels;
-        private FullGraphForm? _fullGraphForm;
         private DateTime _lastGraphRefresh = DateTime.MinValue;
 
         public PilotArenaUI()
@@ -387,8 +386,8 @@ namespace DataManager.UserControls
                 }
             }
 
-            if (_fullGraphForm != null && !_fullGraphForm.IsDisposed)
-                _fullGraphForm.UpdateCurrentFrame(currentFrameIndex);
+            foreach (var module in flpModule.Controls.OfType<ModelTestModule>())
+                module.UpdateOwnGraphFrame(currentFrameIndex);
         }
 
 
@@ -433,34 +432,17 @@ namespace DataManager.UserControls
             OnLogReported?.Invoke(currentTime, type, message);
         }
 
-        private void RefreshGraphForm()
-        {
-            if (_fullGraphForm == null || _fullGraphForm.IsDisposed) return;
-
-            var userFrames = frames
-                .Select((f, i) => (Index: i, Angle: f.Angle, Throttle: f.Throttle))
-                .ToList();
-
-            var pilotData = flpModule.Controls
-                .OfType<ModelTestModule>()
-                .Select(m =>
-                {
-                    var (angles, throttles) = m.GetAllPredictions();
-                    return (ModelName: m.ModelName, Angles: angles, Throttles: throttles);
-                })
-                .ToList();
-
-            _fullGraphForm.RefreshData(userFrames, pilotData);
-        }
+        private List<(int Index, double Angle, double Throttle)> GetUserFrames() =>
+            frames.Select((f, i) => (Index: i, Angle: f.Angle, Throttle: f.Throttle)).ToList();
 
         // 예측이 추가될 때마다 호출 — 500ms 스로틀링으로 과도한 갱신 방지
         private void Module_PredictionUpdated(object? sender, EventArgs e)
         {
-            if (_fullGraphForm == null || _fullGraphForm.IsDisposed) return;
             var now = DateTime.Now;
             if ((now - _lastGraphRefresh).TotalMilliseconds < 500) return;
             _lastGraphRefresh = now;
-            RefreshGraphForm();
+            foreach (var module in flpModule.Controls.OfType<ModelTestModule>())
+                module.RefreshOwnGraph();
         }
 
         private void TriggerFullScanForModule(ModelTestModule module)
@@ -485,6 +467,7 @@ namespace DataManager.UserControls
             module.OnLogReported += (time, level, msg) => OnLogReported?.Invoke(time, level, msg);
             module.ModelReady += (s, e) => TriggerFullScanForModule(module);
             module.PredictionUpdated += Module_PredictionUpdated;
+            module.UserFramesProvider = GetUserFrames;
 
             flpModule.Controls.Add(module);
 
@@ -507,40 +490,6 @@ namespace DataManager.UserControls
                 module.Dispose();
                 RefreshModuleLayout();
             }
-        }
-
-        private void btnFullGraph_Click(object sender, EventArgs e)
-        {
-            if (frames.Count == 0)
-            {
-                MessageBox.Show("먼저 Tub 데이터를 로드하세요.", "안내", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            if (_fullGraphForm != null && !_fullGraphForm.IsDisposed)
-            {
-                RefreshGraphForm();
-                _fullGraphForm.BringToFront();
-                _fullGraphForm.Focus();
-                return;
-            }
-
-            var userFrames = frames
-                .Select((f, i) => (Index: i, Angle: f.Angle, Throttle: f.Throttle))
-                .ToList();
-
-            var pilotData = flpModule.Controls
-                .OfType<ModelTestModule>()
-                .Select(m =>
-                {
-                    var (angles, throttles) = m.GetAllPredictions();
-                    return (ModelName: m.ModelName, Angles: angles, Throttles: throttles);
-                })
-                .ToList();
-
-            _fullGraphForm = new FullGraphForm(userFrames, pilotData);
-            _fullGraphForm.FormClosed += (s, _) => _fullGraphForm = null;
-            _fullGraphForm.Show(this.FindForm());
         }
 
         private void btnLoadTub_Click(object sender, EventArgs e)

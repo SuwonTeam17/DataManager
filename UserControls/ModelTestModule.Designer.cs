@@ -23,6 +23,7 @@ namespace DataManager.UserControls
             System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
             cboModelType = new ComboBox();
             btnLoadModel = new Button();
+            btnFullGraph = new Button();
             pnlSetting = new Panel();
             btnDelModel = new Button();
             lblModelRoute = new Label();
@@ -76,8 +77,28 @@ namespace DataManager.UserControls
             // 
             // pnlSetting
             // 
+            //
+            // btnFullGraph
+            //
+            btnFullGraph.BackColor = Color.FromArgb(130, 100, 200);
+            btnFullGraph.Cursor = Cursors.Hand;
+            btnFullGraph.FlatAppearance.BorderSize = 0;
+            btnFullGraph.FlatStyle = FlatStyle.Flat;
+            btnFullGraph.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnFullGraph.ForeColor = Color.White;
+            btnFullGraph.Location = new Point(220, 5);
+            btnFullGraph.Name = "btnFullGraph";
+            btnFullGraph.Size = new Size(94, 26);
+            btnFullGraph.TabIndex = 8;
+            btnFullGraph.Text = "전체 그래프";
+            btnFullGraph.UseVisualStyleBackColor = false;
+            btnFullGraph.Click += btnFullGraph_Click;
+            //
+            // pnlSetting
+            //
             pnlSetting.BackColor = Color.FromArgb(250, 251, 253);
             pnlSetting.Controls.Add(btnDelModel);
+            pnlSetting.Controls.Add(btnFullGraph);
             pnlSetting.Controls.Add(lblModelRoute);
             pnlSetting.Controls.Add(btnLoadModel);
             pnlSetting.Controls.Add(cboModelType);
@@ -269,6 +290,7 @@ namespace DataManager.UserControls
 
         private ComboBox cboModelType;
         private Button btnLoadModel;
+        private Button btnFullGraph;
         private Panel pnlSetting;
         private Label lblModelRoute;
         private Button btnDelModel;

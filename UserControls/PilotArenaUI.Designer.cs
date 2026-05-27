@@ -24,7 +24,6 @@
             btnFrameLeft = new Button();
             pnlSetting = new Panel();
             btnLoadTub = new Button();
-            btnFullGraph = new Button();
             comboBox1 = new ComboBox();
             btnModelAdd = new Button();
             trkBlur = new TrackBar();
@@ -80,22 +79,6 @@
             btnLoadTub.UseVisualStyleBackColor = false;
             btnLoadTub.Cursor = Cursors.Hand;
             btnLoadTub.Click += btnLoadTub_Click;
-            //
-            // btnFullGraph
-            //
-            btnFullGraph.BackColor = Color.FromArgb(130, 100, 200);
-            btnFullGraph.FlatStyle = FlatStyle.Flat;
-            btnFullGraph.FlatAppearance.BorderSize = 0;
-            btnFullGraph.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
-            btnFullGraph.ForeColor = Color.White;
-            btnFullGraph.Location = new Point(196, 44);
-            btnFullGraph.Name = "btnFullGraph";
-            btnFullGraph.Size = new Size(90, 24);
-            btnFullGraph.TabIndex = 22;
-            btnFullGraph.Text = "전체 그래프";
-            btnFullGraph.UseVisualStyleBackColor = false;
-            btnFullGraph.Cursor = Cursors.Hand;
-            btnFullGraph.Click += btnFullGraph_Click;
             //
             // lblBlur
             // 
@@ -268,7 +251,6 @@
             pnlSetting.BackColor = Color.FromArgb(250, 251, 253);
             pnlSetting.BorderStyle = BorderStyle.None;
             pnlSetting.Controls.Add(btnLoadTub);
-            pnlSetting.Controls.Add(btnFullGraph);
             pnlSetting.Controls.Add(comboBox1);
             pnlSetting.Controls.Add(btnModelAdd);
             pnlSetting.Controls.Add(trkBlur);
@@ -338,6 +320,5 @@
         private Label lblSpeed;
         private ComboBox comboBox1;
         private Button btnLoadTub;
-        private Button btnFullGraph;
     }
 }
