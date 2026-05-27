@@ -40,6 +40,8 @@ namespace DataManager.UserControls
         private Dictionary<int, double> frameThrottleUser = new();
         private Dictionary<int, double> frameThrottlePilot = new();
         private Dictionary<int, string> frameImagePaths = new();
+        // [추가] 실시간 메모리 필터 이미지 보관소 (키: 프레임 인덱스, 값: 가공된 Bitmap)
+        private Dictionary<int, Bitmap> frameMemoryBitmaps = new();
 
         // 가장 최근에 요청된 중심 프레임 — 사용자가 다른 프레임으로 이동하면 창 예측을 중단하는 데 사용
         private volatile int _latestWindowCenter = -1;
@@ -351,17 +353,48 @@ namespace DataManager.UserControls
         {
             frameAnglePilot.Clear();
             frameThrottlePilot.Clear();
+
+            // [추가] 필터 초기화 시 보관 중인 가공 비트맵 해제 및 클리어
+            foreach (var bmp in frameMemoryBitmaps.Values)
+            {
+                bmp?.Dispose();
+            }
+            frameMemoryBitmaps.Clear();
         }
 
-        /// <summary>이미지 경로와 user 값을 함께 저장. PilotArenaUI가 ±5 윈도우 전체에 호출.</summary>
+        /// <summary>이미지 경로, 가공 비트맵 및 user 값을 함께 저장.</summary>
+        // 1. [기존 호출부 호환용] Bitmap이 넘어오지 않는 기존 코드들을 위한 오버로딩 메서드 추가
         public void SetFrameContext(int frameIndex, string imagePath, double angle, double throttle)
+        {
+            // 내부적으로 새로 만든 메서드를 호출하되, Bitmap 자리에 null을 전달합니다.
+            SetFrameContext(frameIndex, imagePath, null, angle, throttle);
+        }
+
+        // 2. [실시간 가공용] 새로 수정하신 매개변수 5개짜리 메서드
+        public void SetFrameContext(int frameIndex, string imagePath, Bitmap? memoryBitmap, double angle, double throttle)
         {
             frameImagePaths[frameIndex] = imagePath;
             frameAngleUser[frameIndex] = angle;
             frameThrottleUser[frameIndex] = throttle;
+
+            // 기존에 보관 중이던 비트맵이 있다면 메모리 누수 방지를 위해 해제
+            if (frameMemoryBitmaps.TryGetValue(frameIndex, out var oldBmp))
+            {
+                oldBmp?.Dispose();
+            }
+
+            // 새 가공 비트맵 보관
+            if (memoryBitmap != null)
+            {
+                frameMemoryBitmaps[frameIndex] = new Bitmap(memoryBitmap);
+            }
+            else
+            {
+                frameMemoryBitmaps.Remove(frameIndex);
+            }
         }
 
-        public void UpdateFrame(string imagePath, double actualAngle, double actualThrottle, int frameIndex = 0, double? predictedAngle = null, double? predictedThrottle = null)
+        public void UpdateFrame(string imagePath, Bitmap? memoryBitmap, double actualAngle, double actualThrottle, int frameIndex = 0, double? predictedAngle = null, double? predictedThrottle = null)
         {
             currentActualAngle = actualAngle;
             currentActualThrottle = actualThrottle;
@@ -373,11 +406,22 @@ namespace DataManager.UserControls
             frameImagePaths[frameIndex] = imagePath;
             _latestWindowCenter = frameIndex;
 
-            if (imagePath != lastLoadedImagePath)
+            // 기존 픽처박스 이미지 자원 메모리 정리
+            var oldImage = picImage.Image;
+            var oldStream = currentImageStream;
+
+            try
             {
-                var oldImage = picImage.Image;
-                var oldStream = currentImageStream;
-                try
+                // [핵심 변경] 실시간 가공된 메모리 비트맵이 들어왔다면 하드디스크 파일에서 읽지 않고 즉시 할당!
+                if (memoryBitmap != null)
+                {
+                    picImage.Image = new Bitmap(memoryBitmap);
+                    lastLoadedImagePath = "memory_transformed_" + frameIndex;
+                    oldImage?.Dispose();
+                    oldStream?.Dispose();
+                    currentImageStream = null;
+                }
+                else if (imagePath != lastLoadedImagePath)
                 {
                     var newStream = new MemoryStream(File.ReadAllBytes(imagePath));
                     picImage.Image = new Bitmap(newStream);
@@ -386,8 +430,8 @@ namespace DataManager.UserControls
                     oldImage?.Dispose();
                     oldStream?.Dispose();
                 }
-                catch { }
             }
+            catch { }
 
             lblAngle.Text = $"조향각\n{FormatVal(actualAngle)}";
             lblThrottle.Text = $"가속값\n{FormatVal(actualThrottle)}";
