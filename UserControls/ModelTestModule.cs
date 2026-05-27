@@ -398,7 +398,7 @@ namespace DataManager.UserControls
         {
             currentActualAngle = actualAngle;
             currentActualThrottle = actualThrottle;
-            currentImagePath = imagePath;
+            currentImagePath = imagePath; // 기본값은 원본 경로
             currentFrameIndex = frameIndex;
 
             frameAngleUser[frameIndex] = actualAngle;
@@ -406,20 +406,33 @@ namespace DataManager.UserControls
             frameImagePaths[frameIndex] = imagePath;
             _latestWindowCenter = frameIndex;
 
-            // 기존 픽처박스 이미지 자원 메모리 정리
             var oldImage = picImage.Image;
             var oldStream = currentImageStream;
 
             try
             {
-                // [핵심 변경] 실시간 가공된 메모리 비트맵이 들어왔다면 하드디스크 파일에서 읽지 않고 즉시 할당!
+                // 실시간 가공된 비트맵이 들어온 경우
                 if (memoryBitmap != null)
                 {
                     picImage.Image = new Bitmap(memoryBitmap);
-                    lastLoadedImagePath = "memory_transformed_" + frameIndex;
                     oldImage?.Dispose();
                     oldStream?.Dispose();
                     currentImageStream = null;
+
+                    // [보완 핵심] 파이썬 AI도 흐림/밝기가 적용된 이미지를 보게 만듭니다.
+                    // EditedData 대신 윈도우 임시 폴더를 사용해 컴퓨터에 찌꺼기 파일이 남지 않습니다.
+                    string tempDir = Path.Combine(Path.GetTempPath(), "PilotArenaCache");
+                    if (!Directory.Exists(tempDir)) Directory.CreateDirectory(tempDir);
+
+                    string tempImagePath = Path.Combine(tempDir, $"temp_frame_{frameIndex}.jpg");
+
+                    // 메모리 비트맵을 임시 파일로 딱 한 장만 저장 (기존 파일에 덮어쓰기 되므로 용량 차지 X)
+                    memoryBitmap.Save(tempImagePath, System.Drawing.Imaging.ImageFormat.Jpeg);
+
+                    // 파이썬 프로세스가 읽어갈 경로를 임시 파일 경로로 교체!
+                    currentImagePath = tempImagePath;
+                    frameImagePaths[frameIndex] = tempImagePath;
+                    lastLoadedImagePath = "memory_transformed_" + frameIndex;
                 }
                 else if (imagePath != lastLoadedImagePath)
                 {
@@ -439,9 +452,11 @@ namespace DataManager.UserControls
             gaugeBar1.Value = Math.Clamp(actualAngle, -1.0, 1.0);
             gaugeBar2.Value = Math.Clamp(actualThrottle, -1.0, 1.0);
 
+            // 하단 그래프 다시 그리기
             RedrawCharts();
             UpdateErrorLabels();
 
+            // AI 예측 실행 및 그래프 반영
             if (predictedAngle.HasValue && predictedThrottle.HasValue)
             {
                 UpdatePrediction(predictedAngle.Value, predictedThrottle.Value);
@@ -503,7 +518,7 @@ namespace DataManager.UserControls
             StopPythonProcess();
 
             string projectRoot = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\"));
-            string pythonExePath = Path.GetFullPath(Path.Combine(projectRoot, "..", ".venv", "Scripts", "python.exe"));
+            string pythonExePath = Path.GetFullPath(Path.Combine(projectRoot, "..", "env", "Scripts", "python.exe"));
 
             if (!File.Exists(pythonExePath))
             {
