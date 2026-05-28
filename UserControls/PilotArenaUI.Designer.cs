@@ -182,7 +182,7 @@
             btnLoadTub.Location = new Point(104, 59);
             btnLoadTub.Margin = new Padding(4, 4, 4, 4);
             btnLoadTub.Name = "btnLoadTub";
-            btnLoadTub.Size = new Size(174, 32);
+            btnLoadTub.Size = new Size(177, 32);
             btnLoadTub.TabIndex = 21;
             btnLoadTub.Text = "주행 데이터 가져오기";
             btnLoadTub.UseVisualStyleBackColor = false;

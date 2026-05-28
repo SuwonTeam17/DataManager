@@ -17,10 +17,10 @@
 
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea2 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend2 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series3 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series4 = new System.Windows.Forms.DataVisualization.Charting.Series();
             pnlChart = new Panel();
             chtData = new System.Windows.Forms.DataVisualization.Charting.Chart();
             btnFileLoad = new Button();
@@ -103,27 +103,27 @@
             // chtData
             // 
             chtData.BackColor = Color.FromArgb(250, 251, 253);
-            chartArea1.BackColor = Color.FromArgb(250, 251, 253);
-            chartArea1.Name = "ChartArea1";
-            chtData.ChartAreas.Add(chartArea1);
+            chartArea2.BackColor = Color.FromArgb(250, 251, 253);
+            chartArea2.Name = "ChartArea1";
+            chtData.ChartAreas.Add(chartArea2);
             chtData.Dock = DockStyle.Fill;
-            legend1.Name = "Legend1";
-            chtData.Legends.Add(legend1);
+            legend2.Name = "Legend1";
+            chtData.Legends.Add(legend2);
             chtData.Location = new Point(0, 0);
             chtData.Margin = new Padding(4);
             chtData.Name = "chtData";
-            series1.ChartArea = "ChartArea1";
-            series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
-            series1.Color = Color.FromArgb(67, 130, 220);
-            series1.Legend = "Legend1";
-            series1.Name = "각도";
-            series2.ChartArea = "ChartArea1";
-            series2.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Spline;
-            series2.Color = Color.FromArgb(72, 175, 120);
-            series2.Legend = "Legend1";
-            series2.Name = "속도";
-            chtData.Series.Add(series1);
-            chtData.Series.Add(series2);
+            series3.ChartArea = "ChartArea1";
+            series3.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series3.Color = Color.FromArgb(67, 130, 220);
+            series3.Legend = "Legend1";
+            series3.Name = "각도";
+            series4.ChartArea = "ChartArea1";
+            series4.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Spline;
+            series4.Color = Color.FromArgb(72, 175, 120);
+            series4.Legend = "Legend1";
+            series4.Name = "속도";
+            chtData.Series.Add(series3);
+            chtData.Series.Add(series4);
             chtData.Size = new Size(1221, 200);
             chtData.TabIndex = 0;
             chtData.Text = "chart1";
@@ -140,7 +140,7 @@
             btnFileLoad.Location = new Point(5, 7);
             btnFileLoad.Margin = new Padding(4);
             btnFileLoad.Name = "btnFileLoad";
-            btnFileLoad.Size = new Size(175, 40);
+            btnFileLoad.Size = new Size(180, 40);
             btnFileLoad.TabIndex = 0;
             btnFileLoad.Text = "주행 데이터 가져오기";
             btnFileLoad.UseVisualStyleBackColor = false;
@@ -155,7 +155,7 @@
             btnNewFolder.FlatStyle = FlatStyle.Flat;
             btnNewFolder.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnNewFolder.ForeColor = Color.White;
-            btnNewFolder.Location = new Point(188, 7);
+            btnNewFolder.Location = new Point(193, 7);
             btnNewFolder.Margin = new Padding(4);
             btnNewFolder.Name = "btnNewFolder";
             btnNewFolder.Size = new Size(129, 40);
@@ -173,7 +173,7 @@
             btnSaveRoute.FlatStyle = FlatStyle.Flat;
             btnSaveRoute.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnSaveRoute.ForeColor = Color.White;
-            btnSaveRoute.Location = new Point(435, 7);
+            btnSaveRoute.Location = new Point(440, 7);
             btnSaveRoute.Margin = new Padding(4);
             btnSaveRoute.Name = "btnSaveRoute";
             btnSaveRoute.Size = new Size(141, 40);
@@ -209,7 +209,7 @@
             btnDelFolder.FlatStyle = FlatStyle.Flat;
             btnDelFolder.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnDelFolder.ForeColor = Color.White;
-            btnDelFolder.Location = new Point(324, 7);
+            btnDelFolder.Location = new Point(329, 7);
             btnDelFolder.Margin = new Padding(4);
             btnDelFolder.Name = "btnDelFolder";
             btnDelFolder.Size = new Size(103, 40);
@@ -223,7 +223,7 @@
             lblSaveRoute.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             lblSaveRoute.Font = new Font("맑은 고딕", 9F);
             lblSaveRoute.ForeColor = Color.FromArgb(120, 130, 150);
-            lblSaveRoute.Location = new Point(723, 7);
+            lblSaveRoute.Location = new Point(728, 7);
             lblSaveRoute.Margin = new Padding(4, 0, 4, 0);
             lblSaveRoute.Name = "lblSaveRoute";
             lblSaveRoute.Size = new Size(283, 40);
@@ -252,7 +252,7 @@
             chkSaveContinue.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             chkSaveContinue.Font = new Font("맑은 고딕", 9.5F);
             chkSaveContinue.ForeColor = Color.FromArgb(60, 72, 92);
-            chkSaveContinue.Location = new Point(587, 12);
+            chkSaveContinue.Location = new Point(592, 12);
             chkSaveContinue.Margin = new Padding(0);
             chkSaveContinue.Name = "chkSaveContinue";
             chkSaveContinue.Size = new Size(129, 29);
