@@ -701,22 +701,33 @@ namespace DataManager.UserControls
                 return;
             }
 
+            // 현재 위치 다음(+1)에서 '숨겨지지 않은' 유효한 다음 인덱스를 찾습니다.
             int _next = FindNearestVisibleIndex(currentFrameIndex + 1, direction: 1);
 
-            // 구간 재생 모드인 경우
+            // [구간 재생 모드인 경우]
             if (isRangePlaying)
             {
+                // 다음 프레임이 유효하고, 선택된 구간의 종료 지점(Item2) 이내인 경우 정상 진행
                 if (_next > currentFrameIndex && _next <= selectedRange.Item2 && _next < drivingData.Count)
                 {
                     DisplayFrame(_next, direction: 1);
                 }
                 else
                 {
-                    StopPlayback();
-                    ReportLog("알림", "선택 구간 재생이 완료되었습니다.");
+                    // [수정] 구간 끝에 도달하면 멈추지 않고, 다시 구간의 시작점으로 인덱스를 되돌려 무한 반복합니다.
+                    currentFrameIndex = selectedRange.Item1;
+
+                    // 시작점 프레임 표시 (필터링 고려하여 가장 가까운 가시 프레임 찾기)
+                    int startFrame = FindNearestVisibleIndex(currentFrameIndex, direction: 1);
+                    if (startFrame >= selectedRange.Item1 && startFrame <= selectedRange.Item2)
+                    {
+                        DisplayFrame(startFrame, direction: 1);
+                    }
+
+                    ReportLog("알림", "구간의 끝에 도달하여 처음부터 다시 반복 재생합니다.");
                 }
             }
-            // 일반 재생 모드인 경우
+            // [일반 재생 모드인 경우]
             else
             {
                 if (_next > currentFrameIndex && _next < drivingData.Count)
@@ -734,8 +745,9 @@ namespace DataManager.UserControls
         {
             playTimer.Stop();
             isPlaying = false;
-            isRangePlaying = false;
+            isRangePlaying = false; // 반복 재생 상태도 안전하게 해제
 
+            // 일반 재생 버튼 디자인 원상복구 (초록색)
             if (btnPlay != null)
             {
                 btnPlay.FlatStyle = FlatStyle.Flat;
@@ -745,13 +757,14 @@ namespace DataManager.UserControls
                 btnPlay.BackColor = Color.FromArgb(72, 175, 120);
             }
 
+            // 구간 재생 버튼 디자인 원상복구 (보라색)
             if (btnRangePlay != null)
             {
                 btnRangePlay.FlatStyle = FlatStyle.Flat;
                 btnRangePlay.FlatAppearance.BorderSize = 0;
                 btnRangePlay.Text = "🔁 구간 재생";
                 btnRangePlay.ForeColor = Color.White;
-                btnRangePlay.BackColor = Color.FromArgb(142, 68, 173); // 요청하신 보라색 기본값
+                btnRangePlay.BackColor = Color.FromArgb(142, 68, 173);
             }
         }
 
