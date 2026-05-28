@@ -140,9 +140,9 @@
             btnFileLoad.Location = new Point(5, 7);
             btnFileLoad.Margin = new Padding(4);
             btnFileLoad.Name = "btnFileLoad";
-            btnFileLoad.Size = new Size(154, 40);
+            btnFileLoad.Size = new Size(175, 40);
             btnFileLoad.TabIndex = 0;
-            btnFileLoad.Text = "파일 가져오기";
+            btnFileLoad.Text = "주행 데이터 가져오기";
             btnFileLoad.UseVisualStyleBackColor = false;
             btnFileLoad.Click += btnFileLoad_Click;
             // 
@@ -155,7 +155,7 @@
             btnNewFolder.FlatStyle = FlatStyle.Flat;
             btnNewFolder.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnNewFolder.ForeColor = Color.White;
-            btnNewFolder.Location = new Point(167, 7);
+            btnNewFolder.Location = new Point(188, 7);
             btnNewFolder.Margin = new Padding(4);
             btnNewFolder.Name = "btnNewFolder";
             btnNewFolder.Size = new Size(129, 40);
@@ -173,7 +173,7 @@
             btnSaveRoute.FlatStyle = FlatStyle.Flat;
             btnSaveRoute.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnSaveRoute.ForeColor = Color.White;
-            btnSaveRoute.Location = new Point(414, 7);
+            btnSaveRoute.Location = new Point(435, 7);
             btnSaveRoute.Margin = new Padding(4);
             btnSaveRoute.Name = "btnSaveRoute";
             btnSaveRoute.Size = new Size(141, 40);
@@ -209,7 +209,7 @@
             btnDelFolder.FlatStyle = FlatStyle.Flat;
             btnDelFolder.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnDelFolder.ForeColor = Color.White;
-            btnDelFolder.Location = new Point(303, 7);
+            btnDelFolder.Location = new Point(324, 7);
             btnDelFolder.Margin = new Padding(4);
             btnDelFolder.Name = "btnDelFolder";
             btnDelFolder.Size = new Size(103, 40);
@@ -223,7 +223,7 @@
             lblSaveRoute.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             lblSaveRoute.Font = new Font("맑은 고딕", 9F);
             lblSaveRoute.ForeColor = Color.FromArgb(120, 130, 150);
-            lblSaveRoute.Location = new Point(702, 7);
+            lblSaveRoute.Location = new Point(723, 7);
             lblSaveRoute.Margin = new Padding(4, 0, 4, 0);
             lblSaveRoute.Name = "lblSaveRoute";
             lblSaveRoute.Size = new Size(283, 40);
@@ -252,7 +252,7 @@
             chkSaveContinue.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             chkSaveContinue.Font = new Font("맑은 고딕", 9.5F);
             chkSaveContinue.ForeColor = Color.FromArgb(60, 72, 92);
-            chkSaveContinue.Location = new Point(566, 12);
+            chkSaveContinue.Location = new Point(587, 12);
             chkSaveContinue.Margin = new Padding(0);
             chkSaveContinue.Name = "chkSaveContinue";
             chkSaveContinue.Size = new Size(129, 29);
