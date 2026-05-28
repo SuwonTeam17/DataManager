@@ -34,6 +34,7 @@ namespace DataManager.UserControls
         private List<DrivingFrame> drivingData = new List<DrivingFrame>();
         private int currentFrameIndex = 0;
         private bool isPlaying = false;
+        private bool isRangePlaying = false; // [추가] 구간 재생 중인지 여부 변수
         private System.Windows.Forms.Timer playTimer;
         private Tuple<int, int> selectedRange = new Tuple<int, int>(0, 0);
 
@@ -689,29 +690,197 @@ namespace DataManager.UserControls
         }
 
         // 재생 타이머: 항상 앞방향
+        // 재생 타이머: 항상 앞방향
+        // 재생 타이머: 항상 앞방향
+        // 재생 타이머 이벤트
         private void PlayTimer_Tick(object sender, EventArgs e)
         {
+            if (drivingData == null || drivingData.Count == 0)
+            {
+                StopPlayback();
+                return;
+            }
+
             int _next = FindNearestVisibleIndex(currentFrameIndex + 1, direction: 1);
-            if (_next > currentFrameIndex)
-                DisplayFrame(_next, direction: 1);
+
+            // 구간 재생 모드인 경우
+            if (isRangePlaying)
+            {
+                if (_next > currentFrameIndex && _next <= selectedRange.Item2 && _next < drivingData.Count)
+                {
+                    DisplayFrame(_next, direction: 1);
+                }
+                else
+                {
+                    StopPlayback();
+                    ReportLog("알림", "선택 구간 재생이 완료되었습니다.");
+                }
+            }
+            // 일반 재생 모드인 경우
             else
-                btnStop_Click(null, null); // 더 이상 앞으로 갈 수 없음 = 끝
+            {
+                if (_next > currentFrameIndex && _next < drivingData.Count)
+                {
+                    DisplayFrame(_next, direction: 1);
+                }
+                else
+                {
+                    StopPlayback();
+                }
+            }
+        }
+
+        private void StopPlayback()
+        {
+            playTimer.Stop();
+            isPlaying = false;
+            isRangePlaying = false;
+
+            if (btnPlay != null)
+            {
+                btnPlay.FlatStyle = FlatStyle.Flat;
+                btnPlay.FlatAppearance.BorderSize = 0;
+                btnPlay.Text = "▶ 재생";
+                btnPlay.ForeColor = Color.White;
+                btnPlay.BackColor = Color.FromArgb(72, 175, 120);
+            }
+
+            if (btnRangePlay != null)
+            {
+                btnRangePlay.FlatStyle = FlatStyle.Flat;
+                btnRangePlay.FlatAppearance.BorderSize = 0;
+                btnRangePlay.Text = "🔁 구간 재생";
+                btnRangePlay.ForeColor = Color.White;
+                btnRangePlay.BackColor = Color.FromArgb(142, 68, 173); // 요청하신 보라색 기본값
+            }
         }
 
         private void btnPlay_Click(object sender, EventArgs e)
         {
-            if (drivingData.Count == 0) return;
-            isPlaying = true;
-            playTimer.Start();
-            ReportLog("알림", "데이터 재생을 시작합니다.");
+            if (drivingData == null || drivingData.Count == 0) return;
+
+            btnPlay.FlatStyle = FlatStyle.Flat;
+            btnPlay.FlatAppearance.BorderSize = 0;
+
+            // 1. [핵심 추가] 만약 '구간 재생 중'이었다면 -> 구간 재생을 끄고 일반 재생으로 모드 전환 (타이머는 유지)
+            if (isRangePlaying)
+            {
+                isRangePlaying = false;
+                isPlaying = true;
+
+                // 일반 재생 버튼을 '■ 정지 (빨간색)' 상태로 변경
+                btnPlay.Text = "■ 정지";
+                btnPlay.ForeColor = Color.White;
+                btnPlay.BackColor = Color.FromArgb(210, 70, 70);
+
+                // 구간 재생 버튼은 대기 상태(보라색)로 돌려놓음
+                if (btnRangePlay != null)
+                {
+                    btnRangePlay.Text = "🔁 구간 재생";
+                    btnRangePlay.BackColor = Color.FromArgb(142, 68, 173);
+                }
+
+                ReportLog("알림", "구간 재생을 취소하고 이어서 일반 재생을 시작합니다.");
+                return; // 전환 완료 후 메서드 종료
+            }
+
+            // 2. 일반 재생 중일 때 버튼을 누르면 -> 정지 처리
+            if (isPlaying || playTimer.Enabled)
+            {
+                StopPlayback();
+            }
+            // 3. 완전히 멈춰있는 상태에서 버튼을 누르면 -> 일반 재생 시작
+            else
+            {
+                playTimer.Stop(); // 타이머 안전 초기화
+
+                isPlaying = true;
+                playTimer.Start();
+
+                btnPlay.Text = "■ 정지";
+                btnPlay.ForeColor = Color.White;
+                btnPlay.BackColor = Color.FromArgb(210, 70, 70); // 빨간색
+
+                ReportLog("알림", "데이터 재생을 시작합니다.");
+            }
         }
 
-        private void btnStop_Click(object sender, EventArgs e)
+        private void btnRangePlay_Click(object sender, EventArgs e)
         {
-            isPlaying = false;
+            if (drivingData == null || drivingData.Count == 0) return;
+
+            // 구간 유효성 검사
+            if (selectedRange == null || selectedRange.Item1 >= selectedRange.Item2)
+            {
+                ReportLog("경고", "올바른 재생 구간이 선택되지 않았습니다.");
+                return;
+            }
+
+            btnRangePlay.FlatStyle = FlatStyle.Flat;
+            btnRangePlay.FlatAppearance.BorderSize = 0;
+
+            // 1. [핵심 추가] 만약 '일반 재생 중'이었다면 -> 일반 재생을 끄고 즉시 구간 재생 모드로 가로챕니다.
+            if (isPlaying)
+            {
+                isPlaying = false;
+                isRangePlaying = true;
+
+                // 현재 프레임 위치가 구간 범위를 벗어나 있다면 구간의 시작점으로 강제 점프
+                if (currentFrameIndex < selectedRange.Item1 || currentFrameIndex >= selectedRange.Item2)
+                {
+                    currentFrameIndex = selectedRange.Item1;
+                    DisplayFrame(currentFrameIndex, direction: 1);
+                }
+
+                // 구간 재생 버튼을 '■ 구간 정지 (빨간색)' 상태로 변경
+                btnRangePlay.Text = "■ 구간 정지";
+                btnRangePlay.ForeColor = Color.White;
+                btnRangePlay.BackColor = Color.FromArgb(210, 70, 70);
+
+                // 일반 재생 버튼은 대기 상태(초록색)로 돌려놓음
+                if (btnPlay != null)
+                {
+                    btnPlay.Text = "▶ 재생";
+                    btnPlay.BackColor = Color.FromArgb(72, 175, 120);
+                }
+
+                ReportLog("알림", "일반 재생을 중단하고 즉시 지정된 구간 재생으로 전환합니다.");
+                return; // 전환 완료 후 메서드 종료
+            }
+
+            // 2. 이미 구간 재생 중일 때 버튼을 누르면 -> 정지 처리
+            if (isRangePlaying || (playTimer.Enabled && isRangePlaying))
+            {
+                StopPlayback();
+                return;
+            }
+
+            // 3. 완전히 멈춰있는 상태에서 버튼을 누르면 -> 구간 재생 시작
             playTimer.Stop();
-            ReportLog("알림", "데이터 재생을 일시 정지합니다.");
+            isRangePlaying = true;
+
+            if (currentFrameIndex < selectedRange.Item1 || currentFrameIndex >= selectedRange.Item2)
+            {
+                currentFrameIndex = selectedRange.Item1;
+                DisplayFrame(currentFrameIndex, direction: 1);
+            }
+
+            playTimer.Start();
+
+            btnRangePlay.Text = "■ 구간 정지";
+            btnRangePlay.ForeColor = Color.White;
+            btnRangePlay.BackColor = Color.FromArgb(210, 70, 70);
+
+            if (btnPlay != null)
+            {
+                btnPlay.Text = "▶ 재생";
+                btnPlay.BackColor = Color.FromArgb(72, 175, 120);
+            }
+
+            ReportLog("알림", $"{selectedRange.Item1}번부터 {selectedRange.Item2}번까지 구간 재생을 시작합니다.");
         }
+
+
 
         private void ComboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -1241,5 +1410,8 @@ namespace DataManager.UserControls
             // 패널의 크기가 가로/세로로 확장되면 전체 영역을 무효화하여 Paint 내용을 새로 갱신합니다.
             pnlTimeStamp?.Invalidate();
         }
+
+        
+
     }
 }
