@@ -49,7 +49,7 @@ namespace DataManager.UserControls
         "EditedData"
         );
         private string targetSavePath = string.Empty;
-        
+
         // ── 타임라인 드래그 상태 변수 추가 ──
         private bool isDraggingTimeline = false;
 
@@ -207,7 +207,7 @@ namespace DataManager.UserControls
                             if (_root.TryGetProperty("_timestamp_ms", out JsonElement _tsProp))
                                 _timestampMs = _tsProp.GetInt64();
 
-                            
+
 
                             string _fullImagePath = Path.Combine(_imagesFolderPath, _imageName);
 
@@ -616,7 +616,7 @@ namespace DataManager.UserControls
 
             // ── 타임라인 갱신 추가 ──
             pnlTimeStamp?.Invalidate();
-                     
+
 
             if (filteredFrameMap.TryGetValue(index, out Bitmap _filtered))
             {
@@ -840,6 +840,11 @@ namespace DataManager.UserControls
                     filteredHideSet.Add(_i);
                     continue;
                 }
+                if (chkRemoveImage.Checked)
+                {
+                    filteredHideSet.Add(_i);
+                    continue;
+                }
 
                 // ── 이미지 변환 필터 ─────────────────────────────
                 if (!_anyImageFilter) continue;
@@ -890,6 +895,7 @@ namespace DataManager.UserControls
         {
             chkDelThrottle.Checked = false;
             chkDelAngle.Checked = false;
+            chkRemoveImage.Checked = false;
             chkInverseColor.Checked = false;
             chkApplyBlackWhite.Checked = false;
             chkSetBright.Checked = false;
@@ -1235,6 +1241,5 @@ namespace DataManager.UserControls
             // 패널의 크기가 가로/세로로 확장되면 전체 영역을 무효화하여 Paint 내용을 새로 갱신합니다.
             pnlTimeStamp?.Invalidate();
         }
-
     }
 }
