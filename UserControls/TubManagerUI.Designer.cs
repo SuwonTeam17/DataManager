@@ -41,6 +41,7 @@
             btnRightRange = new Button();
             btnLeftRange = new Button();
             pnlFillter = new Panel();
+            chkRemoveImage = new CheckBox();
             chkSetBlur = new CheckBox();
             trkSetBlur = new TrackBar();
             chkSetBright = new CheckBox();
@@ -93,9 +94,10 @@
             pnlChart.BackColor = Color.FromArgb(250, 251, 253);
             pnlChart.Controls.Add(chtData);
             pnlChart.Dock = DockStyle.Bottom;
-            pnlChart.Location = new Point(0, 616);
+            pnlChart.Location = new Point(0, 821);
+            pnlChart.Margin = new Padding(4);
             pnlChart.Name = "pnlChart";
-            pnlChart.Size = new Size(950, 150);
+            pnlChart.Size = new Size(1221, 200);
             pnlChart.TabIndex = 3;
             // 
             // chtData
@@ -108,6 +110,7 @@
             legend1.Name = "Legend1";
             chtData.Legends.Add(legend1);
             chtData.Location = new Point(0, 0);
+            chtData.Margin = new Padding(4);
             chtData.Name = "chtData";
             series1.ChartArea = "ChartArea1";
             series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
@@ -121,7 +124,7 @@
             series2.Name = "속도";
             chtData.Series.Add(series1);
             chtData.Series.Add(series2);
-            chtData.Size = new Size(950, 150);
+            chtData.Size = new Size(1221, 200);
             chtData.TabIndex = 0;
             chtData.Text = "chart1";
             // 
@@ -134,9 +137,10 @@
             btnFileLoad.FlatStyle = FlatStyle.Flat;
             btnFileLoad.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnFileLoad.ForeColor = Color.White;
-            btnFileLoad.Location = new Point(4, 5);
+            btnFileLoad.Location = new Point(5, 7);
+            btnFileLoad.Margin = new Padding(4);
             btnFileLoad.Name = "btnFileLoad";
-            btnFileLoad.Size = new Size(120, 30);
+            btnFileLoad.Size = new Size(154, 40);
             btnFileLoad.TabIndex = 0;
             btnFileLoad.Text = "파일 가져오기";
             btnFileLoad.UseVisualStyleBackColor = false;
@@ -151,9 +155,10 @@
             btnNewFolder.FlatStyle = FlatStyle.Flat;
             btnNewFolder.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnNewFolder.ForeColor = Color.White;
-            btnNewFolder.Location = new Point(130, 5);
+            btnNewFolder.Location = new Point(167, 7);
+            btnNewFolder.Margin = new Padding(4);
             btnNewFolder.Name = "btnNewFolder";
-            btnNewFolder.Size = new Size(100, 30);
+            btnNewFolder.Size = new Size(129, 40);
             btnNewFolder.TabIndex = 1;
             btnNewFolder.Text = "새 폴더 생성";
             btnNewFolder.UseVisualStyleBackColor = false;
@@ -168,9 +173,10 @@
             btnSaveRoute.FlatStyle = FlatStyle.Flat;
             btnSaveRoute.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnSaveRoute.ForeColor = Color.White;
-            btnSaveRoute.Location = new Point(322, 5);
+            btnSaveRoute.Location = new Point(414, 7);
+            btnSaveRoute.Margin = new Padding(4);
             btnSaveRoute.Name = "btnSaveRoute";
-            btnSaveRoute.Size = new Size(110, 30);
+            btnSaveRoute.Size = new Size(141, 40);
             btnSaveRoute.TabIndex = 3;
             btnSaveRoute.Text = "저장 경로 지정";
             btnSaveRoute.UseVisualStyleBackColor = false;
@@ -185,9 +191,10 @@
             btnSaveData.FlatStyle = FlatStyle.Flat;
             btnSaveData.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnSaveData.ForeColor = Color.White;
-            btnSaveData.Location = new Point(820, 5);
+            btnSaveData.Location = new Point(1054, 7);
+            btnSaveData.Margin = new Padding(4);
             btnSaveData.Name = "btnSaveData";
-            btnSaveData.Size = new Size(124, 30);
+            btnSaveData.Size = new Size(159, 40);
             btnSaveData.TabIndex = 5;
             btnSaveData.Text = "데이터 저장";
             btnSaveData.UseVisualStyleBackColor = false;
@@ -202,9 +209,10 @@
             btnDelFolder.FlatStyle = FlatStyle.Flat;
             btnDelFolder.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnDelFolder.ForeColor = Color.White;
-            btnDelFolder.Location = new Point(236, 5);
+            btnDelFolder.Location = new Point(303, 7);
+            btnDelFolder.Margin = new Padding(4);
             btnDelFolder.Name = "btnDelFolder";
-            btnDelFolder.Size = new Size(80, 30);
+            btnDelFolder.Size = new Size(103, 40);
             btnDelFolder.TabIndex = 2;
             btnDelFolder.Text = "폴더 삭제";
             btnDelFolder.UseVisualStyleBackColor = false;
@@ -215,9 +223,10 @@
             lblSaveRoute.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             lblSaveRoute.Font = new Font("맑은 고딕", 9F);
             lblSaveRoute.ForeColor = Color.FromArgb(120, 130, 150);
-            lblSaveRoute.Location = new Point(546, 5);
+            lblSaveRoute.Location = new Point(702, 7);
+            lblSaveRoute.Margin = new Padding(4, 0, 4, 0);
             lblSaveRoute.Name = "lblSaveRoute";
-            lblSaveRoute.Size = new Size(220, 30);
+            lblSaveRoute.Size = new Size(283, 40);
             lblSaveRoute.TabIndex = 4;
             lblSaveRoute.Text = "(현재 경로)";
             // 
@@ -233,8 +242,9 @@
             pnlFile.Controls.Add(btnNewFolder);
             pnlFile.Dock = DockStyle.Top;
             pnlFile.Location = new Point(0, 0);
+            pnlFile.Margin = new Padding(4);
             pnlFile.Name = "pnlFile";
-            pnlFile.Size = new Size(950, 40);
+            pnlFile.Size = new Size(1221, 53);
             pnlFile.TabIndex = 1;
             // 
             // chkSaveContinue
@@ -242,10 +252,10 @@
             chkSaveContinue.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             chkSaveContinue.Font = new Font("맑은 고딕", 9.5F);
             chkSaveContinue.ForeColor = Color.FromArgb(60, 72, 92);
-            chkSaveContinue.Location = new Point(440, 9);
+            chkSaveContinue.Location = new Point(566, 12);
             chkSaveContinue.Margin = new Padding(0);
             chkSaveContinue.Name = "chkSaveContinue";
-            chkSaveContinue.Size = new Size(100, 22);
+            chkSaveContinue.Size = new Size(129, 29);
             chkSaveContinue.TabIndex = 6;
             chkSaveContinue.Text = "이어서 저장";
             chkSaveContinue.UseVisualStyleBackColor = true;
@@ -256,9 +266,10 @@
             pnlSetting.Controls.Add(pnlSet);
             pnlSetting.Controls.Add(pnlFillter);
             pnlSetting.Dock = DockStyle.Bottom;
-            pnlSetting.Location = new Point(0, 516);
+            pnlSetting.Location = new Point(0, 688);
+            pnlSetting.Margin = new Padding(4);
             pnlSetting.Name = "pnlSetting";
-            pnlSetting.Size = new Size(950, 100);
+            pnlSetting.Size = new Size(1221, 133);
             pnlSetting.TabIndex = 4;
             // 
             // pnlSet
@@ -273,8 +284,9 @@
             pnlSet.Controls.Add(btnLeftRange);
             pnlSet.Dock = DockStyle.Fill;
             pnlSet.Location = new Point(0, 0);
+            pnlSet.Margin = new Padding(4);
             pnlSet.Name = "pnlSet";
-            pnlSet.Size = new Size(950, 44);
+            pnlSet.Size = new Size(1221, 58);
             pnlSet.TabIndex = 6;
             // 
             // btnInitFillterSet
@@ -286,9 +298,10 @@
             btnInitFillterSet.FlatStyle = FlatStyle.Flat;
             btnInitFillterSet.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnInitFillterSet.ForeColor = Color.White;
-            btnInitFillterSet.Location = new Point(754, 7);
+            btnInitFillterSet.Location = new Point(969, 9);
+            btnInitFillterSet.Margin = new Padding(4);
             btnInitFillterSet.Name = "btnInitFillterSet";
-            btnInitFillterSet.Size = new Size(160, 28);
+            btnInitFillterSet.Size = new Size(206, 36);
             btnInitFillterSet.TabIndex = 8;
             btnInitFillterSet.Text = "변경 사항 설정 초기화";
             btnInitFillterSet.UseVisualStyleBackColor = false;
@@ -303,9 +316,10 @@
             btnCancelFillter.FlatStyle = FlatStyle.Flat;
             btnCancelFillter.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnCancelFillter.ForeColor = Color.White;
-            btnCancelFillter.Location = new Point(638, 7);
+            btnCancelFillter.Location = new Point(820, 9);
+            btnCancelFillter.Margin = new Padding(4);
             btnCancelFillter.Name = "btnCancelFillter";
-            btnCancelFillter.Size = new Size(110, 28);
+            btnCancelFillter.Size = new Size(141, 36);
             btnCancelFillter.TabIndex = 7;
             btnCancelFillter.Text = "변경 사항 취소";
             btnCancelFillter.UseVisualStyleBackColor = false;
@@ -320,9 +334,10 @@
             btnApplyFillter.FlatStyle = FlatStyle.Flat;
             btnApplyFillter.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnApplyFillter.ForeColor = Color.White;
-            btnApplyFillter.Location = new Point(522, 7);
+            btnApplyFillter.Location = new Point(671, 9);
+            btnApplyFillter.Margin = new Padding(4);
             btnApplyFillter.Name = "btnApplyFillter";
-            btnApplyFillter.Size = new Size(110, 28);
+            btnApplyFillter.Size = new Size(141, 36);
             btnApplyFillter.TabIndex = 6;
             btnApplyFillter.Text = "변경 사항 적용";
             btnApplyFillter.UseVisualStyleBackColor = false;
@@ -333,9 +348,10 @@
             lblSelectedRange.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             lblSelectedRange.Font = new Font("맑은 고딕", 9.5F);
             lblSelectedRange.ForeColor = Color.FromArgb(60, 72, 92);
-            lblSelectedRange.Location = new Point(336, 7);
+            lblSelectedRange.Location = new Point(432, 9);
+            lblSelectedRange.Margin = new Padding(4, 0, 4, 0);
             lblSelectedRange.Name = "lblSelectedRange";
-            lblSelectedRange.Size = new Size(180, 28);
+            lblSelectedRange.Size = new Size(231, 36);
             lblSelectedRange.TabIndex = 2;
             lblSelectedRange.Text = "선택된 범위 (0, 0)";
             lblSelectedRange.TextAlign = ContentAlignment.MiddleLeft;
@@ -349,9 +365,10 @@
             btnAllRange.FlatStyle = FlatStyle.Flat;
             btnAllRange.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnAllRange.ForeColor = Color.White;
-            btnAllRange.Location = new Point(250, 7);
+            btnAllRange.Location = new Point(321, 9);
+            btnAllRange.Margin = new Padding(4);
             btnAllRange.Name = "btnAllRange";
-            btnAllRange.Size = new Size(80, 28);
+            btnAllRange.Size = new Size(103, 36);
             btnAllRange.TabIndex = 5;
             btnAllRange.Text = "전체 선택";
             btnAllRange.UseVisualStyleBackColor = false;
@@ -366,9 +383,10 @@
             btnRightRange.FlatStyle = FlatStyle.Flat;
             btnRightRange.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnRightRange.ForeColor = Color.White;
-            btnRightRange.Location = new Point(120, 7);
+            btnRightRange.Location = new Point(154, 9);
+            btnRightRange.Margin = new Padding(4);
             btnRightRange.Name = "btnRightRange";
-            btnRightRange.Size = new Size(124, 28);
+            btnRightRange.Size = new Size(159, 36);
             btnRightRange.TabIndex = 1;
             btnRightRange.Text = "오른쪽 범위 선택";
             btnRightRange.UseVisualStyleBackColor = false;
@@ -383,9 +401,10 @@
             btnLeftRange.FlatStyle = FlatStyle.Flat;
             btnLeftRange.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnLeftRange.ForeColor = Color.White;
-            btnLeftRange.Location = new Point(4, 7);
+            btnLeftRange.Location = new Point(5, 9);
+            btnLeftRange.Margin = new Padding(4);
             btnLeftRange.Name = "btnLeftRange";
-            btnLeftRange.Size = new Size(110, 28);
+            btnLeftRange.Size = new Size(141, 36);
             btnLeftRange.TabIndex = 0;
             btnLeftRange.Text = "왼쪽 범위 선택";
             btnLeftRange.UseVisualStyleBackColor = false;
@@ -394,6 +413,7 @@
             // pnlFillter
             // 
             pnlFillter.BackColor = Color.White;
+            pnlFillter.Controls.Add(chkRemoveImage);
             pnlFillter.Controls.Add(chkSetBlur);
             pnlFillter.Controls.Add(trkSetBlur);
             pnlFillter.Controls.Add(chkSetBright);
@@ -404,19 +424,30 @@
             pnlFillter.Controls.Add(chkDelThrottle);
             pnlFillter.Controls.Add(lblFillter);
             pnlFillter.Dock = DockStyle.Bottom;
-            pnlFillter.Location = new Point(0, 44);
+            pnlFillter.Location = new Point(0, 58);
+            pnlFillter.Margin = new Padding(4);
             pnlFillter.Name = "pnlFillter";
-            pnlFillter.Size = new Size(950, 56);
+            pnlFillter.Size = new Size(1221, 75);
             pnlFillter.TabIndex = 4;
+            // 
+            // chkRemoveImage
+            // 
+            chkRemoveImage.Location = new Point(815, 5);
+            chkRemoveImage.Name = "chkRemoveImage";
+            chkRemoveImage.Size = new Size(116, 29);
+            chkRemoveImage.TabIndex = 12;
+            chkRemoveImage.Text = "이미지 제거";
+            chkRemoveImage.UseVisualStyleBackColor = true;
             // 
             // chkSetBlur
             // 
             chkSetBlur.BackColor = Color.White;
             chkSetBlur.Font = new Font("맑은 고딕", 9.5F);
             chkSetBlur.ForeColor = Color.FromArgb(60, 72, 92);
-            chkSetBlur.Location = new Point(502, 28);
+            chkSetBlur.Location = new Point(645, 37);
+            chkSetBlur.Margin = new Padding(4);
             chkSetBlur.Name = "chkSetBlur";
-            chkSetBlur.Size = new Size(90, 22);
+            chkSetBlur.Size = new Size(116, 29);
             chkSetBlur.TabIndex = 11;
             chkSetBlur.Text = "흐림 설정";
             chkSetBlur.UseVisualStyleBackColor = false;
@@ -426,9 +457,10 @@
             trkSetBlur.AutoSize = false;
             trkSetBlur.BackColor = Color.White;
             trkSetBlur.LargeChange = 1;
-            trkSetBlur.Location = new Point(596, 28);
+            trkSetBlur.Location = new Point(766, 37);
+            trkSetBlur.Margin = new Padding(4);
             trkSetBlur.Name = "trkSetBlur";
-            trkSetBlur.Size = new Size(200, 22);
+            trkSetBlur.Size = new Size(257, 29);
             trkSetBlur.TabIndex = 10;
             trkSetBlur.TickStyle = TickStyle.None;
             // 
@@ -437,9 +469,10 @@
             chkSetBright.BackColor = Color.White;
             chkSetBright.Font = new Font("맑은 고딕", 9.5F);
             chkSetBright.ForeColor = Color.FromArgb(60, 72, 92);
-            chkSetBright.Location = new Point(200, 28);
+            chkSetBright.Location = new Point(257, 37);
+            chkSetBright.Margin = new Padding(4);
             chkSetBright.Name = "chkSetBright";
-            chkSetBright.Size = new Size(90, 22);
+            chkSetBright.Size = new Size(116, 29);
             chkSetBright.TabIndex = 9;
             chkSetBright.Text = "밝기 설정";
             chkSetBright.UseVisualStyleBackColor = false;
@@ -449,9 +482,10 @@
             trkSetBright.AutoSize = false;
             trkSetBright.BackColor = Color.White;
             trkSetBright.LargeChange = 1;
-            trkSetBright.Location = new Point(294, 28);
+            trkSetBright.Location = new Point(378, 37);
+            trkSetBright.Margin = new Padding(4);
             trkSetBright.Name = "trkSetBright";
-            trkSetBright.Size = new Size(200, 22);
+            trkSetBright.Size = new Size(257, 29);
             trkSetBright.TabIndex = 8;
             trkSetBright.TickStyle = TickStyle.None;
             // 
@@ -460,9 +494,10 @@
             chkApplyBlackWhite.BackColor = Color.White;
             chkApplyBlackWhite.Font = new Font("맑은 고딕", 9.5F);
             chkApplyBlackWhite.ForeColor = Color.FromArgb(60, 72, 92);
-            chkApplyBlackWhite.Location = new Point(540, 3);
+            chkApplyBlackWhite.Location = new Point(694, 4);
+            chkApplyBlackWhite.Margin = new Padding(4);
             chkApplyBlackWhite.Name = "chkApplyBlackWhite";
-            chkApplyBlackWhite.Size = new Size(90, 22);
+            chkApplyBlackWhite.Size = new Size(116, 29);
             chkApplyBlackWhite.TabIndex = 7;
             chkApplyBlackWhite.Text = "흑백 적용";
             chkApplyBlackWhite.UseVisualStyleBackColor = false;
@@ -472,9 +507,10 @@
             chkInverseColor.BackColor = Color.White;
             chkInverseColor.Font = new Font("맑은 고딕", 9.5F);
             chkInverseColor.ForeColor = Color.FromArgb(60, 72, 92);
-            chkInverseColor.Location = new Point(444, 3);
+            chkInverseColor.Location = new Point(571, 4);
+            chkInverseColor.Margin = new Padding(4);
             chkInverseColor.Name = "chkInverseColor";
-            chkInverseColor.Size = new Size(90, 22);
+            chkInverseColor.Size = new Size(116, 29);
             chkInverseColor.TabIndex = 6;
             chkInverseColor.Text = "색상 반전";
             chkInverseColor.UseVisualStyleBackColor = false;
@@ -484,9 +520,10 @@
             chkDelAngle.BackColor = Color.White;
             chkDelAngle.Font = new Font("맑은 고딕", 9.5F);
             chkDelAngle.ForeColor = Color.FromArgb(60, 72, 92);
-            chkDelAngle.Location = new Point(322, 3);
+            chkDelAngle.Location = new Point(414, 4);
+            chkDelAngle.Margin = new Padding(4);
             chkDelAngle.Name = "chkDelAngle";
-            chkDelAngle.Size = new Size(116, 22);
+            chkDelAngle.Size = new Size(149, 29);
             chkDelAngle.TabIndex = 5;
             chkDelAngle.Text = "각도 값 0 제거";
             chkDelAngle.UseVisualStyleBackColor = false;
@@ -496,9 +533,10 @@
             chkDelThrottle.BackColor = Color.White;
             chkDelThrottle.Font = new Font("맑은 고딕", 9.5F);
             chkDelThrottle.ForeColor = Color.FromArgb(60, 72, 92);
-            chkDelThrottle.Location = new Point(200, 3);
+            chkDelThrottle.Location = new Point(257, 4);
+            chkDelThrottle.Margin = new Padding(4);
             chkDelThrottle.Name = "chkDelThrottle";
-            chkDelThrottle.Size = new Size(116, 22);
+            chkDelThrottle.Size = new Size(149, 29);
             chkDelThrottle.TabIndex = 4;
             chkDelThrottle.Text = "속도 값 0 제거";
             chkDelThrottle.UseVisualStyleBackColor = false;
@@ -508,9 +546,10 @@
             lblFillter.BackColor = Color.White;
             lblFillter.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             lblFillter.ForeColor = Color.FromArgb(67, 130, 220);
-            lblFillter.Location = new Point(4, 3);
+            lblFillter.Location = new Point(5, 4);
+            lblFillter.Margin = new Padding(4, 0, 4, 0);
             lblFillter.Name = "lblFillter";
-            lblFillter.Size = new Size(190, 50);
+            lblFillter.Size = new Size(244, 67);
             lblFillter.TabIndex = 3;
             lblFillter.Text = "선택 범위 내 변경 사항 설정";
             lblFillter.TextAlign = ContentAlignment.MiddleCenter;
@@ -521,9 +560,10 @@
             pnlSub.Controls.Add(pnlControl);
             pnlSub.Controls.Add(pnlData);
             pnlSub.Dock = DockStyle.Right;
-            pnlSub.Location = new Point(670, 40);
+            pnlSub.Location = new Point(861, 53);
+            pnlSub.Margin = new Padding(4);
             pnlSub.Name = "pnlSub";
-            pnlSub.Size = new Size(280, 476);
+            pnlSub.Size = new Size(360, 635);
             pnlSub.TabIndex = 6;
             // 
             // pnlControl
@@ -539,18 +579,20 @@
             pnlControl.Controls.Add(btnFrameRight);
             pnlControl.Controls.Add(btnFrameLeft);
             pnlControl.Dock = DockStyle.Fill;
-            pnlControl.Location = new Point(0, 76);
+            pnlControl.Location = new Point(0, 101);
+            pnlControl.Margin = new Padding(4);
             pnlControl.Name = "pnlControl";
-            pnlControl.Size = new Size(280, 400);
+            pnlControl.Size = new Size(360, 534);
             pnlControl.TabIndex = 3;
             // 
             // lblSpeed
             // 
             lblSpeed.Font = new Font("맑은 고딕", 9.5F);
             lblSpeed.ForeColor = Color.FromArgb(60, 72, 92);
-            lblSpeed.Location = new Point(4, 68);
+            lblSpeed.Location = new Point(5, 91);
+            lblSpeed.Margin = new Padding(4, 0, 4, 0);
             lblSpeed.Name = "lblSpeed";
-            lblSpeed.Size = new Size(120, 26);
+            lblSpeed.Size = new Size(154, 35);
             lblSpeed.TabIndex = 9;
             lblSpeed.Text = "배속";
             lblSpeed.TextAlign = ContentAlignment.MiddleRight;
@@ -562,9 +604,10 @@
             comboBox1.Font = new Font("맑은 고딕", 9.5F);
             comboBox1.FormattingEnabled = true;
             comboBox1.Items.AddRange(new object[] { "0.25", "0.50", "1.00", "1.50", "2.00", "3.00", "4.00" });
-            comboBox1.Location = new Point(130, 68);
+            comboBox1.Location = new Point(167, 91);
+            comboBox1.Margin = new Padding(4);
             comboBox1.Name = "comboBox1";
-            comboBox1.Size = new Size(130, 25);
+            comboBox1.Size = new Size(166, 29);
             comboBox1.TabIndex = 8;
             comboBox1.Text = "1.00";
             // 
@@ -572,9 +615,10 @@
             // 
             lblAllImageNumRange.Font = new Font("맑은 고딕", 9.5F);
             lblAllImageNumRange.ForeColor = Color.FromArgb(60, 72, 92);
-            lblAllImageNumRange.Location = new Point(6, 10);
+            lblAllImageNumRange.Location = new Point(8, 13);
+            lblAllImageNumRange.Margin = new Padding(4, 0, 4, 0);
             lblAllImageNumRange.Name = "lblAllImageNumRange";
-            lblAllImageNumRange.Size = new Size(268, 50);
+            lblAllImageNumRange.Size = new Size(345, 67);
             lblAllImageNumRange.TabIndex = 7;
             lblAllImageNumRange.Text = "(이미지 첫 번호, 현재 이미지 번호, 이미지 끝 번호 표시)";
             lblAllImageNumRange.TextAlign = ContentAlignment.MiddleCenter;
@@ -587,9 +631,10 @@
             btnStop.FlatStyle = FlatStyle.Flat;
             btnStop.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnStop.ForeColor = Color.White;
-            btnStop.Location = new Point(140, 210);
+            btnStop.Location = new Point(180, 280);
+            btnStop.Margin = new Padding(4);
             btnStop.Name = "btnStop";
-            btnStop.Size = new Size(130, 46);
+            btnStop.Size = new Size(167, 61);
             btnStop.TabIndex = 6;
             btnStop.Text = "■ 중지";
             btnStop.UseVisualStyleBackColor = false;
@@ -603,9 +648,10 @@
             btnPlay.FlatStyle = FlatStyle.Flat;
             btnPlay.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnPlay.ForeColor = Color.White;
-            btnPlay.Location = new Point(4, 210);
+            btnPlay.Location = new Point(5, 280);
+            btnPlay.Margin = new Padding(4);
             btnPlay.Name = "btnPlay";
-            btnPlay.Size = new Size(130, 46);
+            btnPlay.Size = new Size(167, 61);
             btnPlay.TabIndex = 5;
             btnPlay.Text = "▶ 재생";
             btnPlay.UseVisualStyleBackColor = false;
@@ -619,9 +665,10 @@
             btn5FrameRight.FlatStyle = FlatStyle.Flat;
             btn5FrameRight.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btn5FrameRight.ForeColor = Color.White;
-            btn5FrameRight.Location = new Point(140, 158);
+            btn5FrameRight.Location = new Point(180, 211);
+            btn5FrameRight.Margin = new Padding(4);
             btn5FrameRight.Name = "btn5FrameRight";
-            btn5FrameRight.Size = new Size(130, 46);
+            btn5FrameRight.Size = new Size(167, 61);
             btn5FrameRight.TabIndex = 4;
             btn5FrameRight.Text = ">>>";
             btn5FrameRight.UseVisualStyleBackColor = false;
@@ -635,9 +682,10 @@
             btn5FrameLeft.FlatStyle = FlatStyle.Flat;
             btn5FrameLeft.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btn5FrameLeft.ForeColor = Color.White;
-            btn5FrameLeft.Location = new Point(4, 158);
+            btn5FrameLeft.Location = new Point(5, 211);
+            btn5FrameLeft.Margin = new Padding(4);
             btn5FrameLeft.Name = "btn5FrameLeft";
-            btn5FrameLeft.Size = new Size(130, 46);
+            btn5FrameLeft.Size = new Size(167, 61);
             btn5FrameLeft.TabIndex = 3;
             btn5FrameLeft.Text = "<<<";
             btn5FrameLeft.UseVisualStyleBackColor = false;
@@ -651,9 +699,10 @@
             btnFrameRight.FlatStyle = FlatStyle.Flat;
             btnFrameRight.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnFrameRight.ForeColor = Color.White;
-            btnFrameRight.Location = new Point(140, 106);
+            btnFrameRight.Location = new Point(180, 141);
+            btnFrameRight.Margin = new Padding(4);
             btnFrameRight.Name = "btnFrameRight";
-            btnFrameRight.Size = new Size(130, 46);
+            btnFrameRight.Size = new Size(167, 61);
             btnFrameRight.TabIndex = 2;
             btnFrameRight.Text = ">";
             btnFrameRight.UseVisualStyleBackColor = false;
@@ -667,9 +716,10 @@
             btnFrameLeft.FlatStyle = FlatStyle.Flat;
             btnFrameLeft.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnFrameLeft.ForeColor = Color.White;
-            btnFrameLeft.Location = new Point(4, 106);
+            btnFrameLeft.Location = new Point(5, 141);
+            btnFrameLeft.Margin = new Padding(4);
             btnFrameLeft.Name = "btnFrameLeft";
-            btnFrameLeft.Size = new Size(130, 46);
+            btnFrameLeft.Size = new Size(167, 61);
             btnFrameLeft.TabIndex = 1;
             btnFrameLeft.Text = "<";
             btnFrameLeft.UseVisualStyleBackColor = false;
@@ -686,8 +736,9 @@
             pnlData.Controls.Add(prgThrottle);
             pnlData.Dock = DockStyle.Top;
             pnlData.Location = new Point(0, 0);
+            pnlData.Margin = new Padding(4);
             pnlData.Name = "pnlData";
-            pnlData.Size = new Size(280, 76);
+            pnlData.Size = new Size(360, 101);
             pnlData.TabIndex = 2;
             // 
             // lblThrottleDetail
@@ -695,9 +746,10 @@
             lblThrottleDetail.Font = new Font("맑은 고딕", 9F);
             lblThrottleDetail.ForeColor = Color.FromArgb(60, 72, 92);
             lblThrottleDetail.ImageAlign = ContentAlignment.MiddleRight;
-            lblThrottleDetail.Location = new Point(60, 46);
+            lblThrottleDetail.Location = new Point(77, 61);
+            lblThrottleDetail.Margin = new Padding(4, 0, 4, 0);
             lblThrottleDetail.Name = "lblThrottleDetail";
-            lblThrottleDetail.Size = new Size(52, 17);
+            lblThrottleDetail.Size = new Size(67, 23);
             lblThrottleDetail.TabIndex = 5;
             lblThrottleDetail.Text = "수치";
             lblThrottleDetail.TextAlign = ContentAlignment.MiddleCenter;
@@ -707,9 +759,10 @@
             lblAngleDetail.Font = new Font("맑은 고딕", 9F);
             lblAngleDetail.ForeColor = Color.FromArgb(60, 72, 92);
             lblAngleDetail.ImageAlign = ContentAlignment.MiddleRight;
-            lblAngleDetail.Location = new Point(60, 12);
+            lblAngleDetail.Location = new Point(77, 16);
+            lblAngleDetail.Margin = new Padding(4, 0, 4, 0);
             lblAngleDetail.Name = "lblAngleDetail";
-            lblAngleDetail.Size = new Size(52, 17);
+            lblAngleDetail.Size = new Size(67, 23);
             lblAngleDetail.TabIndex = 4;
             lblAngleDetail.Text = "수치";
             lblAngleDetail.TextAlign = ContentAlignment.MiddleCenter;
@@ -718,9 +771,10 @@
             // 
             lblThrottle.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             lblThrottle.ForeColor = Color.FromArgb(72, 175, 120);
-            lblThrottle.Location = new Point(6, 42);
+            lblThrottle.Location = new Point(8, 56);
+            lblThrottle.Margin = new Padding(4, 0, 4, 0);
             lblThrottle.Name = "lblThrottle";
-            lblThrottle.Size = new Size(50, 24);
+            lblThrottle.Size = new Size(64, 32);
             lblThrottle.TabIndex = 3;
             lblThrottle.Text = "속도";
             lblThrottle.TextAlign = ContentAlignment.MiddleCenter;
@@ -729,9 +783,10 @@
             // 
             lblAngle.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             lblAngle.ForeColor = Color.FromArgb(67, 130, 220);
-            lblAngle.Location = new Point(6, 8);
+            lblAngle.Location = new Point(8, 11);
+            lblAngle.Margin = new Padding(4, 0, 4, 0);
             lblAngle.Name = "lblAngle";
-            lblAngle.Size = new Size(50, 24);
+            lblAngle.Size = new Size(64, 32);
             lblAngle.TabIndex = 2;
             lblAngle.Text = "각도";
             lblAngle.TextAlign = ContentAlignment.MiddleCenter;
@@ -739,17 +794,19 @@
             // prgAngle
             // 
             prgAngle.ForeColor = Color.FromArgb(67, 130, 220);
-            prgAngle.Location = new Point(118, 8);
+            prgAngle.Location = new Point(152, 11);
+            prgAngle.Margin = new Padding(4);
             prgAngle.Name = "prgAngle";
-            prgAngle.Size = new Size(148, 26);
+            prgAngle.Size = new Size(190, 35);
             prgAngle.TabIndex = 0;
             // 
             // prgThrottle
             // 
             prgThrottle.ForeColor = Color.FromArgb(72, 175, 120);
-            prgThrottle.Location = new Point(118, 42);
+            prgThrottle.Location = new Point(152, 56);
+            prgThrottle.Margin = new Padding(4);
             prgThrottle.Name = "prgThrottle";
-            prgThrottle.Size = new Size(148, 26);
+            prgThrottle.Size = new Size(190, 35);
             prgThrottle.TabIndex = 1;
             // 
             // pnlImage
@@ -759,9 +816,10 @@
             pnlImage.Controls.Add(trkProgress);
             pnlImage.Controls.Add(pnlTimeStamp);
             pnlImage.Dock = DockStyle.Fill;
-            pnlImage.Location = new Point(0, 40);
+            pnlImage.Location = new Point(0, 53);
+            pnlImage.Margin = new Padding(4);
             pnlImage.Name = "pnlImage";
-            pnlImage.Size = new Size(670, 476);
+            pnlImage.Size = new Size(861, 635);
             pnlImage.TabIndex = 7;
             // 
             // picImage
@@ -769,9 +827,10 @@
             picImage.BackColor = Color.FromArgb(20, 20, 30);
             picImage.Dock = DockStyle.Fill;
             picImage.Location = new Point(0, 0);
+            picImage.Margin = new Padding(4);
             picImage.Name = "picImage";
-            picImage.Size = new Size(670, 412);
-            picImage.SizeMode = PictureBoxSizeMode.StretchImage;
+            picImage.Size = new Size(861, 549);
+            picImage.SizeMode = PictureBoxSizeMode.Zoom;
             picImage.TabIndex = 2;
             picImage.TabStop = false;
             // 
@@ -781,9 +840,10 @@
             trkProgress.BackColor = Color.FromArgb(228, 232, 240);
             trkProgress.Dock = DockStyle.Bottom;
             trkProgress.LargeChange = 1;
-            trkProgress.Location = new Point(0, 412);
+            trkProgress.Location = new Point(0, 549);
+            trkProgress.Margin = new Padding(4);
             trkProgress.Name = "trkProgress";
-            trkProgress.Size = new Size(670, 26);
+            trkProgress.Size = new Size(861, 35);
             trkProgress.TabIndex = 1;
             trkProgress.TickStyle = TickStyle.None;
             // 
@@ -791,15 +851,14 @@
             // 
             pnlTimeStamp.BackColor = Color.FromArgb(250, 251, 253);
             pnlTimeStamp.Dock = DockStyle.Bottom;
-            pnlTimeStamp.Location = new Point(0, 438);
-            pnlTimeStamp.Margin = new Padding(2);
+            pnlTimeStamp.Location = new Point(0, 584);
             pnlTimeStamp.Name = "pnlTimeStamp";
-            pnlTimeStamp.Size = new Size(670, 38);
+            pnlTimeStamp.Size = new Size(861, 51);
             pnlTimeStamp.TabIndex = 12;
             // 
             // TubManagerUI
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleDimensions = new SizeF(9F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(245, 247, 250);
             Controls.Add(pnlImage);
@@ -807,8 +866,9 @@
             Controls.Add(pnlSetting);
             Controls.Add(pnlFile);
             Controls.Add(pnlChart);
+            Margin = new Padding(4);
             Name = "TubManagerUI";
-            Size = new Size(950, 766);
+            Size = new Size(1221, 1021);
             pnlChart.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)chtData).EndInit();
             pnlFile.ResumeLayout(false);
@@ -878,5 +938,6 @@
         private Label lblAngleDetail;
         private Panel pnlTimeStamp;
         private CheckBox chkSaveContinue;
+        private CheckBox chkRemoveImage;
     }
 }
