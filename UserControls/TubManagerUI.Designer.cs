@@ -24,7 +24,6 @@
             pnlChart = new Panel();
             chtData = new System.Windows.Forms.DataVisualization.Charting.Chart();
             btnFileLoad = new Button();
-            btnNewFolder = new Button();
             btnSaveRoute = new Button();
             btnSaveData = new Button();
             btnDelFolder = new Button();
@@ -137,28 +136,11 @@
             btnFileLoad.ForeColor = Color.White;
             btnFileLoad.Location = new Point(4, 5);
             btnFileLoad.Name = "btnFileLoad";
-            btnFileLoad.Size = new Size(140, 30);
+            btnFileLoad.Size = new Size(150, 30);
             btnFileLoad.TabIndex = 0;
             btnFileLoad.Text = "주행 데이터 가져오기";
             btnFileLoad.UseVisualStyleBackColor = false;
             btnFileLoad.Click += btnFileLoad_Click;
-            // 
-            // btnNewFolder
-            // 
-            btnNewFolder.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
-            btnNewFolder.BackColor = Color.FromArgb(72, 175, 120);
-            btnNewFolder.Cursor = Cursors.Hand;
-            btnNewFolder.FlatAppearance.BorderSize = 0;
-            btnNewFolder.FlatStyle = FlatStyle.Flat;
-            btnNewFolder.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
-            btnNewFolder.ForeColor = Color.White;
-            btnNewFolder.Location = new Point(150, 5);
-            btnNewFolder.Name = "btnNewFolder";
-            btnNewFolder.Size = new Size(100, 30);
-            btnNewFolder.TabIndex = 1;
-            btnNewFolder.Text = "새 폴더 생성";
-            btnNewFolder.UseVisualStyleBackColor = false;
-            btnNewFolder.Click += btnNewFolder_Click;
             // 
             // btnSaveRoute
             // 
@@ -169,7 +151,7 @@
             btnSaveRoute.FlatStyle = FlatStyle.Flat;
             btnSaveRoute.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnSaveRoute.ForeColor = Color.White;
-            btnSaveRoute.Location = new Point(342, 5);
+            btnSaveRoute.Location = new Point(294, 5);
             btnSaveRoute.Name = "btnSaveRoute";
             btnSaveRoute.Size = new Size(110, 30);
             btnSaveRoute.TabIndex = 3;
@@ -203,7 +185,7 @@
             btnDelFolder.FlatStyle = FlatStyle.Flat;
             btnDelFolder.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnDelFolder.ForeColor = Color.White;
-            btnDelFolder.Location = new Point(256, 5);
+            btnDelFolder.Location = new Point(184, 5);
             btnDelFolder.Name = "btnDelFolder";
             btnDelFolder.Size = new Size(80, 30);
             btnDelFolder.TabIndex = 2;
@@ -216,7 +198,7 @@
             lblSaveRoute.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             lblSaveRoute.Font = new Font("맑은 고딕", 9F);
             lblSaveRoute.ForeColor = Color.FromArgb(120, 130, 150);
-            lblSaveRoute.Location = new Point(566, 5);
+            lblSaveRoute.Location = new Point(564, 5);
             lblSaveRoute.Name = "lblSaveRoute";
             lblSaveRoute.Size = new Size(220, 30);
             lblSaveRoute.TabIndex = 4;
@@ -231,7 +213,6 @@
             pnlFile.Controls.Add(btnDelFolder);
             pnlFile.Controls.Add(lblSaveRoute);
             pnlFile.Controls.Add(btnSaveRoute);
-            pnlFile.Controls.Add(btnNewFolder);
             pnlFile.Dock = DockStyle.Top;
             pnlFile.Location = new Point(0, 0);
             pnlFile.Name = "pnlFile";
@@ -243,7 +224,7 @@
             chkSaveContinue.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             chkSaveContinue.Font = new Font("맑은 고딕", 9.5F);
             chkSaveContinue.ForeColor = Color.FromArgb(60, 72, 92);
-            chkSaveContinue.Location = new Point(460, 9);
+            chkSaveContinue.Location = new Point(434, 9);
             chkSaveContinue.Margin = new Padding(0);
             chkSaveContinue.Name = "chkSaveContinue";
             chkSaveContinue.Size = new Size(100, 22);
@@ -842,7 +823,6 @@
         private Panel pnlChart;
         private System.Windows.Forms.DataVisualization.Charting.Chart chtData;
         private Button btnFileLoad;
-        private Button btnNewFolder;
         private Button btnSaveRoute;
         private Button btnSaveData;
         private Button btnDelFolder;

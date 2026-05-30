@@ -253,86 +253,7 @@ namespace DataManager.UserControls
         }
 
 
-        private void btnNewFolder_Click(object sender, EventArgs e)
-        {
-
-            if (!Directory.Exists(baseEditedPath))
-            {
-                Directory.CreateDirectory(baseEditedPath);
-            }
-
-
-            Form _inputForm = new Form();
-            _inputForm.Width = 400;
-            _inputForm.Height = 150;
-            _inputForm.FormBorderStyle = FormBorderStyle.FixedDialog;
-            _inputForm.Text = "새 폴더 생성";
-            _inputForm.StartPosition = FormStartPosition.CenterParent;
-            _inputForm.MaximizeBox = false;
-            _inputForm.MinimizeBox = false;
-
-            Label _lblText = new Label() { Left = 20, Top = 20, Width = 350, Text = "생성할 폴더 이름을 입력하세요 (EditedData 폴더 내부에 생성):" };
-
-
-            TextBox _txtInput = new TextBox() { Left = 20, Top = 45, Width = 340, Text = "" };
-
-            Button _btnOk = new Button() { Text = "확인", Left = 180, Width = 80, Top = 80, DialogResult = DialogResult.OK };
-            Button _btnCancel = new Button() { Text = "취소", Left = 280, Width = 80, Top = 80, DialogResult = DialogResult.Cancel };
-
-            _inputForm.Controls.Add(_lblText);
-            _inputForm.Controls.Add(_txtInput);
-            _inputForm.Controls.Add(_btnOk);
-            _inputForm.Controls.Add(_btnCancel);
-            _inputForm.AcceptButton = _btnOk;
-            _inputForm.CancelButton = _btnCancel;
-
-
-            if (_inputForm.ShowDialog() == DialogResult.OK)
-            {
-                string _folderName = _txtInput.Text.Trim();
-
-
-                if (string.IsNullOrEmpty(_folderName))
-                {
-                    MessageBox.Show("폴더 이름을 입력해야 합니다.", "알림");
-                    return;
-                }
-
-
-                foreach (char _c in Path.GetInvalidFileNameChars())
-                {
-                    _folderName = _folderName.Replace(_c, '_');
-                }
-
-
-                string _finalNewFolderPath = Path.Combine(baseEditedPath, _folderName);
-
-                try
-                {
-                    if (!Directory.Exists(_finalNewFolderPath))
-                    {
-
-                        Directory.CreateDirectory(_finalNewFolderPath);
-
-
-                        targetSavePath = _finalNewFolderPath;
-                        lblSaveRoute.Text = $"[저장 경로] {_folderName}";
-
-                        ReportLog("알림", $"새 폴더 생성 및 지정 완료: {_folderName}");
-                        MessageBox.Show($"[{_folderName}] 폴더가 성공적으로 생성되고 저장 경로로 지정되었습니다.", "성공");
-                    }
-                    else
-                    {
-                        MessageBox.Show("이미 존재하는 폴더 이름입니다. 다른 이름을 사용해 주세요.", "알림");
-                    }
-                }
-                catch (Exception _ex)
-                {
-                    ReportLog("오류", $"폴더 생성 실패: {_ex.Message}");
-                    MessageBox.Show($"폴더 생성 중 오류 발생: {_ex.Message}", "오류");
-                }
-            }
-        }
+        
 
 
         private void btnDelFolder_Click(object sender, EventArgs e)
@@ -410,18 +331,103 @@ namespace DataManager.UserControls
 
         private void btnSaveData_Click(object sender, EventArgs e)
         {
+            // 1. 저장할 데이터가 존재하는지 검사
             if (drivingData.Count == 0)
             {
                 MessageBox.Show("저장할 주행 데이터가 존재하지 않습니다. 먼저 데이터를 로드하세요.", "알림");
                 return;
             }
 
+            // 2. 저장 경로가 지정되지 않았거나 폴더가 존재하지 않는 경우 새 폴더 생성창 호출
             if (string.IsNullOrEmpty(targetSavePath) || !Directory.Exists(targetSavePath))
             {
-                MessageBox.Show("저장 경로가 지정되지 않았거나 올바르지 않습니다.\n'저장 경로 지정' 버튼을 먼저 눌러주세요.", "알림");
-                return;
+                // 상위 저장 경로인 baseEditedPath가 없으면 미리 생성
+                if (!Directory.Exists(baseEditedPath))
+                {
+                    Directory.CreateDirectory(baseEditedPath);
+                }
+
+                using (Form _inputForm = new Form())
+                {
+                    _inputForm.Width = 400;
+                    _inputForm.Height = 150;
+                    _inputForm.FormBorderStyle = FormBorderStyle.FixedDialog;
+                    _inputForm.Text = "새 폴더 생성 및 저장 경로 지정";
+                    _inputForm.StartPosition = FormStartPosition.CenterParent;
+                    _inputForm.MaximizeBox = false;
+                    _inputForm.MinimizeBox = false;
+
+                    Label _lblText = new Label() { Left = 20, Top = 20, Width = 350, Text = "경로가 지정되지 않았습니다. 새 폴더 이름을 입력하세요:" };
+                    TextBox _txtInput = new TextBox() { Left = 20, Top = 45, Width = 340, Text = "" };
+                    Button _btnOk = new Button() { Text = "확인", Left = 180, Width = 80, Top = 80, DialogResult = DialogResult.OK };
+                    Button _btnCancel = new Button() { Text = "취소", Left = 280, Width = 80, Top = 80, DialogResult = DialogResult.Cancel };
+
+                    _inputForm.Controls.Add(_lblText);
+                    _inputForm.Controls.Add(_txtInput);
+                    _inputForm.Controls.Add(_btnOk);
+                    _inputForm.Controls.Add(_btnCancel);
+                    _inputForm.AcceptButton = _btnOk;
+                    _inputForm.CancelButton = _btnCancel;
+
+                    if (_inputForm.ShowDialog() == DialogResult.OK)
+                    {
+                        string _folderName = _txtInput.Text.Trim();
+                        if (string.IsNullOrEmpty(_folderName))
+                        {
+                            MessageBox.Show("폴더 이름을 입력해야 합니다. 저장이 취소됩니다.", "알림");
+                            return;
+                        }
+
+                        // 폴더명에 사용할 수 없는 특수문자 치환
+                        foreach (char _c in Path.GetInvalidFileNameChars())
+                        {
+                            _folderName = _folderName.Replace(_c, '_');
+                        }
+
+                        string _finalNewFolderPath = Path.Combine(baseEditedPath, _folderName);
+                        try
+                        {
+                            if (!Directory.Exists(_finalNewFolderPath))
+                            {
+                                Directory.CreateDirectory(_finalNewFolderPath);
+                                targetSavePath = _finalNewFolderPath;
+                                lblSaveRoute.Text = $"[저장 경로] {_folderName}";
+
+                                ReportLog("알림", $"새 폴더 생성 및 지정 완료: {_folderName}");
+                                MessageBox.Show($"[{_folderName}] 폴더가 생성되었습니다.\n이어서 데이터 저장을 진행합니다.", "성공");
+                            }
+                            else
+                            {
+                                // 이미 존재하는 폴더인 경우 활용 여부 확인
+                                DialogResult _useExisting = MessageBox.Show("이미 존재하는 폴더 이름입니다. 이 폴더를 저장 경로로 사용하여 저장을 진행하시겠습니까?", "알림", MessageBoxButtons.YesNo);
+                                if (_useExisting == DialogResult.Yes)
+                                {
+                                    targetSavePath = _finalNewFolderPath;
+                                    lblSaveRoute.Text = $"[저장 경로] {_folderName}";
+                                }
+                                else
+                                {
+                                    ReportLog("알림", "폴더 이름 중복으로 데이터 저장이 취소되었습니다.");
+                                    return;
+                                }
+                            }
+                        }
+                        catch (Exception _ex)
+                        {
+                            ReportLog("오류", $"폴더 생성 실패: {_ex.Message}");
+                            MessageBox.Show($"폴더 생성 중 오류가 발생하여 저장이 취소됩니다.\n{_ex.Message}", "오류");
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        ReportLog("알림", "경로가 지정되지 않아 데이터 저장이 취소되었습니다.");
+                        return;
+                    }
+                }
             }
 
+            // 3. 실제 데이터 저장 프로세스 실행 (기존 원본 로직 완벽 반영)
             try
             {
                 string _saveImagesDir = Path.Combine(targetSavePath, "images");
@@ -429,11 +435,11 @@ namespace DataManager.UserControls
                 string _catalogManifestPath = Path.Combine(targetSavePath, "catalog_0.catalog_manifest");
                 string _manifestJsonPath = Path.Combine(targetSavePath, "manifest.json");
 
-                // ── 이어쓰기 여부 판단 ────────────────────────────────────
                 bool _isContinue = chkSaveContinue.Checked;
                 int _startIndex = 0;
                 List<string> _catalogLines = new List<string>();
 
+                // 이어쓰기(Continue) 모드 처리
                 if (_isContinue)
                 {
                     if (Directory.Exists(_saveImagesDir))
@@ -453,37 +459,37 @@ namespace DataManager.UserControls
                 }
                 else
                 {
+                    // 새로 저장 모드인 경우 기존 폴더 비우고 새로 생성
                     if (Directory.Exists(_saveImagesDir))
                         Directory.Delete(_saveImagesDir, true);
                     Directory.CreateDirectory(_saveImagesDir);
                 }
 
                 int _savedCount = 0;
-
-                // 각 라인의 바이트 길이를 저장할 리스트
                 List<int> _lineLengths = new List<int>();
 
-                // 이어쓰기 모드일 경우 기존 카탈로그 파일의 라인 바이트 수 계산
+                // 이어쓰기일 때 기존 라인들의 바이트 길이 계산 보존
                 if (_isContinue && _catalogLines.Count > 0)
                 {
                     foreach (var line in _catalogLines)
                     {
-                        _lineLengths.Add(System.Text.Encoding.UTF8.GetByteCount(line) + 1);
+                        _lineLengths.Add(System.Text.Encoding.UTF8.GetByteCount(line) + 1); // +1은 줄바꿈(\n) 반영
                     }
                 }
 
+                // 프레임 순회 및 저장
                 for (int _i = 0; _i < drivingData.Count; _i++)
                 {
                     if (filteredHideSet.Contains(_i))
                         continue;
-                    var _frame = drivingData[_i];
 
+                    var _frame = drivingData[_i];
                     int _newIndex = _startIndex + _savedCount;
                     string _ext = Path.GetExtension(_frame.ImagePath);
                     string _newFileName = $"{_newIndex}_cam_image_array_{_ext}";
                     string _destPath = Path.Combine(_saveImagesDir, _newFileName);
 
-                    // ── 이미지 저장 ───────────────────────────────────────
+                    // 편집(필터링 등)된 이미지가 존재하면 변경된 비트맵 저장, 없으면 원본 복사
                     if (filteredFrameMap.TryGetValue(_i, out Bitmap _filteredBmp))
                     {
                         ImageFormat _format;
@@ -501,26 +507,25 @@ namespace DataManager.UserControls
                         File.Copy(_frame.ImagePath, _destPath, true);
                     }
 
-                    // ── catalog JSON 라인 조립 (콜론과 콤마 뒤 띄어쓰기 수동 추가) ─────────────────
+                    // JSON 라인 생성 (OrderedDictionary 순서 보장)
                     var _ordered = new System.Collections.Specialized.OrderedDictionary
-                    {
-                        { "_index",          _newIndex },
-                        { "_session_id",     _frame.SessionId ?? string.Empty },
-                        { "_timestamp_ms",   _frame.TimestampMs },
-                        { "cam/image_array", _newFileName },
-                        { "user/angle",      _frame.Angle },
-                        { "user/mode",       _frame.Mode ?? "user" },
-                        { "user/throttle",   _frame.Throttle }
-                    };
+            {
+                { "_index",          _newIndex },
+                { "_session_id",     _frame.SessionId ?? string.Empty },
+                { "_timestamp_ms",   _frame.TimestampMs },
+                { "cam/image_array", _newFileName },
+                { "user/angle",      _frame.Angle },
+                { "user/mode",       _frame.Mode ?? "user" },
+                { "user/throttle",   _frame.Throttle }
+            };
 
                     var _sb = new System.Text.StringBuilder();
                     _sb.Append("{");
                     bool _first = true;
                     foreach (System.Collections.DictionaryEntry _kv in _ordered)
                     {
-                        if (!_first) _sb.Append(", "); // 콤마 뒤 공백 한 칸 추가
+                        if (!_first) _sb.Append(", ");
                         _first = false;
-
                         string _key = JsonSerializer.Serialize(_kv.Key.ToString());
                         string _val;
                         switch (_kv.Value)
@@ -530,64 +535,55 @@ namespace DataManager.UserControls
                             case double v: _val = JsonSerializer.Serialize(v); break;
                             default: _val = JsonSerializer.Serialize(_kv.Value?.ToString() ?? ""); break;
                         }
-                        _sb.Append($"{_key}: {_val}"); // 콜론 뒤 공백 한 칸 추가
+                        _sb.Append($"{_key}: {_val}");
                     }
                     _sb.Append("}");
 
                     string _jsonLine = _sb.ToString();
                     _catalogLines.Add(_jsonLine);
 
-                    // 현재 라인의 UTF-8 바이트 크기 계산 (+1은 줄바꿈 문자 \n 값 반영)
                     int _lineByteCount = System.Text.Encoding.UTF8.GetByteCount(_jsonLine) + 1;
                     _lineLengths.Add(_lineByteCount);
 
                     _savedCount++;
                 }
 
-                // ── 파일 최종 저장 ────────────────────────────────────────
+                // 파일 쓰기 작업
                 File.WriteAllLines(_catalogPath, _catalogLines);
 
-                // 현재 Unix Timestamp 계산
                 double _unixTimestamp = (DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
 
-                // 1. [catalog_0.catalog_manifest] 파일 띄어쓰기 규칙에 맞춰 직접 조립
+                // catalog_manifest 파일 생성
                 var _mb = new System.Text.StringBuilder();
                 _mb.Append("{");
                 _mb.Append($"\"created_at\": {_unixTimestamp}, ");
-
                 _mb.Append("\"line_lengths\": [");
                 _mb.Append(string.Join(", ", _lineLengths));
                 _mb.Append("], ");
-
                 _mb.Append("\"path\": \"catalog_0.catalog\", ");
                 _mb.Append("\"start_index\": 0");
                 _mb.Append("}");
-
                 File.WriteAllText(_catalogManifestPath, _mb.ToString());
 
-
-                // 2. [manifest.json] 원본 다중 행 포맷 및 띄어쓰기 완벽 반영하여 작성
+                // manifest.json 파일 생성
                 var _manifestLines = new List<string>
-                {
-                    "[\"cam/image_array\", \"user/angle\", \"user/throttle\", \"user/mode\"]",
-                    "[\"image_array\", \"float\", \"float\", \"str\"]",
-                    "{}",
-                    $"{{\"created_at\": {_unixTimestamp}}}",
-                    $"{{\"paths\": [\"catalog_0.catalog\"], \"current_index\": {_startIndex + _savedCount}, \"max_len\": 1000, \"deleted_indexes\": []}}"
-                };
-
-                // 줄바꿈(\n) 형태로 manifest.json 최종 저장
+        {
+            "[\"cam/image_array\", \"user/angle\", \"user/throttle\", \"user/mode\"]",
+            "[\"image_array\", \"float\", \"float\", \"str\"]",
+            "{}",
+            $"{{\"created_at\": {_unixTimestamp}}}",
+            $"{{\"paths\": [\"catalog_0.catalog\"], \"current_index\": {_startIndex + _savedCount}, \"max_len\": 1000, \"deleted_indexes\": []}}"
+        };
                 File.WriteAllLines(_manifestJsonPath, _manifestLines);
-
 
                 string _modeText = _isContinue ? "이어쓰기" : "새로 저장";
                 ReportLog("정보", $"데이터 저장 완료 [{_modeText}] (총 {_savedCount} 프레임, {_startIndex}번부터 시작)");
-                MessageBox.Show($"저장 완료! [{_modeText}]\n{_startIndex}번 ~ {_startIndex + _savedCount - 1}번 프레임 저장됨", "저장 완료");
+                MessageBox.Show($"저장 완료! [{_modeText}]\n{_startIndex}번 ~ {_startIndex + _savedCount - 1}번 프레임이 안전하게 저장되었습니다.", "저장 완료");
             }
             catch (Exception _ex)
             {
                 ReportLog("오류", $"데이터 저장 실패: {_ex.Message}");
-                MessageBox.Show($"저장 중 오류 발생:\n{_ex.Message}", "오류");
+                MessageBox.Show($"저장 중 오류가 발생했습니다:\n{_ex.Message}", "오류");
             }
         }
 
