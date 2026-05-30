@@ -651,8 +651,8 @@ namespace DataManager.UserControls
 
                         isTraining = false;
                         btnTrain.Enabled = true;
-                        btnTrain.Text = "학습 시작";
-                        btnTrain.ForeColor = Color.Black;
+                        btnTrain.Text = "▶ 훈련 시작";
+                        btnTrain.ForeColor = Color.White;
                     });
 
                     trainProcess.Dispose();
@@ -753,8 +753,8 @@ namespace DataManager.UserControls
 
                     isTraining = false;
                     btnTrain.Enabled = true;
-                    btnTrain.Text = "학습 시작";
-                    btnTrain.ForeColor = Color.Black;
+                    btnTrain.Text = "▶ 훈련 시작";
+                    btnTrain.ForeColor = Color.White;
                 });
 
                 trainProcess.Dispose();
@@ -789,8 +789,8 @@ namespace DataManager.UserControls
 
                 isTraining = false;
                 btnTrain.Enabled = true;
-                btnTrain.Text = "학습 시작";
-                btnTrain.ForeColor = Color.Black;
+                btnTrain.Text = "▶ 훈련 시작";
+                btnTrain.ForeColor = Color.White;
             }
         }
 

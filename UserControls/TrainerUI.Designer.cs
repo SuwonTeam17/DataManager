@@ -16,6 +16,7 @@
         private void InitializeComponent()
         {
             pnlConfEditor = new Panel();
+            lblConfigHelp = new Label();
             btnConfigHelp = new Button();
             label2 = new Label();
             pnlConfig = new Panel();
@@ -62,7 +63,6 @@
             btnChgComment = new Button();
             btnShowConf = new Button();
             btnTrainningHistory = new Button();
-            lblConfigHelp = new Label();
             pnlConfEditor.SuspendLayout();
             pnlConfig.SuspendLayout();
             pnlTrainer.SuspendLayout();
@@ -91,6 +91,17 @@
             pnlConfEditor.Name = "pnlConfEditor";
             pnlConfEditor.Size = new Size(1629, 325);
             pnlConfEditor.TabIndex = 0;
+            // 
+            // lblConfigHelp
+            // 
+            lblConfigHelp.AutoSize = true;
+            lblConfigHelp.Font = new Font("맑은 고딕", 11F);
+            lblConfigHelp.ForeColor = Color.FromArgb(60, 72, 92);
+            lblConfigHelp.Location = new Point(956, 40);
+            lblConfigHelp.Name = "lblConfigHelp";
+            lblConfigHelp.Size = new Size(311, 36);
+            lblConfigHelp.TabIndex = 11;
+            lblConfigHelp.Text = "각 구성 설정에 대한 설명";
             // 
             // btnConfigHelp
             // 
@@ -246,9 +257,9 @@
             lblMinValLoss.Font = new Font("맑은 고딕", 11.1428576F, FontStyle.Regular, GraphicsUnit.Point, 129);
             lblMinValLoss.Location = new Point(1249, 251);
             lblMinValLoss.Name = "lblMinValLoss";
-            lblMinValLoss.Size = new Size(362, 37);
+            lblMinValLoss.Size = new Size(347, 37);
             lblMinValLoss.TabIndex = 15;
-            lblMinValLoss.Text = "최소 테스트 오차율: 0.00000";
+            lblMinValLoss.Text = "최소 테스트 오차율: 0.0000";
             // 
             // lblValLoss
             // 
@@ -256,9 +267,9 @@
             lblValLoss.Font = new Font("맑은 고딕", 11.1428576F, FontStyle.Regular, GraphicsUnit.Point, 129);
             lblValLoss.Location = new Point(1249, 172);
             lblValLoss.Name = "lblValLoss";
-            lblValLoss.Size = new Size(299, 37);
+            lblValLoss.Size = new Size(284, 37);
             lblValLoss.TabIndex = 14;
-            lblValLoss.Text = "테스트 오차율: 0.00000";
+            lblValLoss.Text = "테스트 오차율: 0.0000";
             // 
             // lblLoss
             // 
@@ -266,9 +277,9 @@
             lblLoss.Font = new Font("맑은 고딕", 11.1428576F, FontStyle.Regular, GraphicsUnit.Point, 129);
             lblLoss.Location = new Point(1249, 93);
             lblLoss.Name = "lblLoss";
-            lblLoss.Size = new Size(281, 37);
+            lblLoss.Size = new Size(266, 37);
             lblLoss.TabIndex = 13;
-            lblLoss.Text = "학습 오차율 : 0.00000";
+            lblLoss.Text = "학습 오차율 : 0.0000";
             // 
             // lblEpoch
             // 
@@ -297,7 +308,7 @@
             txtModelName.Location = new Point(346, 39);
             txtModelName.Margin = new Padding(5, 6, 5, 6);
             txtModelName.Name = "txtModelName";
-            txtModelName.Size = new Size(363, 35);
+            txtModelName.Size = new Size(354, 35);
             txtModelName.TabIndex = 10;
             // 
             // grpSetTrainSetting
@@ -676,17 +687,6 @@
             btnTrainningHistory.Text = "훈련 기록";
             btnTrainningHistory.UseVisualStyleBackColor = false;
             btnTrainningHistory.Click += btnTrainningHistory_Click;
-            // 
-            // lblConfigHelp
-            // 
-            lblConfigHelp.AutoSize = true;
-            lblConfigHelp.Font = new Font("맑은 고딕", 11F);
-            lblConfigHelp.ForeColor = Color.FromArgb(60, 72, 92);
-            lblConfigHelp.Location = new Point(956, 40);
-            lblConfigHelp.Name = "lblConfigHelp";
-            lblConfigHelp.Size = new Size(311, 36);
-            lblConfigHelp.TabIndex = 11;
-            lblConfigHelp.Text = "각 구성 설정에 대한 설명";
             // 
             // TrainerUI
             // 
