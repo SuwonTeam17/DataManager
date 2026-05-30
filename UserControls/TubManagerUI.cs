@@ -1094,13 +1094,17 @@ namespace DataManager.UserControls
         {
             chtData.Series.Clear();
 
+            
             Series _angleSeries = new Series("각도") { ChartType = SeriesChartType.Line, BorderWidth = 2 };
+           
+            
             Series _throttleSeries = new Series("속도") { ChartType = SeriesChartType.Line, BorderWidth = 2 };
+            _throttleSeries.Color = Color.FromArgb(72, 175, 120); // 노란색에서 초록색으로 변경
 
             for (int _i = 0; _i < drivingData.Count; _i++)
             {
-                if (filteredHideSet.Contains(_i)) continue;
-
+                if (filteredHideSet.Contains(_i))
+                    continue;
                 var _frame = drivingData[_i];
                 _angleSeries.Points.AddXY(_frame.Index, _frame.Angle);
                 _throttleSeries.Points.AddXY(_frame.Index, _frame.Throttle);
