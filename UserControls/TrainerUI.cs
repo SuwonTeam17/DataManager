@@ -48,6 +48,34 @@ namespace DataManager.UserControls
             { "학습 한번에 쓸 사진 수", "AI가 한 번에 꺼내서 볼 사진의 묶음(배치) 개수입니다. 보통 64나 128을 사용하며, 너무 크면 그래픽카드 메모리가 부족해집니다." }
         };
 
+
+        // ⭐ 파이썬 폴더의 정체를 밝혀내는 탐지기 함수
+        private string DetectPythonEnvironmentType(string pythonFolderPath)
+        {
+            if (!Directory.Exists(pythonFolderPath))
+            {
+                return "경로 없음";
+            }
+
+            // 1. 가상환경(venv) 검사: pyvenv.cfg 파일이 있는지 확인
+            string venvConfigPath = Path.Combine(pythonFolderPath, "pyvenv.cfg");
+            if (File.Exists(venvConfigPath))
+            {
+                return "가상환경(venv)";
+            }
+
+            // 2. 임베더블 패키지 검사: ._pth 파일이 있는지 확인
+            // (파이썬 버전에 따라 python39._pth, python310._pth 등으로 이름이 다르므로 확장자로 찾습니다)
+            string[] pthFiles = Directory.GetFiles(pythonFolderPath, "*._pth");
+            if (pthFiles.Length > 0)
+            {
+                return "임베더블(Embeddable)";
+            }
+
+            // 3. 둘 다 아니면 알 수 없는 일반 폴더
+            return "알 수 없음";
+        }
+
         private void TrainerUI_Load(object sender, EventArgs e)
         {
             // 1. 모델 종류 콤보박스 세팅
@@ -588,12 +616,22 @@ namespace DataManager.UserControls
                 Directory.CreateDirectory(modelFolderPath);
             }
 
-            // ⭐ 6. 최종 명령어 조립 (신규(임베더블 페키지) 방식/ python train.py -> donkey train 으로 변경)
-            string donkeyPath = Path.GetFullPath(Path.Combine(mycarPath, "..", "env", "Scripts", "donkey.exe"));
-            string windowsCommand = $"cd /d \"{mycarPath}\" && {cudaCommand}\"{donkeyPath}\" train --tub \"{tubPath}\" --model \"models\\{modelName}\\{modelName}\" --type {selectedType}{transferCommand}";
+            string envPath = Path.GetFullPath(Path.Combine(mycarPath, "..", "env"));
+            string envType = DetectPythonEnvironmentType(envPath);
+            string windowsCommand = "";
 
-            // ⭐ 6. 최종 명령어 조립 (기존(가상 환경) 방식/ python train.py -> donkey train 으로 변경)
-            // string windowsCommand = $"cd /d \"{mycarPath}\" && \"..\\env\\Scripts\\activate\" && {cudaCommand}donkey train --tub \"{tubPath}\" --model \"models\\{modelName}\\{modelName}\" --type {selectedType}{transferCommand}";
+
+            if (envType == "가상환경(venv)")
+            {
+                // 🟢 [기존(가상 환경) 방식] 코드 적용
+                windowsCommand = $"cd /d \"{mycarPath}\" && \"..\\env\\Scripts\\activate\" && {cudaCommand}donkey train --tub \"{tubPath}\" --model \"models\\{modelName}\\{modelName}\" --type {selectedType}{transferCommand}";
+            }
+            else
+            {
+                // 🔵 [신규(임베더블 패키지) 방식] 다이렉트 실행 코드 적용!
+                string donkeyPath = Path.GetFullPath(Path.Combine(mycarPath, "..", "env", "Scripts", "donkey.exe"));
+                windowsCommand = $"cd /d \"{mycarPath}\" && {cudaCommand}\"{donkeyPath}\" train --tub \"{tubPath}\" --model \"models\\{modelName}\\{modelName}\" --type {selectedType}{transferCommand}";
+            }
 
             // (테스트용 메시지 박스는 필요하시면 주석 해제하세요)
             // MessageBox.Show(windowsCommand, "명령어 복사하기");
