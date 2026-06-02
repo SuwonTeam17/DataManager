@@ -56,7 +56,7 @@
             btnStop.FlatStyle = FlatStyle.Flat;
             btnStop.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnStop.ForeColor = Color.White;
-            btnStop.Location = new Point(785, 4);
+            btnStop.Location = new Point(794, 4);
             btnStop.Name = "btnStop";
             btnStop.Size = new Size(70, 30);
             btnStop.TabIndex = 12;
@@ -71,7 +71,7 @@
             btnPlay.FlatStyle = FlatStyle.Flat;
             btnPlay.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnPlay.ForeColor = Color.White;
-            btnPlay.Location = new Point(711, 4);
+            btnPlay.Location = new Point(720, 4);
             btnPlay.Name = "btnPlay";
             btnPlay.Size = new Size(70, 30);
             btnPlay.TabIndex = 11;
@@ -86,7 +86,7 @@
             btn5FrameRight.FlatStyle = FlatStyle.Flat;
             btn5FrameRight.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btn5FrameRight.ForeColor = Color.White;
-            btn5FrameRight.Location = new Point(655, 4);
+            btn5FrameRight.Location = new Point(664, 4);
             btn5FrameRight.Name = "btn5FrameRight";
             btn5FrameRight.Size = new Size(52, 30);
             btn5FrameRight.TabIndex = 10;
@@ -101,7 +101,7 @@
             btn5FrameLeft.FlatStyle = FlatStyle.Flat;
             btn5FrameLeft.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btn5FrameLeft.ForeColor = Color.White;
-            btn5FrameLeft.Location = new Point(543, 4);
+            btn5FrameLeft.Location = new Point(552, 4);
             btn5FrameLeft.Name = "btn5FrameLeft";
             btn5FrameLeft.Size = new Size(52, 30);
             btn5FrameLeft.TabIndex = 9;
@@ -116,7 +116,7 @@
             btnFrameRight.FlatStyle = FlatStyle.Flat;
             btnFrameRight.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnFrameRight.ForeColor = Color.White;
-            btnFrameRight.Location = new Point(599, 4);
+            btnFrameRight.Location = new Point(608, 4);
             btnFrameRight.Name = "btnFrameRight";
             btnFrameRight.Size = new Size(52, 30);
             btnFrameRight.TabIndex = 8;
@@ -131,7 +131,7 @@
             btnFrameLeft.FlatStyle = FlatStyle.Flat;
             btnFrameLeft.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnFrameLeft.ForeColor = Color.White;
-            btnFrameLeft.Location = new Point(487, 4);
+            btnFrameLeft.Location = new Point(496, 4);
             btnFrameLeft.Name = "btnFrameLeft";
             btnFrameLeft.Size = new Size(52, 30);
             btnFrameLeft.TabIndex = 7;
@@ -172,7 +172,7 @@
             btnLoadTub.FlatStyle = FlatStyle.Flat;
             btnLoadTub.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnLoadTub.ForeColor = Color.White;
-            btnLoadTub.Location = new Point(81, 44);
+            btnLoadTub.Location = new Point(90, 44);
             btnLoadTub.Name = "btnLoadTub";
             btnLoadTub.Size = new Size(143, 24);
             btnLoadTub.TabIndex = 21;
@@ -187,7 +187,7 @@
             comboBox1.Font = new Font("맑은 고딕", 9.5F);
             comboBox1.FormattingEnabled = true;
             comboBox1.Items.AddRange(new object[] { "0.25", "0.50", "1.00", "2.00", "3.00", "5.00", "10.00" });
-            comboBox1.Location = new Point(525, 38);
+            comboBox1.Location = new Point(534, 38);
             comboBox1.Name = "comboBox1";
             comboBox1.Size = new Size(62, 25);
             comboBox1.TabIndex = 19;
@@ -203,7 +203,7 @@
             btnModelAdd.ForeColor = Color.White;
             btnModelAdd.Location = new Point(4, 44);
             btnModelAdd.Name = "btnModelAdd";
-            btnModelAdd.Size = new Size(71, 24);
+            btnModelAdd.Size = new Size(80, 24);
             btnModelAdd.TabIndex = 18;
             btnModelAdd.Text = "모델 추가";
             btnModelAdd.UseVisualStyleBackColor = false;
@@ -213,7 +213,7 @@
             // 
             trkBlur.AutoSize = false;
             trkBlur.LargeChange = 1;
-            trkBlur.Location = new Point(301, 10);
+            trkBlur.Location = new Point(310, 10);
             trkBlur.Name = "trkBlur";
             trkBlur.Size = new Size(184, 22);
             trkBlur.TabIndex = 17;
@@ -223,7 +223,7 @@
             // 
             lblBlur.Font = new Font("맑은 고딕", 9.5F);
             lblBlur.ForeColor = Color.FromArgb(60, 72, 92);
-            lblBlur.Location = new Point(225, 8);
+            lblBlur.Location = new Point(234, 8);
             lblBlur.Name = "lblBlur";
             lblBlur.Size = new Size(80, 22);
             lblBlur.TabIndex = 16;
@@ -234,7 +234,7 @@
             // 
             trkBright.AutoSize = false;
             trkBright.LargeChange = 1;
-            trkBright.Location = new Point(301, 42);
+            trkBright.Location = new Point(310, 42);
             trkBright.Name = "trkBright";
             trkBright.Size = new Size(184, 22);
             trkBright.TabIndex = 15;
@@ -244,7 +244,7 @@
             // 
             lblBright.Font = new Font("맑은 고딕", 9.5F);
             lblBright.ForeColor = Color.FromArgb(60, 72, 92);
-            lblBright.Location = new Point(225, 40);
+            lblBright.Location = new Point(234, 40);
             lblBright.Name = "lblBright";
             lblBright.Size = new Size(80, 22);
             lblBright.TabIndex = 14;
@@ -255,7 +255,7 @@
             // 
             trkProgress.AutoSize = false;
             trkProgress.LargeChange = 1;
-            trkProgress.Location = new Point(593, 38);
+            trkProgress.Location = new Point(602, 38);
             trkProgress.Name = "trkProgress";
             trkProgress.Size = new Size(213, 22);
             trkProgress.TabIndex = 13;
@@ -266,7 +266,7 @@
             lblSpeed.AutoSize = true;
             lblSpeed.Font = new Font("맑은 고딕", 9.5F);
             lblSpeed.ForeColor = Color.FromArgb(60, 72, 92);
-            lblSpeed.Location = new Point(487, 42);
+            lblSpeed.Location = new Point(496, 42);
             lblSpeed.Name = "lblSpeed";
             lblSpeed.Size = new Size(34, 17);
             lblSpeed.TabIndex = 20;
