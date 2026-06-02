@@ -24,7 +24,6 @@
             pnlChart = new Panel();
             chtData = new System.Windows.Forms.DataVisualization.Charting.Chart();
             btnFileLoad = new Button();
-            btnNewFolder = new Button();
             btnSaveRoute = new Button();
             btnSaveData = new Button();
             btnDelFolder = new Button();
@@ -56,7 +55,7 @@
             lblSpeed = new Label();
             comboBox1 = new ComboBox();
             lblAllImageNumRange = new Label();
-            btnStop = new Button();
+            btnRangePlay = new Button();
             btnPlay = new Button();
             btn5FrameRight = new Button();
             btn5FrameLeft = new Button();
@@ -137,28 +136,11 @@
             btnFileLoad.ForeColor = Color.White;
             btnFileLoad.Location = new Point(4, 5);
             btnFileLoad.Name = "btnFileLoad";
-            btnFileLoad.Size = new Size(143, 30);
+            btnFileLoad.Size = new Size(150, 30);
             btnFileLoad.TabIndex = 0;
             btnFileLoad.Text = "주행 데이터 가져오기";
             btnFileLoad.UseVisualStyleBackColor = false;
             btnFileLoad.Click += btnFileLoad_Click;
-            // 
-            // btnNewFolder
-            // 
-            btnNewFolder.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
-            btnNewFolder.BackColor = Color.FromArgb(72, 175, 120);
-            btnNewFolder.Cursor = Cursors.Hand;
-            btnNewFolder.FlatAppearance.BorderSize = 0;
-            btnNewFolder.FlatStyle = FlatStyle.Flat;
-            btnNewFolder.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
-            btnNewFolder.ForeColor = Color.White;
-            btnNewFolder.Location = new Point(153, 5);
-            btnNewFolder.Name = "btnNewFolder";
-            btnNewFolder.Size = new Size(100, 30);
-            btnNewFolder.TabIndex = 1;
-            btnNewFolder.Text = "새 폴더 생성";
-            btnNewFolder.UseVisualStyleBackColor = false;
-            btnNewFolder.Click += btnNewFolder_Click;
             // 
             // btnSaveRoute
             // 
@@ -169,7 +151,7 @@
             btnSaveRoute.FlatStyle = FlatStyle.Flat;
             btnSaveRoute.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnSaveRoute.ForeColor = Color.White;
-            btnSaveRoute.Location = new Point(345, 5);
+            btnSaveRoute.Location = new Point(294, 5);
             btnSaveRoute.Name = "btnSaveRoute";
             btnSaveRoute.Size = new Size(110, 30);
             btnSaveRoute.TabIndex = 3;
@@ -203,7 +185,7 @@
             btnDelFolder.FlatStyle = FlatStyle.Flat;
             btnDelFolder.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnDelFolder.ForeColor = Color.White;
-            btnDelFolder.Location = new Point(259, 5);
+            btnDelFolder.Location = new Point(184, 5);
             btnDelFolder.Name = "btnDelFolder";
             btnDelFolder.Size = new Size(80, 30);
             btnDelFolder.TabIndex = 2;
@@ -216,7 +198,7 @@
             lblSaveRoute.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             lblSaveRoute.Font = new Font("맑은 고딕", 9F);
             lblSaveRoute.ForeColor = Color.FromArgb(120, 130, 150);
-            lblSaveRoute.Location = new Point(569, 5);
+            lblSaveRoute.Location = new Point(564, 5);
             lblSaveRoute.Name = "lblSaveRoute";
             lblSaveRoute.Size = new Size(220, 30);
             lblSaveRoute.TabIndex = 4;
@@ -231,7 +213,6 @@
             pnlFile.Controls.Add(btnDelFolder);
             pnlFile.Controls.Add(lblSaveRoute);
             pnlFile.Controls.Add(btnSaveRoute);
-            pnlFile.Controls.Add(btnNewFolder);
             pnlFile.Dock = DockStyle.Top;
             pnlFile.Location = new Point(0, 0);
             pnlFile.Name = "pnlFile";
@@ -243,7 +224,7 @@
             chkSaveContinue.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             chkSaveContinue.Font = new Font("맑은 고딕", 9.5F);
             chkSaveContinue.ForeColor = Color.FromArgb(60, 72, 92);
-            chkSaveContinue.Location = new Point(463, 9);
+            chkSaveContinue.Location = new Point(434, 9);
             chkSaveContinue.Margin = new Padding(0);
             chkSaveContinue.Name = "chkSaveContinue";
             chkSaveContinue.Size = new Size(100, 22);
@@ -414,7 +395,7 @@
             // chkRemoveImage
             // 
             chkRemoveImage.Location = new Point(634, 4);
-            chkRemoveImage.Margin = new Padding(2, 2, 2, 2);
+            chkRemoveImage.Margin = new Padding(2);
             chkRemoveImage.Name = "chkRemoveImage";
             chkRemoveImage.Size = new Size(90, 22);
             chkRemoveImage.TabIndex = 12;
@@ -544,7 +525,7 @@
             pnlControl.Controls.Add(lblSpeed);
             pnlControl.Controls.Add(comboBox1);
             pnlControl.Controls.Add(lblAllImageNumRange);
-            pnlControl.Controls.Add(btnStop);
+            pnlControl.Controls.Add(btnRangePlay);
             pnlControl.Controls.Add(btnPlay);
             pnlControl.Controls.Add(btn5FrameRight);
             pnlControl.Controls.Add(btn5FrameLeft);
@@ -591,21 +572,21 @@
             lblAllImageNumRange.Text = "(이미지 첫 번호, 현재 이미지 번호, 이미지 끝 번호 표시)";
             lblAllImageNumRange.TextAlign = ContentAlignment.MiddleCenter;
             // 
-            // btnStop
+            // btnRangePlay
             // 
-            btnStop.BackColor = Color.FromArgb(210, 70, 70);
-            btnStop.Cursor = Cursors.Hand;
-            btnStop.FlatAppearance.BorderSize = 0;
-            btnStop.FlatStyle = FlatStyle.Flat;
-            btnStop.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
-            btnStop.ForeColor = Color.White;
-            btnStop.Location = new Point(140, 210);
-            btnStop.Name = "btnStop";
-            btnStop.Size = new Size(130, 46);
-            btnStop.TabIndex = 6;
-            btnStop.Text = "■ 중지";
-            btnStop.UseVisualStyleBackColor = false;
-            btnStop.Click += btnStop_Click;
+            btnRangePlay.BackColor = Color.FromArgb(142, 68, 173);
+            btnRangePlay.Cursor = Cursors.Hand;
+            btnRangePlay.FlatAppearance.BorderSize = 0;
+            btnRangePlay.FlatStyle = FlatStyle.Flat;
+            btnRangePlay.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnRangePlay.ForeColor = Color.White;
+            btnRangePlay.Location = new Point(140, 210);
+            btnRangePlay.Name = "btnRangePlay";
+            btnRangePlay.Size = new Size(130, 46);
+            btnRangePlay.TabIndex = 6;
+            btnRangePlay.Text = "🔁 구간 재생";
+            btnRangePlay.UseVisualStyleBackColor = false;
+            btnRangePlay.Click += btnRangePlay_Click;
             // 
             // btnPlay
             // 
@@ -804,7 +785,7 @@
             pnlTimeStamp.BackColor = Color.FromArgb(250, 251, 253);
             pnlTimeStamp.Dock = DockStyle.Bottom;
             pnlTimeStamp.Location = new Point(0, 438);
-            pnlTimeStamp.Margin = new Padding(2, 2, 2, 2);
+            pnlTimeStamp.Margin = new Padding(2);
             pnlTimeStamp.Name = "pnlTimeStamp";
             pnlTimeStamp.Size = new Size(670, 38);
             pnlTimeStamp.TabIndex = 12;
@@ -842,7 +823,6 @@
         private Panel pnlChart;
         private System.Windows.Forms.DataVisualization.Charting.Chart chtData;
         private Button btnFileLoad;
-        private Button btnNewFolder;
         private Button btnSaveRoute;
         private Button btnSaveData;
         private Button btnDelFolder;
@@ -853,7 +833,7 @@
         private Panel pnlControl;
         private Label lblThrottle;
         private Label lblAngle;
-        private Button btnStop;
+        private Button btnRangePlay;
         private Button btnPlay;
         private Button btn5FrameRight;
         private Button btn5FrameLeft;
