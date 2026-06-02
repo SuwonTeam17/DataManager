@@ -19,7 +19,7 @@ namespace DataManager
         private readonly string _rootPath;
         private string _currentPath;
 
-        private Label _lblPath;
+        private TextBox _txtPath;
         private Button _btnUp;
         private ListView _listView;
         private Label _lblSelected;
@@ -64,14 +64,41 @@ namespace DataManager
             _btnUp.Cursor = Cursors.Hand;
             _btnUp.Click += (s, e) => GoUp();
 
-            _lblPath = new Label();
-            _lblPath.Dock = DockStyle.Fill;
-            _lblPath.ForeColor = Color.FromArgb(200, 215, 235);
-            _lblPath.Font = new Font("맑은 고딕", 9F);
-            _lblPath.TextAlign = ContentAlignment.MiddleLeft;
-            _lblPath.Padding = new Padding(8, 0, 0, 0);
+            _txtPath = new TextBox();
+            _txtPath.Dock = DockStyle.Fill;
+            _txtPath.ForeColor = Color.FromArgb(200, 215, 235);
+            _txtPath.BackColor = Color.FromArgb(55, 68, 90);
+            _txtPath.Font = new Font("맑은 고딕", 9F);
+            _txtPath.BorderStyle = BorderStyle.None;
+            _txtPath.Margin = new Padding(8, 0, 0, 0);
+            _txtPath.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode == Keys.Enter)
+                {
+                    string typed = _txtPath.Text.Trim();
+                    if (Directory.Exists(typed))
+                        Navigate(typed);
+                    else
+                    {
+                        _txtPath.ForeColor = Color.FromArgb(255, 120, 100);
+                        _txtPath.Text = typed; // keep wrong input visible
+                    }
+                    e.SuppressKeyPress = true;
+                }
+            };
+            // 포커스를 잃으면 현재 경로로 복원
+            _txtPath.Leave += (s, e) =>
+            {
+                _txtPath.Text = _currentPath;
+                _txtPath.ForeColor = Color.FromArgb(200, 215, 235);
+            };
+            // 포커스 받으면 색상 정상화
+            _txtPath.Enter += (s, e) =>
+            {
+                _txtPath.ForeColor = Color.FromArgb(200, 215, 235);
+            };
 
-            pnlTop.Controls.Add(_lblPath);
+            pnlTop.Controls.Add(_txtPath);
             pnlTop.Controls.Add(_btnUp);
 
             // ── 하단: 선택 표시 + 확인/취소 버튼 ────────────────
@@ -160,10 +187,12 @@ namespace DataManager
             _currentPath = path;
 
             // 경로 표시
-            _lblPath.Text = _currentPath;
+            _txtPath.Text = _currentPath;
+            _txtPath.ForeColor = Color.FromArgb(200, 215, 235);
 
-            // 위로 버튼
-            _btnUp.Enabled = !string.Equals(_currentPath, _rootPath, StringComparison.OrdinalIgnoreCase);
+            // 위로 버튼 (드라이브 루트에서만 비활성화)
+            DirectoryInfo upCheck = Directory.GetParent(_currentPath);
+            _btnUp.Enabled = upCheck != null;
 
             // 선택 초기화
             SelectedPath = string.Empty;
@@ -249,7 +278,6 @@ namespace DataManager
 
         private void GoUp()
         {
-            if (string.Equals(_currentPath, _rootPath, StringComparison.OrdinalIgnoreCase)) return;
             DirectoryInfo parent = Directory.GetParent(_currentPath);
             if (parent != null) Navigate(parent.FullName);
         }
