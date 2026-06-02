@@ -1,8 +1,9 @@
 ﻿
-using System.IO;
 using System.Diagnostics;
+using System.Text;
+using System.IO;
 using System.Text.RegularExpressions;
-using System.Text.RegularExpressions; // 이거 하나만 맨 위에 추가해주세요!
+using System.Windows.Forms.DataVisualization.Charting;
 
 namespace DataManager.UserControls
 {
@@ -12,8 +13,19 @@ namespace DataManager.UserControls
         // ⭐ 실시간 힌트를 띄워줄 백그라운드 타이머
         private System.Windows.Forms.Timer placeholderTimer;
 
+        private double minValLoss = double.MaxValue;
+
         // 클래스 내부 최상단 멤버 변수 구역에 넣어주세요
         public event Action<string, string, string> OnLogReported;
+
+        // 클래스 맨 위 전역 변수 영역
+        private Process trainProcess = null;
+        private bool isTraining = false; // ⭐ 현재 훈련 중인지 기억하는 변수
+        private bool isUserStopped = false;   // ⭐ 사용자가 의도적으로 정지했는지 확인하는 깃발
+
+        // 클래스 전역 변수 영역
+        private List<double> historyLoss = new List<double>();
+        private List<double> historyValLoss = new List<double>();
 
         // ⭐ 한글 이름과 파이썬 변수명을 연결해 주는 공통 사전
         private readonly Dictionary<string, string> configMapping = new Dictionary<string, string>()
@@ -25,6 +37,44 @@ namespace DataManager.UserControls
             { "반복 횟수", "MAX_EPOCHS" },
             { "학습 한번에 쓸 사진 수", "BATCH_SIZE" }
         };
+
+        private Dictionary<string, string> configHelpDocs = new Dictionary<string, string>()
+        {
+            { "상단 자르기", "이미지 위쪽(하늘, 천장 등)에서 잘라낼 픽셀 수입니다. 불필요한 배경을 가려 AI가 트랙에만 집중하게 만듭니다." },
+            { "하단 자르기", "이미지 아래쪽(자동차 보닛 등)에서 잘라낼 픽셀 수입니다. 트랙이 아닌 자동차 앞부분이 학습에 방해되는 것을 막아줍니다." },
+            { "우측 자르기", "이미지 오른쪽 가장자리에서 잘라낼 픽셀 수입니다. 카메라가 한쪽으로 치우쳐 있을 때 시야를 보정합니다." },
+            { "좌측 자르기", "이미지 왼쪽 가장자리에서 잘라낼 픽셀 수입니다. 마찬가지로 시야의 중심을 맞추는 데 사용합니다." },
+            { "반복 횟수", "준비된 사진 데이터 전체를 AI가 처음부터 끝까지 복습할 최대 횟수(에포크)입니다. 보통 100을 설정하며, 얼리 스토핑이 작동하면 다 채우지 않고 끝날 수 있습니다." },
+            { "학습 한번에 쓸 사진 수", "AI가 한 번에 꺼내서 볼 사진의 묶음(배치) 개수입니다. 보통 64나 128을 사용하며, 너무 크면 그래픽카드 메모리가 부족해집니다." }
+        };
+
+
+        // ⭐ 파이썬 폴더의 정체를 밝혀내는 탐지기 함수
+        private string DetectPythonEnvironmentType(string pythonFolderPath)
+        {
+            if (!Directory.Exists(pythonFolderPath))
+            {
+                return "경로 없음";
+            }
+
+            // 1. 가상환경(venv) 검사: pyvenv.cfg 파일이 있는지 확인
+            string venvConfigPath = Path.Combine(pythonFolderPath, "pyvenv.cfg");
+            if (File.Exists(venvConfigPath))
+            {
+                return "가상환경(venv)";
+            }
+
+            // 2. 임베더블 패키지 검사: ._pth 파일이 있는지 확인
+            // (파이썬 버전에 따라 python39._pth, python310._pth 등으로 이름이 다르므로 확장자로 찾습니다)
+            string[] pthFiles = Directory.GetFiles(pythonFolderPath, "*._pth");
+            if (pthFiles.Length > 0)
+            {
+                return "임베더블(Embeddable)";
+            }
+
+            // 3. 둘 다 아니면 알 수 없는 일반 폴더
+            return "알 수 없음";
+        }
 
         private void TrainerUI_Load(object sender, EventArgs e)
         {
@@ -110,6 +160,7 @@ namespace DataManager.UserControls
             catch { }
         }
 
+        private ComboBox lastFocusedComboBox = null;
 
         public TrainerUI()
         {
@@ -286,6 +337,10 @@ namespace DataManager.UserControls
             });
             cboSelConf_New.SelectedIndex = 0;
 
+            // ⭐ 콤보박스를 마우스로 클릭(Enter)하거나 값을 바꿀 때마다 자신을 기억시킵니다.
+            cboSelConf_New.Enter += (s, args) => { lastFocusedComboBox = (ComboBox)s; };
+            cboSelConf_New.SelectedIndexChanged += (s, args) => { lastFocusedComboBox = (ComboBox)s; };
+
             Button btnDelete = new Button();
             btnDelete.Name = "btnDelete";
             btnDelete.Text = "X";
@@ -297,6 +352,12 @@ namespace DataManager.UserControls
 
             btnDelete.Click += (s, args) =>
             {
+                // ⭐ 방어 코드: 만약 지우려는 줄이 마지막으로 선택했던 콤보박스라면, 기억을 비워줍니다. (에러 방지)
+                if (lastFocusedComboBox == cboSelConf_New)
+                {
+                    lastFocusedComboBox = null;
+                }
+
                 flpConfCon.Controls.Remove(rowPanel);
                 rowPanel.Dispose();
                 SyncAllPanelSizes();
@@ -334,10 +395,66 @@ namespace DataManager.UserControls
             OnLogReported?.Invoke(currentTime, type, message);
         }
 
+
         private void btnTrain_Click(object sender, EventArgs e)
         {
+            // ==============================================================
+            // 🛑 1. [정지 모드] 현재 훈련 중인데 버튼을 눌렀을 때 (강제 중지)
+            // ==============================================================
+            if (isTraining)
+            {
+                DialogResult result = MessageBox.Show(
+                    "훈련을 강제로 중지하시겠습니까?\n(현재까지 저장된 최고 기록 모델과 설정 영수증은 안전하게 보존됩니다.)",
+                    "훈련 중지", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
+                if (result == DialogResult.Yes)
+                {
+                    btnTrain.Enabled = false;
+                    btnTrain.Text = "정지 중...";
+
+                    // ⭐ "에러가 아니라 사용자가 끈 거야!" 라고 깃발 꽂기
+                    isUserStopped = true;
+
+                    try
+                    {
+                        Process.Start(new ProcessStartInfo
+                        {
+                            FileName = "taskkill",
+                            Arguments = $"/PID {trainProcess.Id} /T /F",
+                            CreateNoWindow = true,
+                            UseShellExecute = false
+                        }).WaitForExit();
+                    }
+                    catch { }
+                }
+                return; // 정지 로직만 실행하고 함수를 빠져나갑니다.
+            }
+
+            // ==============================================================
+            // 🚀 2. [시작 모드] 새로 훈련을 시작할 때
+            // ==============================================================
+
+            // ⭐ 시작 상태 세팅
+            isTraining = true;
+            isUserStopped = false;
             btnTrain.Enabled = false;
-            btnTrain.Text = "학습 중...";
+            historyLoss.Clear();    // ⭐ 새 훈련 시작 전 수첩 초기화
+            historyValLoss.Clear(); // ⭐ 새 훈련 시작 전 수첩 초기화
+            btnTrain.Text = "🛑 학습 정지"; // 버튼을 정지 버튼으로 변신
+            btnTrain.ForeColor = Color.Red;
+
+            // 1. 역대 최저점 초기화 (가장 중요! 다시 무한대로 돌려놓습니다)
+            minValLoss = double.MaxValue;
+
+            // 2. 라벨 텍스트 초기화
+            lblEpoch.Text = "반복횟수 : 0/0";
+            lblLoss.Text = "학습 오차율 : 0.00000";
+            lblValLoss.Text = "테스트 오차율 : 0.00000";
+            lblMinValLoss.Text = "최소 테스트 오차율 : 0.00000";
+
+            // 4. 라벨 색상 및 폰트 굵기 원상 복구 (초록색 굵은 글씨 해제)
+            lblMinValLoss.ForeColor = Color.Black;
+            lblMinValLoss.Font = new Font(lblMinValLoss.Font, FontStyle.Regular);
 
             string tubPath = "";
 
@@ -356,8 +473,10 @@ namespace DataManager.UserControls
                 }
                 else
                 {
+                    isTraining = false;
                     btnTrain.Enabled = true;
-                    btnTrain.Text = "▶ 훈련 시작";
+                    btnTrain.Text = "학습 시작";
+                    btnTrain.ForeColor = Color.Black;
                     return;
                 }
             }
@@ -369,14 +488,14 @@ namespace DataManager.UserControls
                 DirectoryInfo parentInfo = Directory.GetParent(currentPath);
                 if (parentInfo == null)
                 {
-                    // 1. 디버깅을 위한 영구적인 증거(로그)를 남깁니다.
                     ReportLog("치명적 오류", "파이썬 엔진 누락: 'env' 폴더를 찾을 수 없음. (경로 탐색 실패)");
-
-                    // 2. 사용자에게 가장 강력한(Error) 시각적 경고를 줍니다.
                     MessageBox.Show("AI 훈련을 위한 핵심 파이썬 엔진('env' 폴더)을 찾을 수 없습니다.\n프로그램이 정상적으로 설치되었는지 확인해 주세요.",
-                                    "시스템 치명적 오류",
-                                    MessageBoxButtons.OK,
-                                    MessageBoxIcon.Error); // ⬅️ Warning이나 Information이 아닌 Error(빨간 X) 사용!
+                                    "시스템 치명적 오류", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                    isTraining = false;
+                    btnTrain.Enabled = true;
+                    btnTrain.Text = "학습 시작";
+                    btnTrain.ForeColor = Color.Black;
                     return;
                 }
                 currentPath = parentInfo.FullName;
@@ -388,7 +507,6 @@ namespace DataManager.UserControls
             string timestamp = DateTime.Now.ToString("yyMMdd_HHmmss");
             string defaultMemo = "";
 
-            // 1. 전이학습 콤보박스에서 특정 모델을 선택했다면? (0번 인덱스가 '선택 안 함'이라고 가정)
             if (cboSelectTransferModel.SelectedIndex > 0)
             {
                 string baseModel = cboSelectTransferModel.SelectedItem.ToString();
@@ -396,11 +514,9 @@ namespace DataManager.UserControls
             }
             else
             {
-                // 2. 아무것도 선택하지 않은 백지상태 학습이라면?
                 defaultMemo = $"[{DateTime.Now.ToString("MM/dd HH:mm")}] 신규 베이스 모델";
             }
 
-            // 3. 최종 결정 (사용자가 쓴 글이 있으면 그걸 쓰고, 없으면 방금 조립한 defaultMemo를 씁니다)
             string curMemo = string.IsNullOrWhiteSpace(txtComment.Text) ? defaultMemo : txtComment.Text.Trim();
 
             // 4. 모델 종류(--type) 파라미터 번역
@@ -413,11 +529,10 @@ namespace DataManager.UserControls
             else if (displayType.Contains("IMU")) selectedType = "imu";
             else if (displayType.Contains("3D")) selectedType = "3d";
 
-            // ⭐ 5. 전이학습(--transfer) 파라미터 확인 (꼼수 제거, 공식 옵션 적용!)
+            // 5. 전이학습(--transfer) 파라미터 확인
             string curTransfer = "X";
             string transferCommand = "";
 
-            // 2. 콤보박스에서 1번째 이상(실제 모델)을 선택했을 때만 경로 탐색을 시작합니다.
             if (cboSelectTransferModel.SelectedIndex > 0)
             {
                 string selectedBaseModel = cboSelectTransferModel.SelectedItem.ToString();
@@ -425,10 +540,8 @@ namespace DataManager.UserControls
 
                 string nestedPath = Path.Combine(modelsBaseDir, selectedBaseModel, selectedBaseModel);
                 string flatPath = Path.Combine(modelsBaseDir, selectedBaseModel);
-
                 string targetTransferPath = "";
 
-                // 3. 모델 구조 탐색 (아까 작성한 3중 방어막)
                 if (Directory.Exists(nestedPath) || File.Exists(nestedPath))
                 {
                     targetTransferPath = $"models\\{selectedBaseModel}\\{selectedBaseModel}";
@@ -445,15 +558,17 @@ namespace DataManager.UserControls
                 {
                     MessageBox.Show($"'{selectedBaseModel}' 베이스 모델 파일을 찾을 수 없습니다.",
                                     "모델 찾기 실패", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return; // 훈련 중단
+                    isTraining = false;
+                    btnTrain.Enabled = true;
+                    btnTrain.Text = "학습 시작";
+                    btnTrain.ForeColor = Color.Black;
+                    return;
                 }
 
-                // 4. 전이학습을 한다고 했으니 명령어를 채워줍니다.
                 transferCommand = $" --transfer \"{targetTransferPath}\"";
                 curTransfer = selectedBaseModel;
             }
 
-            // CPU 모드일 때는 CUDA와 DML 양쪽 모두에게 -1을 주어 GPU를 완벽하게 숨깁니다.
             string cudaCommand = rdoUseCPU.Checked
                 ? "set CUDA_VISIBLE_DEVICES=-1 && set DML_VISIBLE_DEVICES=-1 && "
                 : "";
@@ -464,56 +579,62 @@ namespace DataManager.UserControls
 
             if (!string.IsNullOrEmpty(customName))
             {
-                // ⭐ 새로 추가된 강력한 방어막 (영어, 숫자, 언더바만 허용)
                 if (!Regex.IsMatch(customName, @"^[a-zA-Z0-9_]+$"))
                 {
-                    // 1. 백그라운드 로그 기록 (어떤 글자 때문에 막혔는지 증거를 남김)
                     ReportLog("경고", $"이름 형식 오류 차단됨: 입력값 '{customName}' (영문, 숫자, 언더바 이외 문자 포함)");
-
-                    // 2. 사용자에게는 팝업창 띄우기
                     MessageBox.Show("안정적인 AI 훈련을 위해 모델 이름은\n영어, 숫자, 언더바(_)만 사용할 수 있습니다.",
                                     "이름 형식 오류", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    isTraining = false;
                     btnTrain.Enabled = true;
                     btnTrain.Text = "학습 시작";
-                    return; // 훈련 즉시 중단
+                    btnTrain.ForeColor = Color.Black;
+                    return;
                 }
                 modelName = customName;
             }
             else
             {
-                // 빈칸이면 안전한 날짜 형식으로 자동 생성
                 modelName = $"mypilot_{DateTime.Now.ToString("yyMMdd_HHmmss")}";
             }
 
-            // 🚨 방어막 2: 사용자가 적은 이름의 모델이 이미 존재하는지 검사 (덮어쓰기 방지)
+            // 방어막: 덮어쓰기 방지
             string modelFolderPath = Path.Combine(mycarPath, "models", modelName);
             if (Directory.Exists(modelFolderPath))
             {
-                // 1. 시스템 기록용으로 로그를 조용히 남깁니다.
                 ReportLog("오류", $"이름 중복: '{modelName}' 모델이 이미 존재함.");
-
-                // 2. 사용자에게는 강력하게 경고창을 띄워 행동을 멈춥니다.
                 MessageBox.Show($"'{modelName}'(이)라는 모델이 이미 존재합니다.\n다른 이름을 지정해주세요.",
-                                "이름 중복",
-                                MessageBoxButtons.OK,
-                                MessageBoxIcon.Warning);
+                                "이름 중복", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                isTraining = false;
                 btnTrain.Enabled = true;
                 btnTrain.Text = "학습 시작";
-                return; // 훈련 중단
+                btnTrain.ForeColor = Color.Black;
+                return;
             }
 
-            // 2. Directory.Exists로 폴더가 '없는' 상태인지 확인합니다.
             if (!Directory.Exists(modelFolderPath))
             {
-                // 3. 폴더가 없다면 새로 만듭니다. (상위 폴더가 없다면 상위 폴더까지 한 번에 다 만들어 줍니다)
                 Directory.CreateDirectory(modelFolderPath);
             }
 
+            string envPath = Path.GetFullPath(Path.Combine(mycarPath, "..", "env"));
+            string envType = DetectPythonEnvironmentType(envPath);
+            string windowsCommand = "";
 
 
-            // ⭐ 6. 최종 명령어 조립 (python train.py -> donkey train 으로 변경)
-            string windowsCommand = $"cd /d \"{mycarPath}\" && \"..\\env\\Scripts\\activate\" && {cudaCommand}donkey train --tub \"{tubPath}\" --model \"models\\{modelName}\\{modelName}\" --type {selectedType}{transferCommand}";
+            if (envType == "가상환경(venv)")
+            {
+                // 🟢 [기존(가상 환경) 방식] 코드 적용
+                windowsCommand = $"cd /d \"{mycarPath}\" && \"..\\env\\Scripts\\activate\" && {cudaCommand}donkey train --tub \"{tubPath}\" --model \"models\\{modelName}\\{modelName}\" --type {selectedType}{transferCommand}";
+            }
+            else
+            {
+                // 🔵 [신규(임베더블 패키지) 방식] 다이렉트 실행 코드 적용!
+                string donkeyPath = Path.GetFullPath(Path.Combine(mycarPath, "..", "env", "Scripts", "donkey.exe"));
+                windowsCommand = $"cd /d \"{mycarPath}\" && {cudaCommand}\"{donkeyPath}\" train --tub \"{tubPath}\" --model \"models\\{modelName}\\{modelName}\" --type {selectedType}{transferCommand}";
+            }
 
+            // (테스트용 메시지 박스는 필요하시면 주석 해제하세요)
+            // MessageBox.Show(windowsCommand, "명령어 복사하기");
 
             // 7. 백그라운드 프로세스 세팅
             ProcessStartInfo psi = new ProcessStartInfo();
@@ -525,94 +646,58 @@ namespace DataManager.UserControls
             psi.RedirectStandardError = true;
             string pythonErrorMessage = "";
 
-            Process process = new Process();
-            process.StartInfo = psi;
+            // ⭐ 지역 변수 대신 전역 변수 trainProcess 사용!
+            trainProcess = new Process();
+            trainProcess.StartInfo = psi;
 
             prgTrain.Value = 0;
             prgTrain.Maximum = 100;
 
-            // 8. 훈련 게이지 가로채기
-            process.OutputDataReceived += (s, args) =>
+            trainProcess.ErrorDataReceived += (s, args) =>
             {
                 if (!string.IsNullOrEmpty(args.Data))
                 {
-                    Match match = Regex.Match(args.Data, @"Epoch (\d+)/(\d+)");
-                    if (match.Success)
-                    {
-                        int currentEpoch = int.Parse(match.Groups[1].Value);
-                        int totalEpoch = int.Parse(match.Groups[2].Value);
-
-                        this.BeginInvoke((MethodInvoker)async delegate
-                        {
-                            int targetMax = totalEpoch * 100;
-                            int targetValue = currentEpoch * 100;
-
-                            if (prgTrain.Maximum != targetMax) prgTrain.Maximum = targetMax;
-
-                            for (int i = prgTrain.Value; i <= targetValue; i += 2)
-                            {
-                                if (i > prgTrain.Maximum) i = prgTrain.Maximum;
-                                prgTrain.Value = i;
-                                await Task.Delay(1);
-                            }
-                        });
-                    }
-                }
-            };
-
-            process.ErrorDataReceived += (s, args) =>
-            {
-                if (!string.IsNullOrEmpty(args.Data))
-                {
-                    // 파일에 안 쓰고 메모리(변수)에 바로 누적시킵니다.
                     pythonErrorMessage += args.Data + Environment.NewLine;
                 }
             };
 
             // 9. 파이썬 학습 종료 이벤트 
-            process.EnableRaisingEvents = true;
-            process.Exited += (s, args) =>
+            trainProcess.EnableRaisingEvents = true;
+            trainProcess.Exited += (s, args) =>
             {
-                // ⭐ 핵심 수정: 프로세스가 메모리에서 날아가기 전에 '종료 코드'를 미리 안전하게 복사해 둡니다!
-                int savedExitCode = process.ExitCode;
+                int savedExitCode = trainProcess.ExitCode;
 
-                // 🚨 [방어막] 비정상 종료 시(에러 등)
-                if (savedExitCode != 0)
+                // 🚨 [에러 발생 시] 종료 코드가 0이 아니고, 사용자가 강제종료한 것도 아닐 때
+                if (savedExitCode != 0 && !isUserStopped)
                 {
                     this.BeginInvoke((MethodInvoker)delegate
                     {
-                        // 화면의 로그 기록에는 안전하게 빼둔 savedExitCode를 사용합니다.
                         ReportLog("오류", $"학습 중 오류 발생! (종료 코드: {savedExitCode})");
 
                         string displayError = string.IsNullOrWhiteSpace(pythonErrorMessage)
                                               ? "알 수 없는 이유로 프로세스가 강제 종료되었습니다. (메모리 부족 등)"
                                               : pythonErrorMessage.Trim();
 
-                        MessageBox.Show(
-                            displayError,
-                            "훈련 실패 원인",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error
-                        );
+                        MessageBox.Show(displayError, "훈련 실패 원인", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
                         prgTrain.Value = 0;
 
-                        // 껍데기 폴더는 예정대로 미련 없이 삭제
                         if (Directory.Exists(modelFolderPath))
                         {
                             try { Directory.Delete(modelFolderPath, true); } catch { }
                         }
 
+                        isTraining = false;
                         btnTrain.Enabled = true;
-                        btnTrain.Text = "학습 시작";
+                        btnTrain.Text = "▶ 훈련 시작";
+                        btnTrain.ForeColor = Color.White;
                     });
 
-                    // 화면 스레드가 변수를 읽든 말든, 본체는 여기서 안전하게 삭제됩니다.
-                    process.Dispose();
+                    trainProcess.Dispose();
                     return;
                 }
 
-                // 정상 종료 시 마무리 작업
+                // 🎉 [정상 종료 OR 사용자 강제 중지] 영수증 작업 진행
                 this.BeginInvoke((MethodInvoker)async delegate
                 {
                     int step = 200;
@@ -624,7 +709,15 @@ namespace DataManager.UserControls
                     }
                     prgTrain.Value = prgTrain.Maximum;
 
-                    ReportLog("알림", $"학습 완료! '{modelName}' 이름으로 저장되었습니다.");
+                    // ⭐ 깃발에 따라 메시지 다르게 띄우기
+                    if (isUserStopped)
+                    {
+                        ReportLog("알림", $"학습이 중지되었습니다. (저장된 지점까지 '{modelName}' 이름으로 보존됩니다.)");
+                    }
+                    else
+                    {
+                        ReportLog("알림", $"학습 완료! '{modelName}' 이름으로 저장되었습니다.");
+                    }
 
                     // 4줄 영수증 기록
                     string curDataset = Path.GetFileName(tubPath);
@@ -633,6 +726,15 @@ namespace DataManager.UserControls
 
                     try { File.WriteAllLines(metaFilePath, new string[] { curDataset, displayType, curTransfer, curMemo }); }
                     catch { }
+
+                    // =========================================================
+                    // ⭐ 동키카가 사진을 안 만들었을 경우를 대비해 C#이 직접 구워냅니다!
+                    string backupGraphPath = Path.Combine(modelFolder, "loss_graph_manual.png");
+
+                    // 굳이 동키카가 그렸는지 안 그렸는지 찾을 필요 없이, 
+                    // C#이 무조건 이 예쁜 그래프를 만들어서 폴더에 넣어줍니다.
+                    try { CreateAndSaveGraph(backupGraphPath); } catch { }
+                    // =========================================================
 
                     // [영구 박제 로직] 설정 파일 병합
                     string baseConfigPath = Path.Combine(mycarPath, "config.py");
@@ -687,19 +789,26 @@ namespace DataManager.UserControls
                     await Task.Delay(1500);
                     prgTrain.Value = 0;
 
+                    isTraining = false;
                     btnTrain.Enabled = true;
-                    btnTrain.Text = "학습 시작";
+                    btnTrain.Text = "▶ 훈련 시작";
+                    btnTrain.ForeColor = Color.White;
                 });
 
-                process.Dispose();
+                trainProcess.Dispose();
             };
 
             // 10. 엔진 가동 시작!
             try
             {
-                process.Start();
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
+                // 버튼을 활성화시켜서 취소(정지)할 수 있게 풀어줌
+                btnTrain.Enabled = true;
+
+                trainProcess.Start();
+                trainProcess.BeginErrorReadLine();
+
+                // ⭐ 실시간 스트림 가로채기 (비동기)
+                Task.Run(() => ReadPythonStream(trainProcess.StandardOutput));
 
                 ReportLog("알림", $"'{modelName}' 모델 학습 엔진 가동을 시작했습니다.");
             }
@@ -709,22 +818,19 @@ namespace DataManager.UserControls
 
                 MessageBox.Show($"훈련 엔진을 시작하는 중에 에러가 발생했습니다.\n" +
                     $"파이썬 가상환경(env)이나 데이터 폴더에 문제가 있을 수 있습니다.",
-                    "훈련 가동 실패",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
+                    "훈련 가동 실패", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
-                // ⭐ [추가된 로직] 애초에 엔진 가동조차 실패했을 때도 껍데기 폴더 삭제!
                 if (Directory.Exists(modelFolderPath))
                 {
                     try { Directory.Delete(modelFolderPath, true); } catch { }
                 }
 
+                isTraining = false;
                 btnTrain.Enabled = true;
-                btnTrain.Text = "학습 시작";
+                btnTrain.Text = "▶ 훈련 시작";
+                btnTrain.ForeColor = Color.White;
             }
         }
-
-
 
         private void LoadExistingModels()
         {
@@ -1278,31 +1384,38 @@ namespace DataManager.UserControls
                 currentPath = parentInfo.FullName;
             }
 
-            // ⭐ 수정된 부분: 바뀐 훈련 명령어(--model)에 맞춰 png 파일의 위치를 안쪽으로 조준합니다.
-            // 새 경로: mycar\models\모델명\모델명.png
+            // 3. 3가지 버전의 png 파일 경로 준비
+            // ① 정상 종료 시 동키카가 새로 뱉는 경로 (mycar\models\모델명\모델명.png)
             string pngPath = Path.Combine(currentPath, "mycar", "models", modelName, $"{modelName}.png");
 
-            // [호환성] 예전에 바깥에 저장했던 구형 모델들의 사진 경로도 남겨둡니다.
-            // 옛날 경로: mycar\models\모델명.png
+            // ② 호환성 (예전 구형 모델 경로)
             string oldPngPath = Path.Combine(currentPath, "mycar", "models", $"{modelName}.png");
 
-            // 3. 사진 파일이 있으면 뷰어 띄우기 (새 경로 먼저 찾고, 없으면 옛날 경로 찾기)
-            if (File.Exists(pngPath))
+            // ⭐ ③ 우리가 새로 만든 '강제 종료 대비용 수제 그래프' 경로!
+            string manualPngPath = Path.Combine(currentPath, "mycar", "models", modelName, "loss_graph_manual.png");
+
+            // 4. 사진 파일이 있으면 뷰어 띄우기 (우리가 만든 수제 그래프를 1순위로 찾습니다!)
+            if (File.Exists(manualPngPath))
             {
+                // ⭐ 1순위: 우리가 직접 C#으로 그린 예쁜 한글 그래프
+                ShowGraphViewer(modelName, manualPngPath);
+            }
+            else if (File.Exists(pngPath))
+            {
+                // 2순위: 동키카가 만든 오리지널 그래프 (신규 경로)
                 ShowGraphViewer(modelName, pngPath);
             }
             else if (File.Exists(oldPngPath))
             {
+                // 3순위: 동키카가 만든 오리지널 그래프 (구형 경로)
                 ShowGraphViewer(modelName, oldPngPath);
             }
             else
             {
-                // 1. 어떤 모델의 그래프가 없는지 변수(modelName)를 넣어 로그를 남깁니다.
-                // 등급은 대형 에러가 아니므로 "경고" 또는 "정보"가 좋습니다.
+                // 파일이 셋 다 없을 때 (1에포크도 못 돌고 죽은 경우)
                 ReportLog("경고", $"'{modelName}' 모델의 훈련 그래프 파일(png)이 존재하지 않습니다.");
 
-                // 2. 사용자에게는 경고 아이콘과 함께 안내합니다.
-                MessageBox.Show($"'{modelName}' 모델의 훈련 그래프(png) 파일이 존재하지 않습니다.\n학습이 도중에 중단되었거나 파일이 이동되었을 수 있습니다.",
+                MessageBox.Show($"'{modelName}' 모델의 훈련 그래프(png) 파일이 존재하지 않습니다.\n학습이 도중에 너무 일찍 중단되었거나 파일이 이동되었을 수 있습니다.",
                                 "그래프 파일 없음",
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Warning);
@@ -1504,6 +1617,251 @@ namespace DataManager.UserControls
         {
             // 초 단위(yyMMddHHmm) 실시간 포맷
             txtModelName.PlaceholderText = $"mypilot_{DateTime.Now.ToString("yyMMdd_HHmmss")}";
+        }
+
+        private void ReadPythonStream(StreamReader reader)
+        {
+            StringBuilder sb = new StringBuilder();
+            int charCode;
+
+            // 파이썬이 종료될 때까지 1글자씩 계속 읽어옵니다.
+            while ((charCode = reader.Read()) > -1)
+            {
+                char c = (char)charCode;
+
+                // 텐서플로우가 실시간 덮어쓰기(\r)를 하거나 줄바꿈(\n)을 할 때 캐치!
+                if (c == '\r' || c == '\n')
+                {
+                    string line = sb.ToString();
+                    sb.Clear(); // 다음 글자들을 위해 비워둠
+
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+
+                    // 모인 한 줄을 실시간 파싱 함수로 보냅니다.
+                    ParseRealTimeStep(line);
+                }
+                else
+                {
+                    sb.Append(c); // 아직 줄이 안 끝났으면 글자를 계속 이어 붙임
+                }
+            }
+        }
+
+        private void ParseRealTimeStep(string line)
+        {
+            // 1. 에포크 전체 진행도 (프로그레스 바 갱신)
+            Match epochMatch = Regex.Match(line, @"Epoch (\d+)/(\d+)");
+            if (epochMatch.Success)
+            {
+                int currentEpoch = int.Parse(epochMatch.Groups[1].Value);
+                int totalEpoch = int.Parse(epochMatch.Groups[2].Value);
+
+                this.BeginInvoke((MethodInvoker)async delegate
+                {
+                    lblEpoch.Text = $"반복횟수 : {currentEpoch}/{totalEpoch}";
+
+                    int targetMax = totalEpoch * 100;
+                    int targetValue = currentEpoch * 100;
+
+                    if (prgTrain.Maximum != targetMax) prgTrain.Maximum = targetMax;
+                    if (prgTrain.Value > targetValue) prgTrain.Value = targetValue;
+
+                    for (int i = prgTrain.Value; i <= targetValue; i += 2)
+                    {
+                        if (i > prgTrain.Maximum) i = prgTrain.Maximum;
+                        prgTrain.Value = i;
+                        await Task.Delay(1);
+                    }
+                });
+                return;
+            }
+
+            // ⭐ 2. 신기록 달성 낚아채기 (Keras 자체 출력 활용)
+            Match improveMatch = Regex.Match(line, @"val_loss improved from .* to ([0-9.]+)");
+            if (improveMatch.Success)
+            {
+                double minVal = double.Parse(improveMatch.Groups[1].Value);
+                this.BeginInvoke((MethodInvoker)delegate
+                {
+                    lblMinValLoss.Text = $"최소 테스트 오차율 : {minVal:F4}";
+                    lblMinValLoss.ForeColor = Color.Green;
+                    lblMinValLoss.Font = new Font(lblMinValLoss.Font, FontStyle.Bold);
+                });
+                return;
+            }
+
+            // ⭐ 3. 정체 구간 낚아채기 (기록 경신 실패 시 색상 원상 복구)
+            Match notImproveMatch = Regex.Match(line, @"val_loss did not improve from ([0-9.]+)");
+            if (notImproveMatch.Success)
+            {
+                this.BeginInvoke((MethodInvoker)delegate
+                {
+                    lblMinValLoss.ForeColor = Color.Black;
+                    lblMinValLoss.Font = new Font(lblMinValLoss.Font, FontStyle.Regular);
+                });
+                return;
+            }
+
+            // 4. 에포크 완료 시점의 최종 오차율 갱신
+            if (line.Contains("- loss:") && line.Contains("- val_loss:"))
+            {
+                Match lossMatch = Regex.Match(line, @"-\s*loss:\s*([0-9.]+)");
+                Match valLossMatch = Regex.Match(line, @"-\s*val_loss:\s*([0-9.]+)");
+
+                if (lossMatch.Success && valLossMatch.Success)
+                {
+                    double finalLoss = double.Parse(lossMatch.Groups[1].Value);
+                    double valLoss = double.Parse(valLossMatch.Groups[1].Value);
+
+                    // ⭐ 파싱한 숫자를 수첩에 순서대로 추가합니다!
+                    historyLoss.Add(finalLoss);
+                    historyValLoss.Add(valLoss);
+
+                    this.BeginInvoke((MethodInvoker)delegate
+                    {
+                        lblLoss.Text = $"학습 오차율 : {finalLoss:F4}";
+                        lblValLoss.Text = $"테스트 오차율 : {valLoss:F4}";
+                    });
+                }
+                return;
+            }
+
+            // 5. 실시간 스텝 진행 중 (val_loss 없이 loss만 갱신될 때)
+            if (line.Contains("- loss:"))
+            {
+                Match stepMatch = Regex.Match(line, @"-\s*loss:\s*([0-9.]+)");
+                if (stepMatch.Success)
+                {
+                    double currentLoss = double.Parse(stepMatch.Groups[1].Value);
+                    this.BeginInvoke((MethodInvoker)delegate
+                    {
+                        lblLoss.Text = $"학습 오차율 : {currentLoss:F4}";
+                    });
+                }
+            }
+        }
+
+        private void btnConfigHelp_Click(object sender, EventArgs e)
+        {
+            // 1. 화면에 추가된 설정(패널)이 하나도 없을 때
+            if (flpConfCon.Controls.Count == 0)
+            {
+                MessageBox.Show("현재 추가된 설정 항목이 없습니다.", "도움말", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            // 똑같은 설명이 여러 번 나오는 걸 막기 위한 기억 장치
+            HashSet<string> seenConfigs = new HashSet<string>();
+
+            // 긴 문자열을 예쁘게 조립하기 위한 StringBuilder
+            StringBuilder helpMessage = new StringBuilder();
+            helpMessage.AppendLine("💡 현재 화면에 활성화된 설정들의 설명입니다.\n");
+
+            // 2. flpConfCon 안의 모든 패널(줄)을 하나씩 순회합니다.
+            foreach (Control rowControl in flpConfCon.Controls)
+            {
+                // 3. 패널 안에서 "cboSelConf"라는 이름을 가진 콤보박스를 찾습니다.
+                Control[] found = rowControl.Controls.Find("cboSelConf", false);
+
+                if (found.Length > 0 && found[0] is ComboBox cbo)
+                {
+                    string selectedText = cbo.Text;
+
+                    // 빈칸이거나, 이미 설명을 추가한 설정이라면 건너뜀
+                    if (string.IsNullOrWhiteSpace(selectedText) || seenConfigs.Contains(selectedText))
+                        continue;
+
+                    // 백과사전에 등록된 설명 추가
+                    helpMessage.AppendLine($"[{selectedText}]");
+                    if (configHelpDocs.ContainsKey(selectedText))
+                    {
+                        helpMessage.AppendLine(configHelpDocs[selectedText]);
+                    }
+                    else
+                    {
+                        helpMessage.AppendLine("설명이 아직 준비되지 않았습니다.");
+                    }
+                    helpMessage.AppendLine(); // 줄바꿈으로 단락 분리
+
+                    // 방금 설명한 설정은 기억 장치에 추가
+                    seenConfigs.Add(selectedText);
+                }
+            }
+
+            // 4. 모인 설명들을 하나의 팝업창으로 띄워줍니다!
+            MessageBox.Show(helpMessage.ToString(), "전체 설정 도움말", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void CreateAndSaveGraph(string savePath)
+        {
+            // 점수가 아예 없으면(1에포크도 못 돌았으면) 그리지 않고 함수 종료
+            if (historyLoss.Count == 0) return;
+
+            // 1. 메모리 상에 투명한 도화지(Chart)를 생성합니다.
+            using (var chart = new System.Windows.Forms.DataVisualization.Charting.Chart())
+            {
+                chart.Width = 800;  // 사진 가로 크기
+                chart.Height = 600; // 사진 세로 크기
+                chart.BackColor = Color.White; // 폰트가 잘 보이도록 배경색을 흰색으로 고정
+
+                var chartArea = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+
+                // X축 (가로) 한국어 설정 + 폰트 키우기
+                chartArea.AxisX.Title = "반복 횟수 (Epoch)";
+                chartArea.AxisX.TitleFont = new Font("맑은 고딕", 12, FontStyle.Bold);
+                chartArea.AxisX.MajorGrid.Enabled = false; // ⭐ 가로 눈금선 제거!
+
+                // Y축 (세로) 한국어 설정 + 폰트 키우기
+                chartArea.AxisY.Title = "오차율 (Loss)";
+                chartArea.AxisY.TitleFont = new Font("맑은 고딕", 12, FontStyle.Bold);
+                chartArea.AxisY.MajorGrid.Enabled = false; // ⭐ 세로 눈금선 제거!
+
+                chart.ChartAreas.Add(chartArea);
+
+                // ⭐ 그래프 맨 위에 멋진 전체 제목 달아주기
+                chart.Titles.Add(new System.Windows.Forms.DataVisualization.Charting.Title(
+                    "학습 및 테스트 오차율 변화",
+                    System.Windows.Forms.DataVisualization.Charting.Docking.Top,
+                    new Font("맑은 고딕", 15, FontStyle.Bold),
+                    Color.Black
+                ));
+
+                // ⭐ 범례(Legend) 폰트도 한글이 잘 보이게 수정
+                var legend = new System.Windows.Forms.DataVisualization.Charting.Legend("Legend1");
+                legend.Font = new Font("맑은 고딕", 10, FontStyle.Regular);
+                legend.Docking = System.Windows.Forms.DataVisualization.Charting.Docking.Top; // 범례를 위쪽으로 올려서 공간 확보
+                chart.Legends.Add(legend);
+
+                // 2. 파란선 (학습 오차율) 세팅
+                var seriesLoss = new System.Windows.Forms.DataVisualization.Charting.Series("학습 오차율 (Train Loss)");
+                seriesLoss.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+                seriesLoss.Color = Color.Blue;
+                seriesLoss.BorderWidth = 3;
+
+                // 3. 주황선 (테스트 오차율) 세팅
+                var seriesValLoss = new System.Windows.Forms.DataVisualization.Charting.Series("테스트 오차율 (Val Loss)");
+                seriesValLoss.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+                seriesValLoss.Color = Color.DarkOrange;
+                seriesValLoss.BorderWidth = 3;
+
+                // 4. 수첩에 적어둔 점수를 하나씩 꺼내서 점을 찍습니다.
+                for (int i = 0; i < historyLoss.Count; i++)
+                {
+                    seriesLoss.Points.AddXY(i + 1, historyLoss[i]);
+
+                    // 혹시라도 배열 길이가 달라서 에러가 나는 것을 방지
+                    if (i < historyValLoss.Count)
+                    {
+                        seriesValLoss.Points.AddXY(i + 1, historyValLoss[i]);
+                    }
+                }
+
+                chart.Series.Add(seriesLoss);
+                chart.Series.Add(seriesValLoss);
+
+                // 5. 완성된 도화지를 지정된 경로에 PNG 파일로 구워냅니다!
+                chart.SaveImage(savePath, System.Windows.Forms.DataVisualization.Charting.ChartImageFormat.Png);
+            }
         }
     }
 }
