@@ -17,10 +17,10 @@
 
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea2 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend2 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series3 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series4 = new System.Windows.Forms.DataVisualization.Charting.Series();
             pnlChart = new Panel();
             chtData = new System.Windows.Forms.DataVisualization.Charting.Chart();
             btnFileLoad = new Button();
@@ -40,6 +40,10 @@
             btnRightRange = new Button();
             btnLeftRange = new Button();
             pnlFillter = new Panel();
+            numRightAngle = new NumericUpDown();
+            numLeftAngle = new NumericUpDown();
+            numRightThrottle = new NumericUpDown();
+            numLeftThrottle = new NumericUpDown();
             chkRemoveImage = new CheckBox();
             chkSetBlur = new CheckBox();
             trkSetBlur = new TrackBar();
@@ -78,6 +82,10 @@
             pnlSetting.SuspendLayout();
             pnlSet.SuspendLayout();
             pnlFillter.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)numRightAngle).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)numLeftAngle).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)numRightThrottle).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)numLeftThrottle).BeginInit();
             ((System.ComponentModel.ISupportInitialize)trkSetBlur).BeginInit();
             ((System.ComponentModel.ISupportInitialize)trkSetBright).BeginInit();
             pnlSub.SuspendLayout();
@@ -101,26 +109,26 @@
             // chtData
             // 
             chtData.BackColor = Color.FromArgb(250, 251, 253);
-            chartArea1.BackColor = Color.FromArgb(250, 251, 253);
-            chartArea1.Name = "ChartArea1";
-            chtData.ChartAreas.Add(chartArea1);
+            chartArea2.BackColor = Color.FromArgb(250, 251, 253);
+            chartArea2.Name = "ChartArea1";
+            chtData.ChartAreas.Add(chartArea2);
             chtData.Dock = DockStyle.Fill;
-            legend1.Name = "Legend1";
-            chtData.Legends.Add(legend1);
+            legend2.Name = "Legend1";
+            chtData.Legends.Add(legend2);
             chtData.Location = new Point(0, 0);
             chtData.Name = "chtData";
-            series1.ChartArea = "ChartArea1";
-            series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
-            series1.Color = Color.FromArgb(67, 130, 220);
-            series1.Legend = "Legend1";
-            series1.Name = "각도";
-            series2.ChartArea = "ChartArea1";
-            series2.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Spline;
-            series2.Color = Color.FromArgb(72, 175, 120);
-            series2.Legend = "Legend1";
-            series2.Name = "속도";
-            chtData.Series.Add(series1);
-            chtData.Series.Add(series2);
+            series3.ChartArea = "ChartArea1";
+            series3.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series3.Color = Color.FromArgb(67, 130, 220);
+            series3.Legend = "Legend1";
+            series3.Name = "각도";
+            series4.ChartArea = "ChartArea1";
+            series4.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Spline;
+            series4.Color = Color.FromArgb(72, 175, 120);
+            series4.Legend = "Legend1";
+            series4.Name = "속도";
+            chtData.Series.Add(series3);
+            chtData.Series.Add(series4);
             chtData.Size = new Size(950, 150);
             chtData.TabIndex = 0;
             chtData.Text = "chart1";
@@ -376,6 +384,10 @@
             // pnlFillter
             // 
             pnlFillter.BackColor = Color.White;
+            pnlFillter.Controls.Add(numRightAngle);
+            pnlFillter.Controls.Add(numLeftAngle);
+            pnlFillter.Controls.Add(numRightThrottle);
+            pnlFillter.Controls.Add(numLeftThrottle);
             pnlFillter.Controls.Add(chkRemoveImage);
             pnlFillter.Controls.Add(chkSetBlur);
             pnlFillter.Controls.Add(trkSetBlur);
@@ -392,9 +404,57 @@
             pnlFillter.Size = new Size(950, 56);
             pnlFillter.TabIndex = 4;
             // 
+            // numRightAngle
+            // 
+            numRightAngle.Location = new Point(575, 4);
+            numRightAngle.Name = "numRightAngle";
+            numRightAngle.Size = new Size(63, 23);
+            numRightAngle.TabIndex = 16;
+            numRightAngle.DecimalPlaces = 2;
+            numRightAngle.Increment = 0.01M;
+            numRightAngle.Minimum = 0;
+            numRightAngle.Maximum = 1;
+            numRightAngle.Value = 0;
+            // 
+            // numLeftAngle
+            // 
+            numLeftAngle.Location = new Point(482, 5);
+            numLeftAngle.Name = "numLeftAngle";
+            numLeftAngle.Size = new Size(63, 23);
+            numLeftAngle.TabIndex = 15;
+            numLeftAngle.DecimalPlaces = 2;
+            numLeftAngle.Increment = 0.01M;
+            numLeftAngle.Minimum = 0;
+            numLeftAngle.Maximum = 1;
+            numLeftAngle.Value = 0;
+            // 
+            // numRightThrottle
+            // 
+            numRightThrottle.Location = new Point(272, 4);
+            numRightThrottle.Name = "numRightThrottle";
+            numRightThrottle.Size = new Size(63, 23);
+            numRightThrottle.TabIndex = 14;
+            numRightThrottle.DecimalPlaces = 2;
+            numRightThrottle.Increment = 0.01M;
+            numRightThrottle.Minimum = 0;
+            numRightThrottle.Maximum = 1;
+            numRightThrottle.Value = 0;
+            // 
+            // numLeftThrottle
+            // 
+            numLeftThrottle.Location = new Point(179, 4);
+            numLeftThrottle.Name = "numLeftThrottle";
+            numLeftThrottle.Size = new Size(63, 23);
+            numLeftThrottle.TabIndex = 13;
+            numLeftThrottle.DecimalPlaces = 2;
+            numLeftThrottle.Increment = 0.01M;
+            numLeftThrottle.Minimum = 0;
+            numLeftThrottle.Maximum = 1;
+            numLeftThrottle.Value = 0;
+            // 
             // chkRemoveImage
             // 
-            chkRemoveImage.Location = new Point(634, 4);
+            chkRemoveImage.Location = new Point(714, 6);
             chkRemoveImage.Margin = new Padding(2);
             chkRemoveImage.Name = "chkRemoveImage";
             chkRemoveImage.Size = new Size(90, 22);
@@ -407,7 +467,7 @@
             chkSetBlur.BackColor = Color.White;
             chkSetBlur.Font = new Font("맑은 고딕", 9.5F);
             chkSetBlur.ForeColor = Color.FromArgb(60, 72, 92);
-            chkSetBlur.Location = new Point(502, 28);
+            chkSetBlur.Location = new Point(410, 28);
             chkSetBlur.Name = "chkSetBlur";
             chkSetBlur.Size = new Size(90, 22);
             chkSetBlur.TabIndex = 11;
@@ -419,7 +479,7 @@
             trkSetBlur.AutoSize = false;
             trkSetBlur.BackColor = Color.White;
             trkSetBlur.LargeChange = 1;
-            trkSetBlur.Location = new Point(596, 28);
+            trkSetBlur.Location = new Point(497, 28);
             trkSetBlur.Name = "trkSetBlur";
             trkSetBlur.Size = new Size(200, 22);
             trkSetBlur.TabIndex = 10;
@@ -430,7 +490,7 @@
             chkSetBright.BackColor = Color.White;
             chkSetBright.Font = new Font("맑은 고딕", 9.5F);
             chkSetBright.ForeColor = Color.FromArgb(60, 72, 92);
-            chkSetBright.Location = new Point(200, 28);
+            chkSetBright.Location = new Point(108, 28);
             chkSetBright.Name = "chkSetBright";
             chkSetBright.Size = new Size(90, 22);
             chkSetBright.TabIndex = 9;
@@ -442,18 +502,22 @@
             trkSetBright.AutoSize = false;
             trkSetBright.BackColor = Color.White;
             trkSetBright.LargeChange = 1;
-            trkSetBright.Location = new Point(294, 28);
+            trkSetBright.Location = new Point(195, 28);
             trkSetBright.Name = "trkSetBright";
             trkSetBright.Size = new Size(200, 22);
             trkSetBright.TabIndex = 8;
             trkSetBright.TickStyle = TickStyle.None;
+            trkSetBright.Minimum = -100;
+            trkSetBright.Maximum = 100;
+            trkSetBright.Value = 0;
+
             // 
             // chkApplyBlackWhite
             // 
             chkApplyBlackWhite.BackColor = Color.White;
             chkApplyBlackWhite.Font = new Font("맑은 고딕", 9.5F);
             chkApplyBlackWhite.ForeColor = Color.FromArgb(60, 72, 92);
-            chkApplyBlackWhite.Location = new Point(540, 3);
+            chkApplyBlackWhite.Location = new Point(810, 28);
             chkApplyBlackWhite.Name = "chkApplyBlackWhite";
             chkApplyBlackWhite.Size = new Size(90, 22);
             chkApplyBlackWhite.TabIndex = 7;
@@ -465,7 +529,7 @@
             chkInverseColor.BackColor = Color.White;
             chkInverseColor.Font = new Font("맑은 고딕", 9.5F);
             chkInverseColor.ForeColor = Color.FromArgb(60, 72, 92);
-            chkInverseColor.Location = new Point(444, 3);
+            chkInverseColor.Location = new Point(714, 28);
             chkInverseColor.Name = "chkInverseColor";
             chkInverseColor.Size = new Size(90, 22);
             chkInverseColor.TabIndex = 6;
@@ -477,11 +541,11 @@
             chkDelAngle.BackColor = Color.White;
             chkDelAngle.Font = new Font("맑은 고딕", 9.5F);
             chkDelAngle.ForeColor = Color.FromArgb(60, 72, 92);
-            chkDelAngle.Location = new Point(322, 3);
+            chkDelAngle.Location = new Point(410, 6);
             chkDelAngle.Name = "chkDelAngle";
-            chkDelAngle.Size = new Size(116, 22);
+            chkDelAngle.Size = new Size(301, 22);
             chkDelAngle.TabIndex = 5;
-            chkDelAngle.Text = "각도 값 0 제거";
+            chkDelAngle.Text = "각도가 -              ~ +              인 값 제거";
             chkDelAngle.UseVisualStyleBackColor = false;
             // 
             // chkDelThrottle
@@ -489,11 +553,11 @@
             chkDelThrottle.BackColor = Color.White;
             chkDelThrottle.Font = new Font("맑은 고딕", 9.5F);
             chkDelThrottle.ForeColor = Color.FromArgb(60, 72, 92);
-            chkDelThrottle.Location = new Point(200, 3);
+            chkDelThrottle.Location = new Point(108, 6);
             chkDelThrottle.Name = "chkDelThrottle";
-            chkDelThrottle.Size = new Size(116, 22);
+            chkDelThrottle.Size = new Size(301, 22);
             chkDelThrottle.TabIndex = 4;
-            chkDelThrottle.Text = "속도 값 0 제거";
+            chkDelThrottle.Text = "속도가 -              ~ +              인 값 제거";
             chkDelThrottle.UseVisualStyleBackColor = false;
             // 
             // lblFillter
@@ -503,7 +567,7 @@
             lblFillter.ForeColor = Color.FromArgb(67, 130, 220);
             lblFillter.Location = new Point(4, 3);
             lblFillter.Name = "lblFillter";
-            lblFillter.Size = new Size(190, 50);
+            lblFillter.Size = new Size(97, 50);
             lblFillter.TabIndex = 3;
             lblFillter.Text = "선택 범위 내 변경 사항 설정";
             lblFillter.TextAlign = ContentAlignment.MiddleCenter;
@@ -808,6 +872,10 @@
             pnlSetting.ResumeLayout(false);
             pnlSet.ResumeLayout(false);
             pnlFillter.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)numRightAngle).EndInit();
+            ((System.ComponentModel.ISupportInitialize)numLeftAngle).EndInit();
+            ((System.ComponentModel.ISupportInitialize)numRightThrottle).EndInit();
+            ((System.ComponentModel.ISupportInitialize)numLeftThrottle).EndInit();
             ((System.ComponentModel.ISupportInitialize)trkSetBlur).EndInit();
             ((System.ComponentModel.ISupportInitialize)trkSetBright).EndInit();
             pnlSub.ResumeLayout(false);
@@ -871,5 +939,9 @@
         private Panel pnlTimeStamp;
         private CheckBox chkSaveContinue;
         private CheckBox chkRemoveImage;
+        private NumericUpDown numLeftThrottle;
+        private NumericUpDown numRightThrottle;
+        private NumericUpDown numRightAngle;
+        private NumericUpDown numLeftAngle;
     }
 }

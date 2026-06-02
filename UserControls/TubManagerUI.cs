@@ -75,6 +75,14 @@ namespace DataManager.UserControls
 
         private void InitializeCustomLogic()
         {
+            trkSetBright.Minimum = -100;
+            trkSetBright.Maximum = 100;
+            trkSetBright.Value = 0;
+
+            trkSetBlur.Minimum = 0;
+            trkSetBlur.Maximum = 10;
+            trkSetBlur.Value = 0;
+
             playTimer = new System.Windows.Forms.Timer();
             playTimer.Tick += PlayTimer_Tick;
 
@@ -1008,12 +1016,12 @@ namespace DataManager.UserControls
                 var _frame = drivingData[_i];
 
                 // ── 삭제(숨김) 필터 ──────────────────────────────
-                if (chkDelThrottle.Checked && _frame.Throttle == 0.0)
+                if (chkDelThrottle.Checked && _frame.Throttle >= -(double)numLeftThrottle.Value && _frame.Throttle <= (double)numRightThrottle.Value)
                 {
                     filteredHideSet.Add(_i);
                     continue;
                 }
-                if (chkDelAngle.Checked && _frame.Angle == 0.0)
+                if (chkDelAngle.Checked && _frame.Throttle >= -(double)numLeftAngle.Value && _frame.Throttle <= (double)numRightAngle.Value)
                 {
                     filteredHideSet.Add(_i);
                     continue;
@@ -1078,8 +1086,15 @@ namespace DataManager.UserControls
             chkApplyBlackWhite.Checked = false;
             chkSetBright.Checked = false;
             chkSetBlur.Checked = false;
-            trkSetBright.Value = trkSetBright.Minimum;
-            trkSetBlur.Value = trkSetBlur.Minimum;
+
+            numLeftThrottle.Value = 0;
+            numRightThrottle.Value = 0;
+
+            numLeftAngle.Value = 0;
+            numRightAngle.Value = 0;
+
+            trkSetBright.Value = 0;
+            trkSetBlur.Value = 0;
             ReportLog("알림", "필터 설정이 초기화되었습니다.");
         }
 
