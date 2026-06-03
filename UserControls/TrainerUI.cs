@@ -1994,13 +1994,13 @@ namespace DataManager.UserControls
             modelHelp.AppendLine(" - 핸들 각도를 수십 개의 칸으로 쪼개서 확률로 계산합니다.");
             modelHelp.AppendLine(" - 사람이 부드럽게 꺾지 못하고 뚝뚝 끊어서 조종했어도 커브를 매끄럽게 잘 돕니다.\n");
 
-            modelHelp.AppendLine("■ 3. 추론형 주행 (Inferred) ★강력 추천");
-            modelHelp.AppendLine(" - 인간의 불안정한 속도 데이터는 버리고, 오직 '핸들링'만 집중 학습합니다.");
-            modelHelp.AppendLine(" - 속도는 핸들을 많이 꺾으면 알아서 줄어들도록 수학 공식이 제어하므로 주행이 아주 스마트합니다.\n");
-
-            modelHelp.AppendLine("■ 4. 기억형 주행 (RNN)");
+            modelHelp.AppendLine("■ 3. 기억형 주행 (RNN)");
             modelHelp.AppendLine(" - 과거 3~4장의 사진 흐름을 기억하여 차체의 궤적과 속도감을 인지합니다.");
             modelHelp.AppendLine(" - 훈련 속도가 조금 느리며, 라즈베리파이 사양에 따라 실제 주행 시 약간의 렉이 있을 수 있습니다.\n");
+
+            modelHelp.AppendLine("■ 4. 추론형 주행 (Inferred) ★강력 추천");
+            modelHelp.AppendLine(" - 인간의 불안정한 속도 데이터는 버리고, 오직 '핸들링'만 집중 학습합니다.");
+            modelHelp.AppendLine(" - 속도는 핸들을 많이 꺾으면 알아서 줄어들도록 수학 공식이 제어하므로 주행이 아주 스마트합니다.\n");
 
             modelHelp.AppendLine("■ 5. 입체 시각 주행 (3D)");
             modelHelp.AppendLine(" - 시간과 공간을 입체적으로 분석하는 끝판왕 모델입니다.");
