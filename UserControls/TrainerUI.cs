@@ -1,9 +1,10 @@
 ﻿
 using System.Diagnostics;
-using System.Text;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms.DataVisualization.Charting;
+using System.Xml.Linq;
 
 namespace DataManager.UserControls
 {
@@ -31,6 +32,9 @@ namespace DataManager.UserControls
         private Form dynamicLogWindow;
         private ListView dynamicLvLogs;
 
+        // 마우스를 꾹 누르고 드래그 중인지 기억하는 스위치
+        private bool isDraggingModels = false;
+
         // ⭐ 한글 이름과 파이썬 변수명을 연결해 주는 공통 사전
         private readonly Dictionary<string, string> configMapping = new Dictionary<string, string>()
         {
@@ -52,6 +56,30 @@ namespace DataManager.UserControls
             { "학습 한번에 쓸 사진 수", "AI가 한 번에 꺼내서 볼 사진의 묶음(배치) 개수입니다. 보통 64나 128을 사용하며, 너무 크면 그래픽카드 메모리가 부족해집니다." }
         };
 
+        // ==============================================================
+        // 🔒 훈련 상태에 따른 UI 전체 잠금/해제 제어 스위치
+        // ==============================================================
+        private void ToggleUIState(bool isTraining)
+        {
+            // 훈련 중(true)이면 컨트롤들을 비활성화(false)해야 하므로 값을 반대로 뒤집습니다.
+            bool enableControls = !isTraining;
+
+            // 1. 기본 정보 입력칸 잠금
+            // (하리님의 실제 텍스트박스 이름에 맞게 수정해주세요)
+            txtModelName.Enabled = enableControls;
+            cboSelectModelType.Enabled = enableControls;
+            cboSelectTransferModel.Enabled = enableControls;
+            txtComment .Enabled = enableControls;
+            chkShowTrainLog .Enabled = enableControls;
+            grpSetTrainSetting .Enabled = enableControls;
+
+            // 2. ⭐ 방금 만든 동적 구성 설정 패널 전체를 한 방에 잠금!
+            // 패널(flpConfCon) 자체를 꺼버리면 그 안의 모든 콤보박스와 텍스트박스도 같이 잠깁니다.
+            flpConfCon.Enabled = enableControls;
+            btnAddConf.Enabled = enableControls;
+            cboAddConfCount.Enabled = enableControls;
+            btnSaveMyConf.Enabled = enableControls;
+        }
 
         // ⭐ 파이썬 폴더의 정체를 밝혀내는 탐지기 함수
         private string DetectPythonEnvironmentType(string pythonFolderPath)
@@ -445,6 +473,7 @@ namespace DataManager.UserControls
             historyValLoss.Clear(); // ⭐ 새 훈련 시작 전 수첩 초기화
             btnTrain.Text = "🛑 학습 정지"; // 버튼을 정지 버튼으로 변신
             btnTrain.ForeColor = Color.Red;
+            ToggleUIState(true);
 
             // 1. 역대 최저점 초기화 (가장 중요! 다시 무한대로 돌려놓습니다)
             minValLoss = double.MaxValue;
@@ -478,8 +507,9 @@ namespace DataManager.UserControls
                 {
                     isTraining = false;
                     btnTrain.Enabled = true;
-                    btnTrain.Text = "학습 시작";
-                    btnTrain.ForeColor = Color.Black;
+                    btnTrain.Text = "▶ 훈련 시작";
+                    btnTrain.ForeColor = Color.White;
+                    ToggleUIState(false);
                     return;
                 }
             }
@@ -497,8 +527,9 @@ namespace DataManager.UserControls
 
                     isTraining = false;
                     btnTrain.Enabled = true;
-                    btnTrain.Text = "학습 시작";
-                    btnTrain.ForeColor = Color.Black;
+                    btnTrain.Text = "▶ 훈련 시작";
+                    btnTrain.ForeColor = Color.White;
+                    ToggleUIState(false);
                     return;
                 }
                 currentPath = parentInfo.FullName;
@@ -562,8 +593,9 @@ namespace DataManager.UserControls
                                     "모델 찾기 실패", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     isTraining = false;
                     btnTrain.Enabled = true;
-                    btnTrain.Text = "학습 시작";
-                    btnTrain.ForeColor = Color.Black;
+                    btnTrain.Text = "▶ 훈련 시작";
+                    btnTrain.ForeColor = Color.White;
+                    ToggleUIState(false);
                     return;
                 }
 
@@ -588,8 +620,9 @@ namespace DataManager.UserControls
                                     "이름 형식 오류", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     isTraining = false;
                     btnTrain.Enabled = true;
-                    btnTrain.Text = "학습 시작";
-                    btnTrain.ForeColor = Color.Black;
+                    btnTrain.Text = "▶ 훈련 시작";
+                    btnTrain.ForeColor = Color.White;
+                    ToggleUIState(false);
                     return;
                 }
                 modelName = customName;
@@ -608,8 +641,9 @@ namespace DataManager.UserControls
                                 "이름 중복", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 isTraining = false;
                 btnTrain.Enabled = true;
-                btnTrain.Text = "학습 시작";
-                btnTrain.ForeColor = Color.Black;
+                btnTrain.Text = "▶ 훈련 시작";
+                btnTrain.ForeColor = Color.White;
+                ToggleUIState(false);
                 return;
             }
 
@@ -765,6 +799,7 @@ namespace DataManager.UserControls
                         btnTrain.Enabled = true;
                         btnTrain.Text = "▶ 훈련 시작";
                         btnTrain.ForeColor = Color.White;
+                        ToggleUIState(false);
                     });
 
                     trainProcess.Dispose();
@@ -867,6 +902,7 @@ namespace DataManager.UserControls
                     btnTrain.Enabled = true;
                     btnTrain.Text = "▶ 훈련 시작";
                     btnTrain.ForeColor = Color.White;
+                    ToggleUIState(false);
                 });
 
                 trainProcess.Dispose();
@@ -903,6 +939,7 @@ namespace DataManager.UserControls
                 btnTrain.Enabled = true;
                 btnTrain.Text = "▶ 훈련 시작";
                 btnTrain.ForeColor = Color.White;
+                ToggleUIState(false);
             }
         }
 
@@ -1027,87 +1064,95 @@ namespace DataManager.UserControls
         private void btnDelete_Click(object sender, EventArgs e)
         {
             // 1. [UX 방어막] 리스트뷰에서 아무것도 선택하지 않고 버튼을 눌렀을 때 컷!
-            if (lvwModel.SelectedItems.Count == 0)
+            int selectedCount = lvwModel.SelectedItems.Count;
+            if (selectedCount == 0)
             {
                 MessageBox.Show("삭제할 모델을 먼저 선택해 주세요.", "선택 확인",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
-            // 2. 선택된 줄(모델) 정보 가져오기
-            ListViewItem selectedItem = lvwModel.SelectedItems[0];
-            string modelName = selectedItem.Text; // 첫 번째 칸 (모델명)
+            // 2. [UX 방어막] 진짜 지울 것인지 사용자에게 다시 한번 물어보기
+            // 단일 삭제와 대량 삭제일 때의 메시지를 유연하게 분기해 줍니다.
+            string confirmMsg = selectedCount == 1
+                ? $"'{lvwModel.SelectedItems[0].Text}' 모델을 정말로 삭제하시겠습니까?\n하드디스크의 실제 파일과 영수증이 모두 영구 삭제됩니다."
+                : $"선택한 {selectedCount}개의 모델을 정말로 일괄 삭제하시겠습니까?\n하드디스크의 실제 파일과 영수증이 모두 영구 삭제됩니다.";
 
-            // 3. [UX 방어막] 진짜 지울 것인지 사용자에게 다시 한번 물어보기
-            DialogResult result = MessageBox.Show(
-                $"'{modelName}' 모델을 정말로 삭제하시겠습니까?\n하드디스크의 실제 파일과 영수증이 모두 영구 삭제됩니다.",
-                "모델 완전 삭제 경고",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Warning
-            );
-
+            DialogResult result = MessageBox.Show(confirmMsg, "모델 완전 삭제 경고", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             if (result == DialogResult.No) return; // '아니오'를 누르면 삭제 취소
+
+            // 3. 실제 컴퓨터의 모델 폴더 기준 경로 추적
+            // ⭐ [성능 튜닝] 루프 안에서 매번 경로를 계산하면 느려지므로, 바깥에서 딱 한 번만 실행합니다.
+            string currentPath = Application.StartupPath;
+            while (!Directory.Exists(Path.Combine(currentPath, "env")))
+            {
+                DirectoryInfo parentInfo = Directory.GetParent(currentPath);
+                if (parentInfo == null) break;
+                currentPath = parentInfo.FullName;
+            }
+
+            // 4. ⭐ [화면 버벅임 방지] 대량 삭제 시 리스트뷰가 깜빡거리는 현상을 잠급니다.
+            lvwModel.BeginUpdate();
+
+            int successCount = 0;
 
             try
             {
-                // 4. 실제 컴퓨터의 모델 폴더 경로 추적
-                string currentPath = Application.StartupPath;
-                while (!Directory.Exists(Path.Combine(currentPath, "env")))
+                // 5. ⭐ [핵심] 인덱스 꼬임 방지를 위한 역순(Reverse) for문!
+                // SelectedIndices의 맨 마지막 원소부터 거꾸로 걸어 내려옵니다.
+                for (int i = lvwModel.SelectedIndices.Count - 1; i >= 0; i--)
                 {
-                    DirectoryInfo parentInfo = Directory.GetParent(currentPath);
-                    if (parentInfo == null) break;
-                    currentPath = parentInfo.FullName;
+                    int targetIndex = lvwModel.SelectedIndices[i];
+                    ListViewItem item = lvwModel.Items[targetIndex];
+                    string modelName = item.Text; // 지울 모델명 추출
+
+                    // 바깥쪽 폴더 경로 (mycar\models\모델명)
+                    string modelFolderPath = Path.Combine(currentPath, "mycar", "models", modelName);
+
+                    // 하드디스크에서 폴더 통째로 완전 삭제
+                    if (Directory.Exists(modelFolderPath))
+                    {
+                        Directory.Delete(modelFolderPath, true);
+                    }
+
+                    // 폴더 밖(models)에 숨어있는 보너스 파일(.tflite, .png)도 추적해서 암살!
+                    string tflitePath = Path.Combine(currentPath, "mycar", "models", $"{modelName}.tflite");
+                    string pngPath = Path.Combine(currentPath, "mycar", "models", $"{modelName}.png");
+
+                    if (File.Exists(tflitePath)) File.Delete(tflitePath);
+                    if (File.Exists(pngPath)) File.Delete(pngPath);
+
+                    // 6. UI 리스트뷰(표)에서 해당 인덱스의 줄 지우기
+                    lvwModel.Items.RemoveAt(targetIndex);
+
+                    // 7. 전이학습 선택 콤보박스 목록에서도 똑같이 지워줘서 동기화하기!
+                    if (cboSelectTransferModel.Items.Contains(modelName))
+                    {
+                        cboSelectTransferModel.Items.Remove(modelName);
+                    }
+
+                    successCount++;
                 }
 
-                // 바깥쪽 폴더 경로 (mycar\models\모델명)
-                string modelFolderPath = Path.Combine(currentPath, "mycar", "models", modelName);
-
-                // 5. 하드디스크에서 폴더 통째로 완전 삭제
-                if (Directory.Exists(modelFolderPath))
-                {
-                    // ⭐ true 옵션: 바깥 폴더를 지우면 그 안의 meta.txt와 '중첩된 모델 폴더'까지 한 방에 날아갑니다.
-                    Directory.Delete(modelFolderPath, true);
-                }
-
-                // ==========================================================
-                // 5-1. 폴더 밖(models)에 숨어있는 보너스 파일(.tflite, .png)도 추적해서 암살!
-                string tflitePath = Path.Combine(currentPath, "mycar", "models", $"{modelName}.tflite");
-                string pngPath = Path.Combine(currentPath, "mycar", "models", $"{modelName}.png");
-
-                if (File.Exists(tflitePath))
-                {
-                    File.Delete(tflitePath);
-                }
-                if (File.Exists(pngPath))
-                {
-                    File.Delete(pngPath);
-                }
-                // ==========================================================
-
-                // 6. 화면의 리스트뷰(표)에서 해당 줄 지우기
-                lvwModel.Items.Remove(selectedItem);
-
-                // 7. 전이학습 선택 콤보박스 목록에서도 똑같이 지워줘서 동기화하기!
-                if (cboSelectTransferModel.Items.Contains(modelName))
-                {
-                    cboSelectTransferModel.Items.Remove(modelName);
-                }
-
-                ReportLog("알림", $"'{modelName}' 모델이 성공적으로 삭제되었습니다.");
+                ReportLog("알림", $"{successCount}개의 모델이 성공적으로 완전 삭제되었습니다.");
             }
             catch (Exception ex)
             {
-                // 1. 개발자용: 이번에도 역시 ex.Message가 아닌 ex.ToString()을 남겨서 어느 줄에서 터졌는지 기록합니다.
-                ReportLog("오류", $"모델 삭제 실패: {ex.ToString()}");
+                // 에러가 나면 어느 모델을 지우다 터졌는지 역추적이 가능하도록 ex.ToString()을 남깁니다.
+                ReportLog("오류", $"모델 일괄 삭제 중 일부 실패: {ex.ToString()}");
 
-                // 2. 사용자용: 윈도우에서 가장 자주 발생하는 에러 원인을 친절하게 짚어줍니다.
-                MessageBox.Show("모델을 삭제하는 중 에러가 발생했습니다.\n" +
-                                "해당 모델의 폴더가 열려있거나, 파이썬 백그라운드 프로세스가 파일을 사용 중일 수 있습니다.\n" +
+                MessageBox.Show("모델들을 삭제하는 중 에러가 발생했습니다.\n" +
+                                "특정 모델의 폴더가 열려있거나, 파이썬 백그라운드 프로세스가 파일을 사용 중일 수 있습니다.\n" +
                                 "폴더를 닫거나 잠시 후 다시 시도해 주세요.\n\n" +
                                 $"[상세 원인] {ex.Message}",
                                 "삭제 실패",
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Error);
+            }
+            finally
+            {
+                // 8. ⭐ 작업이 다 끝났으니 잠갔던 리스트뷰 화면을 풀고 한 번에 새로고침합니다.
+                lvwModel.EndUpdate();
             }
         }
 
@@ -1573,7 +1618,14 @@ namespace DataManager.UserControls
 
         private void btnRename_Click(object sender, EventArgs e)
         {
-            if (lvwModel.SelectedItems.Count == 0) return;
+            // 1. 리스트뷰에서 모델 선택 확인
+            if (lvwModel.SelectedItems.Count == 0)
+            {
+                MessageBox.Show("이름을 변경할 모델을 먼저 선택해주세요.", "선택 확인",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
             ListViewItem selectedItem = lvwModel.SelectedItems[0];
             string oldName = selectedItem.Text;
 
@@ -1977,6 +2029,38 @@ namespace DataManager.UserControls
                 // ⭐ 기존에 만들어둔 삭제 버튼을 "프로그램이 대신 마우스로 클릭" 해줍니다!
                 btnDelete.PerformClick();
             }
+
+            // 💡 컨트롤(Ctrl) 키가 눌려있는 상태일 때만 내부 조사를 시작합니다.
+            if (e.Control)
+            {
+                // 1️⃣ [Ctrl + 1] ➔ 이름 변경 (btnRename)
+                if ((e.KeyCode == Keys.D1 || e.KeyCode == Keys.NumPad1) && btnRename.Enabled)
+                {
+                    btnRename_Click(sender, e);
+                    SetKeyHandled(e);
+                }
+
+                // 2️⃣ [Ctrl + 2] ➔ 메모 변경 (btnChgComment)
+                else if ((e.KeyCode == Keys.D2 || e.KeyCode == Keys.NumPad2) && btnChgComment.Enabled)
+                {
+                    btnChgComment_Click(sender, e);
+                    SetKeyHandled(e);
+                }
+
+                // 3️⃣ [Ctrl + 3] ➔ 구성 표시 (btnShowConf)
+                else if ((e.KeyCode == Keys.D3 || e.KeyCode == Keys.NumPad3) && btnShowConf.Enabled)
+                {
+                    btnShowConf_Click(sender, e);
+                    SetKeyHandled(e);
+                }
+
+                // 4️⃣ [Ctrl + 4] ➔ 훈련 기록 보기 (btnTrainningHistory)
+                else if ((e.KeyCode == Keys.D4 || e.KeyCode == Keys.NumPad4) && btnTrainningHistory.Enabled)
+                {
+                    btnTrainningHistory_Click(sender, e);
+                    SetKeyHandled(e);
+                }
+            }
         }
 
         private void btnModelTypeHelp_Click(object sender, EventArgs e)
@@ -2008,6 +2092,62 @@ namespace DataManager.UserControls
 
             // 깔끔하고 신뢰감 주는 정보(Information) 아이콘으로 메시지박스 팝업!
             MessageBox.Show(modelHelp.ToString(), "훈련 모델 상세 안내", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        // ① 마우스를 꾹 눌렀을 때
+        private void lvwModel_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left) isDraggingModels = true;
+        }
+
+        // ② 마우스를 누른 채로 슉슉 움직일 때 (여기가 핵심!)
+        private void lvwModel_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (isDraggingModels)
+            {
+                // 마우스 커서가 지나가는 위치의 아이템(모델 이름)을 찾습니다.
+                ListViewItem item = lvwModel.GetItemAt(e.X, e.Y);
+
+                if (item != null)
+                {
+                    // 💡 지나가는 자리의 모델을 파란색(선택 상태)으로 칠합니다!
+                    item.Selected = true;
+                }
+            }
+        }
+
+        // ③ 마우스에서 손을 뗐을 때
+        private void lvwModel_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left) isDraggingModels = false;
+        }
+
+        private void lvwModel_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            // 현재 선택된 항목 개수
+            int selectedCount = lvwModel.SelectedItems.Count;
+
+            // ⭐ 0개(선택 없음)이거나 1개일 때만 true!
+            // 즉, 2개 이상 다중 드래그했을 때만 이름/메모 변경을 락(lock) 겁니다.
+            bool allowSingleActions = (selectedCount <= 1);
+
+            // 0개일 때는 이벤트 내부의 방어 코드가 작동하고, 1개일 때는 정상 작동합니다!
+            btnRename.Enabled = allowSingleActions;           // 이름 변경
+            btnChgComment.Enabled = allowSingleActions;       // 메모 변경
+            btnShowConf.Enabled = allowSingleActions;         // 구성 표시
+            btnTrainningHistory.Enabled = allowSingleActions; // 훈련 기록
+
+
+            // 삭제 버튼은 0개일 때도 방어 코드가 있으니 켜두고, 1개 이상일 때도 당연히 켜둡니다.
+            // 결론적으로 삭제 버튼은 어떤 상황에서든 항상 켜두면 됩니다!
+            btnDelete.Enabled = true;
+        }
+
+        // 💡 중복되는 키 처리 완료 코드를 깔끔하게 묶어주는 헬퍼 함수
+        private void SetKeyHandled(KeyEventArgs e)
+        {
+            e.Handled = true;
+            e.SuppressKeyPress = true; // 윈도우 특유의 '띵~' 거리는 경고음 방지
         }
     }
 }
