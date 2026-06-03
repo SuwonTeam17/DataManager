@@ -27,6 +27,7 @@
             lblAddConfSetter = new Label();
             lblConfEditor = new Label();
             pnlTrainer = new Panel();
+            chkShowTrainLog = new CheckBox();
             lblMinValLoss = new Label();
             lblValLoss = new Label();
             lblLoss = new Label();
@@ -63,6 +64,7 @@
             btnChgComment = new Button();
             btnShowConf = new Button();
             btnTrainningHistory = new Button();
+            btnModelTypeHelp = new Button();
             pnlConfEditor.SuspendLayout();
             pnlConfig.SuspendLayout();
             pnlTrainer.SuspendLayout();
@@ -227,6 +229,8 @@
             // 
             pnlTrainer.BackColor = Color.FromArgb(250, 251, 253);
             pnlTrainer.BorderStyle = BorderStyle.FixedSingle;
+            pnlTrainer.Controls.Add(btnModelTypeHelp);
+            pnlTrainer.Controls.Add(chkShowTrainLog);
             pnlTrainer.Controls.Add(lblMinValLoss);
             pnlTrainer.Controls.Add(lblValLoss);
             pnlTrainer.Controls.Add(lblLoss);
@@ -250,6 +254,17 @@
             pnlTrainer.Name = "pnlTrainer";
             pnlTrainer.Size = new Size(1629, 313);
             pnlTrainer.TabIndex = 1;
+            // 
+            // chkShowTrainLog
+            // 
+            chkShowTrainLog.AutoSize = true;
+            chkShowTrainLog.Font = new Font("맑은 고딕 Semilight", 9F, FontStyle.Regular, GraphicsUnit.Point, 129);
+            chkShowTrainLog.Location = new Point(715, 127);
+            chkShowTrainLog.Name = "chkShowTrainLog";
+            chkShowTrainLog.Size = new Size(273, 34);
+            chkShowTrainLog.TabIndex = 16;
+            chkShowTrainLog.Text = "학습할 때 학습 로그 보기";
+            chkShowTrainLog.UseVisualStyleBackColor = true;
             // 
             // lblMinValLoss
             // 
@@ -298,14 +313,14 @@
             lblSetModelName.Location = new Point(153, 24);
             lblSetModelName.Margin = new Padding(9, 0, 9, 0);
             lblSetModelName.Name = "lblSetModelName";
-            lblSetModelName.Size = new Size(190, 50);
+            lblSetModelName.Size = new Size(191, 50);
             lblSetModelName.TabIndex = 11;
             lblSetModelName.Text = "모델 이름 (선택)";
             lblSetModelName.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // txtModelName
             // 
-            txtModelName.Location = new Point(346, 39);
+            txtModelName.Location = new Point(339, 31);
             txtModelName.Margin = new Padding(5, 6, 5, 6);
             txtModelName.Name = "txtModelName";
             txtModelName.Size = new Size(354, 35);
@@ -399,18 +414,18 @@
             txtComment.BackColor = Color.White;
             txtComment.BorderStyle = BorderStyle.FixedSingle;
             txtComment.Font = new Font("맑은 고딕", 9.5F);
-            txtComment.Location = new Point(831, 40);
+            txtComment.Location = new Point(837, 24);
             txtComment.Margin = new Padding(5, 6, 5, 6);
             txtComment.Multiline = true;
             txtComment.Name = "txtComment";
-            txtComment.Size = new Size(400, 106);
+            txtComment.Size = new Size(400, 87);
             txtComment.TabIndex = 0;
             // 
             // lblComment
             // 
             lblComment.Font = new Font("맑은 고딕", 9.5F);
             lblComment.ForeColor = Color.FromArgb(60, 72, 92);
-            lblComment.Location = new Point(710, 70);
+            lblComment.Location = new Point(709, 55);
             lblComment.Margin = new Padding(5, 0, 5, 0);
             lblComment.Name = "lblComment";
             lblComment.Size = new Size(118, 36);
@@ -437,7 +452,7 @@
             cboSelectTransferModel.FlatStyle = FlatStyle.Flat;
             cboSelectTransferModel.Font = new Font("맑은 고딕", 9.5F);
             cboSelectTransferModel.FormattingEnabled = true;
-            cboSelectTransferModel.Location = new Point(382, 156);
+            cboSelectTransferModel.Location = new Point(375, 156);
             cboSelectTransferModel.Margin = new Padding(5, 6, 5, 6);
             cboSelectTransferModel.Name = "cboSelectTransferModel";
             cboSelectTransferModel.Size = new Size(318, 38);
@@ -454,7 +469,7 @@
             cboSelectModelType.Location = new Point(331, 89);
             cboSelectModelType.Margin = new Padding(5, 6, 5, 6);
             cboSelectModelType.Name = "cboSelectModelType";
-            cboSelectModelType.Size = new Size(369, 38);
+            cboSelectModelType.Size = new Size(330, 38);
             cboSelectModelType.TabIndex = 2;
             // 
             // lblSelectModelType
@@ -522,6 +537,7 @@
             lvwModel.TabIndex = 0;
             lvwModel.UseCompatibleStateImageBehavior = false;
             lvwModel.View = View.Details;
+            lvwModel.KeyDown += lstModels_KeyDown;
             // 
             // colName
             // 
@@ -688,6 +704,17 @@
             btnTrainningHistory.UseVisualStyleBackColor = false;
             btnTrainningHistory.Click += btnTrainningHistory_Click;
             // 
+            // btnModelTypeHelp
+            // 
+            btnModelTypeHelp.Font = new Font("맑은 고딕", 9.857143F, FontStyle.Regular, GraphicsUnit.Point, 129);
+            btnModelTypeHelp.Location = new Point(669, 86);
+            btnModelTypeHelp.Name = "btnModelTypeHelp";
+            btnModelTypeHelp.Size = new Size(40, 41);
+            btnModelTypeHelp.TabIndex = 12;
+            btnModelTypeHelp.Text = "？";
+            btnModelTypeHelp.UseVisualStyleBackColor = true;
+            btnModelTypeHelp.Click += btnModelTypeHelp_Click;
+            // 
             // TrainerUI
             // 
             AutoScaleDimensions = new SizeF(12F, 30F);
@@ -764,5 +791,7 @@
         private Label lblMinValLoss;
         private Button btnConfigHelp;
         private Label lblConfigHelp;
+        private CheckBox chkShowTrainLog;
+        private Button btnModelTypeHelp;
     }
 }
