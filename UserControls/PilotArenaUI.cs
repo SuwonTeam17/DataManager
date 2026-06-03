@@ -53,7 +53,6 @@ namespace DataManager.UserControls
 
             trkProgress.ValueChanged += TrkProgress_ValueChanged;
             btnPlay.Click += BtnPlay_Click;
-            btnStop.Click += BtnStop_Click;
             comboBox1.SelectedIndexChanged += ComboBox1_SelectedIndexChanged;
             comboBox1.TextChanged += ComboBox1_SelectedIndexChanged;
 
@@ -89,16 +88,34 @@ namespace DataManager.UserControls
 
         private void BtnPlay_Click(object? sender, EventArgs e)
         {
-            if (frames.Count > 0)
+            if (playbackTimer.Enabled)
             {
-                UpdateTimerInterval();
-                playbackTimer.Start();
+                playbackTimer.Stop();
+                SetPlayButtonState(false);
+            }
+            else
+            {
+                if (frames.Count > 0)
+                {
+                    UpdateTimerInterval();
+                    playbackTimer.Start();
+                    SetPlayButtonState(true);
+                }
             }
         }
 
-        private void BtnStop_Click(object? sender, EventArgs e)
+        private void SetPlayButtonState(bool isPlaying)
         {
-            playbackTimer.Stop();
+            if (isPlaying)
+            {
+                btnPlay.Text = "■ 중지";
+                btnPlay.BackColor = Color.FromArgb(210, 70, 70);
+            }
+            else
+            {
+                btnPlay.Text = "▶ 재생";
+                btnPlay.BackColor = Color.FromArgb(72, 175, 120);
+            }
         }
 
         private void PlaybackTimer_Tick(object? sender, EventArgs e)
@@ -114,6 +131,7 @@ namespace DataManager.UserControls
             else
             {
                 playbackTimer.Stop();
+                SetPlayButtonState(false);
             }
         }
 
