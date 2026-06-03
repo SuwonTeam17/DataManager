@@ -47,21 +47,6 @@
             lblPilotTest.TabIndex = 0;
             lblPilotTest.Text = "모델 테스트";
             // 
-            // btnStop
-            // 
-            btnStop.BackColor = Color.FromArgb(210, 70, 70);
-            btnStop.Cursor = Cursors.Hand;
-            btnStop.FlatAppearance.BorderSize = 0;
-            btnStop.FlatStyle = FlatStyle.Flat;
-            btnStop.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
-            btnStop.ForeColor = Color.White;
-            btnStop.Location = new Point(794, 4);
-            btnStop.Name = "btnStop";
-            btnStop.Size = new Size(70, 30);
-            btnStop.TabIndex = 12;
-            btnStop.Text = "■ 중지";
-            btnStop.UseVisualStyleBackColor = false;
-            // 
             // btnPlay
             // 
             btnPlay.BackColor = Color.FromArgb(72, 175, 120);
