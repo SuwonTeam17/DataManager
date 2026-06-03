@@ -16,7 +16,6 @@
         private void InitializeComponent()
         {
             lblPilotTest = new Label();
-            btnStop = new Button();
             btnPlay = new Button();
             btn5FrameRight = new Button();
             btn5FrameLeft = new Button();
@@ -149,7 +148,6 @@
             pnlSetting.Controls.Add(trkBright);
             pnlSetting.Controls.Add(lblBright);
             pnlSetting.Controls.Add(trkProgress);
-            pnlSetting.Controls.Add(btnStop);
             pnlSetting.Controls.Add(lblPilotTest);
             pnlSetting.Controls.Add(btnPlay);
             pnlSetting.Controls.Add(btnFrameRight);
@@ -304,7 +302,6 @@
         private Label lblPilotTest;
         private Button btnLoadModel;
         private ComboBox cboModelType;
-        private Button btnStop;
         private Button btnPlay;
         private Button btn5FrameRight;
         private Button btn5FrameLeft;
