@@ -21,6 +21,7 @@ namespace DataManager
 
         private TextBox _txtPath;
         private Button _btnUp;
+        private Button _btnBrowse;
         private ListView _listView;
         private Label _lblSelected;
         private Button _btnOk;
@@ -100,6 +101,35 @@ namespace DataManager
 
             pnlTop.Controls.Add(_txtPath);
             pnlTop.Controls.Add(_btnUp);
+
+            // 파일탐색기 버튼 (텍스트박스 오른쪽 끝)
+            _btnBrowse = new Button();
+            _btnBrowse.Dock = DockStyle.Right;
+            _btnBrowse.Width = 36;
+            _btnBrowse.BackColor = Color.FromArgb(60, 75, 100);
+            _btnBrowse.ForeColor = Color.White;
+            _btnBrowse.FlatStyle = FlatStyle.Flat;
+            _btnBrowse.FlatAppearance.BorderSize = 0;
+            _btnBrowse.Cursor = Cursors.Hand;
+            _btnBrowse.Font = new Font("Segoe UI Emoji", 13F);
+            _btnBrowse.Text = "📂";
+            _btnBrowse.TextAlign = ContentAlignment.MiddleCenter;
+            _btnBrowse.Padding = new Padding(0);
+            _btnBrowse.TabStop = false;
+            _btnBrowse.Click += (s, e) =>
+            {
+                using (var dlg = new FolderBrowserDialog())
+                {
+                    dlg.Description = "폴더를 선택하세요";
+                    dlg.ShowNewFolderButton = true;
+                    if (Directory.Exists(_currentPath))
+                        dlg.SelectedPath = _currentPath;
+
+                    if (dlg.ShowDialog(this) == DialogResult.OK)
+                        Navigate(dlg.SelectedPath);
+                }
+            };
+            pnlTop.Controls.Add(_btnBrowse);
 
             // ── 하단: 선택 표시 + 확인/취소 버튼 ────────────────
             var pnlBottom = new Panel();
