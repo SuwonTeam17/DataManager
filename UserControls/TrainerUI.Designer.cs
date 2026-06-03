@@ -522,6 +522,7 @@
             lvwModel.TabIndex = 0;
             lvwModel.UseCompatibleStateImageBehavior = false;
             lvwModel.View = View.Details;
+            lvwModel.KeyDown += lstModels_KeyDown;
             // 
             // colName
             // 

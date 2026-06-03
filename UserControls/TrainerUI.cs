@@ -83,8 +83,7 @@ namespace DataManager.UserControls
             cboSelectModelType.Items.Add("기본 주행 (Linear)");
             cboSelectModelType.Items.Add("분류형 주행 (Categorical)");
             cboSelectModelType.Items.Add("기억형 주행 (RNN)");
-            cboSelectModelType.Items.Add("지시형 주행 (Behavior)");
-            cboSelectModelType.Items.Add("센서 융합 주행 (IMU)");
+            cboSelectModelType.Items.Add("추론형 주행 (Inferred)"); // ⭐ Behavior 대신 Inferred로 변경
             cboSelectModelType.Items.Add("입체 시각 주행 (3D)");
             cboSelectModelType.SelectedIndex = 0;
             lblTransferWarning.Visible = false; // 전이학습 경고 메시지 숨기기
@@ -525,8 +524,7 @@ namespace DataManager.UserControls
 
             if (displayType.Contains("Categorical")) selectedType = "categorical";
             else if (displayType.Contains("RNN")) selectedType = "rnn";
-            else if (displayType.Contains("Behavior")) selectedType = "behavior";
-            else if (displayType.Contains("IMU")) selectedType = "imu";
+            else if (displayType.Contains("Inferred")) selectedType = "inferred"; // ⭐ Contains와 변수명 변경
             else if (displayType.Contains("3D")) selectedType = "3d";
 
             // 5. 전이학습(--transfer) 파라미터 확인
@@ -1743,52 +1741,27 @@ namespace DataManager.UserControls
 
         private void btnConfigHelp_Click(object sender, EventArgs e)
         {
-            // 1. 화면에 추가된 설정(패널)이 하나도 없을 때
-            if (flpConfCon.Controls.Count == 0)
+            // 긴 문자열을 예쁘게 조립하기 위한 StringBuilder
+            StringBuilder helpMessage = new StringBuilder();
+            helpMessage.AppendLine("[ ⚙️ 전체 구성 설정(Config) 가이드 ]\n");
+
+            // 1. 화면의 콤보박스를 뒤질 필요 없이, 백과사전(딕셔너리) 자체를 처음부터 끝까지 순회합니다.
+            // configHelpDocs에 저장된 모든 Key(설정 이름)와 Value(설명)를 싹 다 가져옵니다.
+            foreach (var doc in configHelpDocs)
             {
-                MessageBox.Show("현재 추가된 설정 항목이 없습니다.", "도움말", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                helpMessage.AppendLine($"[{doc.Key}]");
+                helpMessage.AppendLine(doc.Value);
+                helpMessage.AppendLine(); // 줄바꿈으로 단락 분리
+            }
+
+            // 2. 만약 백과사전이 텅 비어있을 경우의 안전 장치
+            if (configHelpDocs.Count == 0)
+            {
+                MessageBox.Show("등록된 도움말 데이터가 없습니다.", "도움말", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
-            // 똑같은 설명이 여러 번 나오는 걸 막기 위한 기억 장치
-            HashSet<string> seenConfigs = new HashSet<string>();
-
-            // 긴 문자열을 예쁘게 조립하기 위한 StringBuilder
-            StringBuilder helpMessage = new StringBuilder();
-            helpMessage.AppendLine("💡 현재 화면에 활성화된 설정들의 설명입니다.\n");
-
-            // 2. flpConfCon 안의 모든 패널(줄)을 하나씩 순회합니다.
-            foreach (Control rowControl in flpConfCon.Controls)
-            {
-                // 3. 패널 안에서 "cboSelConf"라는 이름을 가진 콤보박스를 찾습니다.
-                Control[] found = rowControl.Controls.Find("cboSelConf", false);
-
-                if (found.Length > 0 && found[0] is ComboBox cbo)
-                {
-                    string selectedText = cbo.Text;
-
-                    // 빈칸이거나, 이미 설명을 추가한 설정이라면 건너뜀
-                    if (string.IsNullOrWhiteSpace(selectedText) || seenConfigs.Contains(selectedText))
-                        continue;
-
-                    // 백과사전에 등록된 설명 추가
-                    helpMessage.AppendLine($"[{selectedText}]");
-                    if (configHelpDocs.ContainsKey(selectedText))
-                    {
-                        helpMessage.AppendLine(configHelpDocs[selectedText]);
-                    }
-                    else
-                    {
-                        helpMessage.AppendLine("설명이 아직 준비되지 않았습니다.");
-                    }
-                    helpMessage.AppendLine(); // 줄바꿈으로 단락 분리
-
-                    // 방금 설명한 설정은 기억 장치에 추가
-                    seenConfigs.Add(selectedText);
-                }
-            }
-
-            // 4. 모인 설명들을 하나의 팝업창으로 띄워줍니다!
+            // 3. 싹 다 모은 설명들을 하나의 팝업창으로 시원하게 띄워줍니다!
             MessageBox.Show(helpMessage.ToString(), "전체 설정 도움말", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
@@ -1861,6 +1834,17 @@ namespace DataManager.UserControls
 
                 // 5. 완성된 도화지를 지정된 경로에 PNG 파일로 구워냅니다!
                 chart.SaveImage(savePath, System.Windows.Forms.DataVisualization.Charting.ChartImageFormat.Png);
+            }
+        }
+
+        // ⭐ 리스트박스에서 키보드가 눌렸을 때 실행되는 이벤트
+        private void lstModels_KeyDown(object sender, KeyEventArgs e)
+        {
+            // 1. 눌린 키가 'Delete' 키인지 확인
+            if (e.KeyCode == Keys.Delete)
+            {
+                // ⭐ 기존에 만들어둔 삭제 버튼을 "프로그램이 대신 마우스로 클릭" 해줍니다!
+                btnDelete.PerformClick();
             }
         }
     }
