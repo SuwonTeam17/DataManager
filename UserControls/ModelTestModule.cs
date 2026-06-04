@@ -55,8 +55,6 @@ namespace DataManager.UserControls
         private string lastLoadedImagePath = string.Empty;
         private MemoryStream? currentImageStream;
         private Label lblModelType = null!;
-        private Label lblAngleError = null!;
-        private Label lblThrottleError = null!;
 
         public ModelTestModule()
         {
@@ -87,7 +85,6 @@ namespace DataManager.UserControls
             Disposed += (s, e) => StopPythonProcess();
 
             SetupCharts();
-            SetupErrorLabels();
         }
 
         private void SetupCharts()
@@ -154,42 +151,6 @@ namespace DataManager.UserControls
                 lblThrottleError.Text = "가속값 오차\n-";
         }
 
-        private void SetupErrorLabels()
-        {
-            lblAngleError = MakeErrorLabel("조향각 오차\n-", Color.FromArgb(34, 177, 76));
-            lblThrottleError = MakeErrorLabel("가속값 오차\n-", Color.DodgerBlue);
-            Controls.Add(lblAngleError);
-            Controls.Add(lblThrottleError);
-            lblAngleError.BringToFront();
-            lblThrottleError.BringToFront();
-            Resize += (s, e) => PositionErrorLabels();
-        }
-
-        private static Label MakeErrorLabel(string text, Color foreColor) => new Label
-        {
-            AutoSize = false,
-            Size = new Size(90, 34),
-            TextAlign = ContentAlignment.MiddleCenter,
-            Font = new Font("Consolas", 8f, FontStyle.Bold),
-            ForeColor = foreColor,
-            BackColor = Color.FromArgb(210, 245, 247, 250),
-            Text = text,
-            BorderStyle = BorderStyle.FixedSingle,
-        };
-
-        private void PositionErrorLabels()
-        {
-            const int chartTotalH = 248;
-            const int chart1H    = 132;
-            const int chart2H    = chartTotalH - chart1H;
-            const int lblW = 90, lblH = 34;
-
-            int chartTop = Height - chartTotalH;
-            int x = Width - lblW - 4;
-
-            lblAngleError.SetBounds(x, chartTop + (chart1H - lblH) / 2, lblW, lblH);
-            lblThrottleError.SetBounds(x, chartTop + chart1H + (chart2H - lblH) / 2, lblW, lblH);
-        }
 
         public event EventHandler CloseRequested;
 
@@ -319,6 +280,10 @@ namespace DataManager.UserControls
             {
                 lblModelRoute.Text += " (로드 중...)";
                 lblModelType.Text = ReadModelTypeFromMeta(folderPath);
+                string memo = ReadMemoFromMeta(folderPath);
+                if (!string.IsNullOrEmpty(memo))
+                    ReportLog("메모", memo);
+                ClearPredictions();
                 _ = StartPythonProcessAsync();
             }
             else
@@ -327,12 +292,25 @@ namespace DataManager.UserControls
             }
         }
 
+        private static string? FindMetaPath(string folderPath)
+        {
+            string metaPath = Path.Combine(folderPath, "meta.txt");
+            if (File.Exists(metaPath)) return metaPath;
+            string? parentDir = Path.GetDirectoryName(folderPath);
+            if (parentDir != null)
+            {
+                string parentMeta = Path.Combine(parentDir, "meta.txt");
+                if (File.Exists(parentMeta)) return parentMeta;
+            }
+            return null;
+        }
+
         private static string ReadModelTypeFromMeta(string folderPath)
         {
             try
             {
-                string metaPath = Path.Combine(folderPath, "meta.txt");
-                if (!File.Exists(metaPath)) return "-";
+                string? metaPath = FindMetaPath(folderPath);
+                if (metaPath == null) return "-";
 
                 string content = File.ReadAllText(metaPath);
                 var match = Regex.Match(content, @"\(([^)]+)\)");
@@ -341,6 +319,23 @@ namespace DataManager.UserControls
             catch
             {
                 return "-";
+            }
+        }
+
+        private static string ReadMemoFromMeta(string folderPath)
+        {
+            try
+            {
+                string? metaPath = FindMetaPath(folderPath);
+                if (metaPath == null) return string.Empty;
+
+                string[] lines = File.ReadAllLines(metaPath);
+                if (lines.Length < 4) return string.Empty;
+                return lines[3].Trim();
+            }
+            catch
+            {
+                return string.Empty;
             }
         }
 
@@ -775,7 +770,6 @@ namespace DataManager.UserControls
         {
             PnlSetting_Resize(this, EventArgs.Empty);
             PnlData_Resize(this, EventArgs.Empty);
-            PositionErrorLabels();
         }
 
         private void PnlSetting_Resize(object? sender, EventArgs e)
@@ -861,6 +855,16 @@ namespace DataManager.UserControls
             g.DrawLine(pen, endX, endY,
                 endX - (float)(Math.Cos(lineAngle - spread) * arrowLen),
                 endY - (float)(Math.Sin(lineAngle - spread) * arrowLen));
+        }
+
+        private void lblAngleError_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void lblThrottleError_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

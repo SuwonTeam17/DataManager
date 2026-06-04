@@ -28,6 +28,8 @@ namespace DataManager.UserControls
             btnDelModel = new Button();
             lblModelRoute = new Label();
             pnlChart = new Panel();
+            lblAngleError = new Label();
+            lblThrottleError = new Label();
             chart2 = new System.Windows.Forms.DataVisualization.Charting.Chart();
             chart1 = new System.Windows.Forms.DataVisualization.Charting.Chart();
             pnlImage = new Panel();
@@ -138,6 +140,8 @@ namespace DataManager.UserControls
             // pnlChart
             // 
             pnlChart.BackColor = Color.FromArgb(250, 251, 253);
+            pnlChart.Controls.Add(lblAngleError);
+            pnlChart.Controls.Add(lblThrottleError);
             pnlChart.Controls.Add(chart2);
             pnlChart.Controls.Add(chart1);
             pnlChart.Dock = DockStyle.Bottom;
@@ -145,6 +149,36 @@ namespace DataManager.UserControls
             pnlChart.Name = "pnlChart";
             pnlChart.Size = new Size(375, 248);
             pnlChart.TabIndex = 7;
+            // 
+            // lblAngleError
+            // 
+            lblAngleError.Anchor = AnchorStyles.Right;
+            lblAngleError.BackColor = Color.FromArgb(210, 245, 247, 250);
+            lblAngleError.BorderStyle = BorderStyle.FixedSingle;
+            lblAngleError.Font = new Font("Consolas", 10F, FontStyle.Bold);
+            lblAngleError.ForeColor = Color.FromArgb(34, 177, 76);
+            lblAngleError.Location = new Point(246, 44);
+            lblAngleError.Name = "lblAngleError";
+            lblAngleError.Size = new Size(90, 70);
+            lblAngleError.TabIndex = 20;
+            lblAngleError.Text = "조향각 오차\n-";
+            lblAngleError.TextAlign = ContentAlignment.MiddleCenter;
+            lblAngleError.Click += lblAngleError_Click;
+            // 
+            // lblThrottleError
+            // 
+            lblThrottleError.Anchor = AnchorStyles.Right;
+            lblThrottleError.BackColor = Color.FromArgb(210, 245, 247, 250);
+            lblThrottleError.BorderStyle = BorderStyle.FixedSingle;
+            lblThrottleError.Font = new Font("Consolas", 10F, FontStyle.Bold);
+            lblThrottleError.ForeColor = Color.DodgerBlue;
+            lblThrottleError.Location = new Point(246, 170);
+            lblThrottleError.Name = "lblThrottleError";
+            lblThrottleError.Size = new Size(90, 70);
+            lblThrottleError.TabIndex = 21;
+            lblThrottleError.Text = "가속값 오차\n-";
+            lblThrottleError.TextAlign = ContentAlignment.MiddleCenter;
+            lblThrottleError.Click += lblThrottleError_Click;
             // 
             // chart2
             // 
@@ -301,5 +335,7 @@ namespace DataManager.UserControls
         private GaugeBar gaugeBar2;
         private System.Windows.Forms.DataVisualization.Charting.Chart chart2;
         private System.Windows.Forms.DataVisualization.Charting.Chart chart1;
+        private Label lblAngleError;
+        private Label lblThrottleError;
     }
 }

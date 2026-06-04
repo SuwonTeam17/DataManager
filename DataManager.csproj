@@ -31,9 +31,6 @@
     <Compile Update="UserControls\PilotArenaUI.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Update="UserControls\InitUI.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
 	<Compile Update="UserControls\TubManagerUI.cs">
 		<SubType>UserControl</SubType>
 	</Compile>

@@ -94,6 +94,33 @@ def parse_outputs(raw):
     return angle, throttle
 
 
+def _get_input_info(shape):
+    """
+    shape 리스트에서 (ndim, time_steps)를 추출.
+    5D 시계열 모델: shape = [None, T, H, W, C] → ndim=5, time_steps=T (없으면 1)
+    4D 일반 모델:   shape = [None, H, W, C]    → ndim=4, time_steps=1
+    """
+    ndim = len(shape)
+    if ndim == 5:
+        t = shape[1]
+        time_steps = int(t) if t is not None else 1
+    else:
+        time_steps = 1
+    return ndim, time_steps
+
+
+def _adapt_input(img_arr, ndim, time_steps):
+    """
+    (1, H, W, C) 입력을 모델이 요구하는 shape으로 맞춤.
+    5D 시계열 모델: 같은 프레임을 time_steps만큼 복제 → (1, T, H, W, C)
+    """
+    if ndim == 5 and img_arr.ndim == 4:
+        frame   = img_arr[0]                               # (H, W, C)
+        stacked = np.stack([frame] * time_steps, axis=0)   # (T, H, W, C)
+        return np.expand_dims(stacked, axis=0)             # (1, T, H, W, C)
+    return img_arr
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # 모델 로드
 # ─────────────────────────────────────────────────────────────────────────────
@@ -103,9 +130,9 @@ def load_model_savedmodel(model_path):
 
     # 방법 1: AutoTrackable 패치 + tf.saved_model.load()
     try:
-        print("[1/2] tf.saved_model.load() 시도...", file=sys.stderr)
+        print("[1/3] tf.saved_model.load() 시도...", file=sys.stderr)
         _apply_autotrackable_patch()
-        loaded  = tf.saved_model.load(model_path)
+        loaded   = tf.saved_model.load(model_path)
         sig_keys = list(loaded.signatures.keys())
         if not sig_keys:
             raise RuntimeError("serving signature가 없습니다.")
@@ -122,23 +149,34 @@ def load_model_savedmodel(model_path):
         if not input_keys:
             raise RuntimeError("입력 키를 찾을 수 없습니다.")
         input_key = input_keys[0]
-        print("[1/2] 성공.", file=sys.stderr)
 
-        def predict(img_arr):
-            result = infer(**{input_key: tf.constant(img_arr, dtype=tf.float32)})
+        # 입력 shape에서 차원 수·시간 스텝 감지 (3D 시계열 모델 대응)
+        ndim, time_steps = 4, 1
+        try:
+            spec = infer.structured_input_signature[1].get(input_key)
+            if spec is not None:
+                ndim, time_steps = _get_input_info(spec.shape.as_list())
+        except Exception:
+            pass
+        print(f"[MODEL] 입력 차원={ndim}D, 시간스텝={time_steps}", file=sys.stderr)
+        print("[1/3] 성공.", file=sys.stderr)
+
+        def predict(img_arr, _key=input_key, _ndim=ndim, _ts=time_steps):
+            adjusted = _adapt_input(img_arr, _ndim, _ts)
+            result   = infer(**{_key: tf.constant(adjusted, dtype=tf.float32)})
             return parse_outputs({k: v.numpy() for k, v in result.items()})
 
         return predict
 
     except Exception as e:
         last_error = e
-        print(f"[1/2] 실패: {e}", file=sys.stderr)
+        print(f"[1/3] 실패: {e}", file=sys.stderr)
 
     # 방법 2: TFSMLayer
     try:
-        print("[2/2] TFSMLayer 시도...", file=sys.stderr)
+        print("[2/3] TFSMLayer 시도...", file=sys.stderr)
         layer = tf.keras.layers.TFSMLayer(model_path, call_endpoint="serving_default")
-        print("[2/2] 성공.", file=sys.stderr)
+        print("[2/3] 성공.", file=sys.stderr)
 
         def predict_tfsm(img_arr):
             preds = layer(tf.convert_to_tensor(img_arr, dtype=tf.float32))
@@ -152,7 +190,30 @@ def load_model_savedmodel(model_path):
 
     except Exception as e:
         last_error = e
-        print(f"[2/2] 실패: {e}", file=sys.stderr)
+        print(f"[2/3] 실패: {e}", file=sys.stderr)
+
+    # 방법 3: Keras SavedModel 직접 로드 (serving signature 없는 경우 대비)
+    try:
+        print("[3/3] keras.models.load_model() 시도...", file=sys.stderr)
+        model = tf.keras.models.load_model(model_path, compile=False)
+
+        ndim, time_steps = 4, 1
+        try:
+            ndim, time_steps = _get_input_info(list(model.input_shape))
+        except Exception:
+            pass
+        print(f"[MODEL] 입력 차원={ndim}D, 시간스텝={time_steps}", file=sys.stderr)
+        print("[3/3] 성공.", file=sys.stderr)
+
+        def predict_keras_sm(img_arr, _ndim=ndim, _ts=time_steps):
+            adjusted = _adapt_input(img_arr, _ndim, _ts)
+            return parse_outputs(model.predict(adjusted, verbose=0))
+
+        return predict_keras_sm
+
+    except Exception as e:
+        last_error = e
+        print(f"[3/3] 실패: {e}", file=sys.stderr)
 
     raise RuntimeError(f"SavedModel 로드 실패. 마지막 에러: {last_error}")
 
@@ -168,8 +229,16 @@ def load_model_h5(model_path):
     model = tf.keras.models.load_model(actual_path, compile=False)
     print(f"[MODEL] H5 로드 완료: {actual_path}", file=sys.stderr)
 
-    def predict(img_arr):
-        return parse_outputs(model.predict(img_arr, verbose=0))
+    ndim, time_steps = 4, 1
+    try:
+        ndim, time_steps = _get_input_info(list(model.input_shape))
+    except Exception:
+        pass
+    print(f"[MODEL] 입력 차원={ndim}D, 시간스텝={time_steps}", file=sys.stderr)
+
+    def predict(img_arr, _ndim=ndim, _ts=time_steps):
+        adjusted = _adapt_input(img_arr, _ndim, _ts)
+        return parse_outputs(model.predict(adjusted, verbose=0))
 
     return predict
 

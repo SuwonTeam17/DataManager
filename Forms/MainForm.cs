@@ -8,7 +8,6 @@ namespace DataManager
     public partial class MainForm : Form
     {
         // ⭐ 1. 화면들을 클래스 전역 변수로 딱 한 번만 미리 선언해 둡니다.
-        private InitUI initUI;
         private TubManagerUI tubUI;
         private TrainerUI trainerUI;
         private PilotArenaUI pilotArenaUI;
@@ -21,13 +20,12 @@ namespace DataManager
             InitializeScreens();
 
             // 처음 켜졌을 때는 InitUI를 보여줍니다.
-            SwitchScreen(initUI);
+            SwitchScreen(tubUI);
         }
 
         // 화면들을 최초 1회 생성하고 설정하는 함수
         private void InitializeScreens()
         {
-            initUI = new InitUI();
             tubUI = new TubManagerUI();
             trainerUI = new TrainerUI();
             pilotArenaUI = new PilotArenaUI();
@@ -38,7 +36,6 @@ namespace DataManager
             pilotArenaUI.OnLogReported += AppendLogToListView;
 
             // 모든 화면을 메인 패널에 꽉 채워서 넣고 일단 다 숨깁니다.
-            AddScreenToPanel(initUI);
             AddScreenToPanel(tubUI);
             AddScreenToPanel(trainerUI);
             AddScreenToPanel(pilotArenaUI);

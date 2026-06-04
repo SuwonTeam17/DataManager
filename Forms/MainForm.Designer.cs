@@ -44,7 +44,7 @@
             // 
             // btnChgTubForm
             // 
-            btnChgTubForm.BackColor = Color.FromArgb(100, 110, 130);
+            btnChgTubForm.BackColor = Color.FromArgb(67, 130, 220);
             btnChgTubForm.Cursor = Cursors.Hand;
             btnChgTubForm.FlatAppearance.BorderSize = 0;
             btnChgTubForm.FlatStyle = FlatStyle.Flat;
@@ -53,7 +53,7 @@
             btnChgTubForm.Location = new Point(0, 0);
             btnChgTubForm.Margin = new Padding(0);
             btnChgTubForm.Name = "btnChgTubForm";
-            btnChgTubForm.Size = new Size(160, 40);
+            btnChgTubForm.Size = new Size(206, 53);
             btnChgTubForm.TabIndex = 0;
             btnChgTubForm.Text = "이미지 편집";
             btnChgTubForm.UseVisualStyleBackColor = false;
@@ -67,10 +67,10 @@
             btnChgTrainerForm.FlatStyle = FlatStyle.Flat;
             btnChgTrainerForm.Font = new Font("맑은 고딕", 10F, FontStyle.Bold);
             btnChgTrainerForm.ForeColor = Color.White;
-            btnChgTrainerForm.Location = new Point(160, 0);
+            btnChgTrainerForm.Location = new Point(206, 0);
             btnChgTrainerForm.Margin = new Padding(0);
             btnChgTrainerForm.Name = "btnChgTrainerForm";
-            btnChgTrainerForm.Size = new Size(160, 40);
+            btnChgTrainerForm.Size = new Size(206, 53);
             btnChgTrainerForm.TabIndex = 1;
             btnChgTrainerForm.Text = "모델 훈련";
             btnChgTrainerForm.UseVisualStyleBackColor = false;
@@ -84,10 +84,10 @@
             btnChgPilotForm.FlatStyle = FlatStyle.Flat;
             btnChgPilotForm.Font = new Font("맑은 고딕", 10F, FontStyle.Bold);
             btnChgPilotForm.ForeColor = Color.White;
-            btnChgPilotForm.Location = new Point(320, 0);
+            btnChgPilotForm.Location = new Point(411, 0);
             btnChgPilotForm.Margin = new Padding(0);
             btnChgPilotForm.Name = "btnChgPilotForm";
-            btnChgPilotForm.Size = new Size(160, 40);
+            btnChgPilotForm.Size = new Size(206, 53);
             btnChgPilotForm.TabIndex = 2;
             btnChgPilotForm.Text = "모델 테스트";
             btnChgPilotForm.UseVisualStyleBackColor = false;
@@ -103,7 +103,7 @@
             pnlChgForm.Location = new Point(0, 0);
             pnlChgForm.Margin = new Padding(0);
             pnlChgForm.Name = "pnlChgForm";
-            pnlChgForm.Size = new Size(950, 40);
+            pnlChgForm.Size = new Size(1221, 53);
             pnlChgForm.TabIndex = 4;
             // 
             // pnlLog
@@ -111,10 +111,10 @@
             pnlLog.BackColor = Color.FromArgb(245, 247, 250);
             pnlLog.Controls.Add(lvwLogBox);
             pnlLog.Dock = DockStyle.Bottom;
-            pnlLog.Location = new Point(0, 806);
+            pnlLog.Location = new Point(0, 882);
             pnlLog.Margin = new Padding(0);
             pnlLog.Name = "pnlLog";
-            pnlLog.Size = new Size(950, 130);
+            pnlLog.Size = new Size(1221, 173);
             pnlLog.TabIndex = 6;
             // 
             // lvwLogBox
@@ -128,8 +128,9 @@
             lvwLogBox.FullRowSelect = true;
             lvwLogBox.GridLines = true;
             lvwLogBox.Location = new Point(0, 0);
+            lvwLogBox.Margin = new Padding(4, 4, 4, 4);
             lvwLogBox.Name = "lvwLogBox";
-            lvwLogBox.Size = new Size(950, 130);
+            lvwLogBox.Size = new Size(1221, 173);
             lvwLogBox.TabIndex = 0;
             lvwLogBox.UseCompatibleStateImageBehavior = false;
             lvwLogBox.View = View.Details;
@@ -153,21 +154,22 @@
             // 
             pnlMain.BackColor = Color.FromArgb(245, 247, 250);
             pnlMain.Dock = DockStyle.Fill;
-            pnlMain.Location = new Point(0, 40);
+            pnlMain.Location = new Point(0, 53);
             pnlMain.Margin = new Padding(0);
             pnlMain.Name = "pnlMain";
-            pnlMain.Size = new Size(950, 766);
+            pnlMain.Size = new Size(1221, 829);
             pnlMain.TabIndex = 7;
             // 
             // MainForm
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleDimensions = new SizeF(9F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(245, 247, 250);
-            ClientSize = new Size(950, 936);
+            ClientSize = new Size(1221, 1055);
             Controls.Add(pnlMain);
             Controls.Add(pnlLog);
             Controls.Add(pnlChgForm);
+            Margin = new Padding(4, 4, 4, 4);
             Name = "MainForm";
             Text = "Data Manager";
             pnlChgForm.ResumeLayout(false);
