@@ -45,10 +45,7 @@ namespace DataManager.UserControls
         private HashSet<int> filteredHideSet = new HashSet<int>();
 
 
-        private readonly string baseEditedPath = Path.Combine(
-        Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).Parent.Parent.Parent.FullName,
-        "EditedData"
-        );
+        private readonly string baseEditedPath = AppPaths.EditedData;
         private string targetSavePath = string.Empty;
 
         // ── 타임라인 드래그 상태 변수 추가 ──

@@ -366,7 +366,7 @@ namespace DataManager
             }
         }
 
-        public static string EditedData => Path.Combine(ProjectRoot, "EditedData");
+        public static string EditedData => Path.Combine(SolutionRoot, "mycar", "data", "EditedData");
         public static string MycarData => Path.Combine(SolutionRoot, "mycar", "data");
         public static string MycarModels => Path.Combine(SolutionRoot, "mycar", "models");
     }
