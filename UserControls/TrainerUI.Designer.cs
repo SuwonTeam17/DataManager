@@ -27,6 +27,7 @@
             lblAddConfSetter = new Label();
             lblConfEditor = new Label();
             pnlTrainer = new Panel();
+            btnModelTypeHelp = new Button();
             chkShowTrainLog = new CheckBox();
             lblMinValLoss = new Label();
             lblValLoss = new Label();
@@ -64,7 +65,6 @@
             btnChgComment = new Button();
             btnShowConf = new Button();
             btnTrainningHistory = new Button();
-            btnModelTypeHelp = new Button();
             pnlConfEditor.SuspendLayout();
             pnlConfig.SuspendLayout();
             pnlTrainer.SuspendLayout();
@@ -254,6 +254,17 @@
             pnlTrainer.Name = "pnlTrainer";
             pnlTrainer.Size = new Size(1629, 313);
             pnlTrainer.TabIndex = 1;
+            // 
+            // btnModelTypeHelp
+            // 
+            btnModelTypeHelp.Font = new Font("맑은 고딕", 9.857143F, FontStyle.Regular, GraphicsUnit.Point, 129);
+            btnModelTypeHelp.Location = new Point(669, 86);
+            btnModelTypeHelp.Name = "btnModelTypeHelp";
+            btnModelTypeHelp.Size = new Size(40, 41);
+            btnModelTypeHelp.TabIndex = 12;
+            btnModelTypeHelp.Text = "？";
+            btnModelTypeHelp.UseVisualStyleBackColor = true;
+            btnModelTypeHelp.Click += btnModelTypeHelp_Click;
             // 
             // chkShowTrainLog
             // 
@@ -537,7 +548,11 @@
             lvwModel.TabIndex = 0;
             lvwModel.UseCompatibleStateImageBehavior = false;
             lvwModel.View = View.Details;
+            lvwModel.SelectedIndexChanged += lvwModel_SelectedIndexChanged;
             lvwModel.KeyDown += lstModels_KeyDown;
+            lvwModel.MouseDown += lvwModel_MouseDown;
+            lvwModel.MouseMove += lvwModel_MouseMove;
+            lvwModel.MouseUp += lvwModel_MouseUp;
             // 
             // colName
             // 
@@ -629,7 +644,7 @@
             btnDelete.Name = "btnDelete";
             btnDelete.Size = new Size(304, 60);
             btnDelete.TabIndex = 0;
-            btnDelete.Text = "삭제";
+            btnDelete.Text = "삭제 (Del)";
             btnDelete.UseVisualStyleBackColor = false;
             btnDelete.Click += btnDelete_Click;
             // 
@@ -646,7 +661,7 @@
             btnRename.Name = "btnRename";
             btnRename.Size = new Size(304, 60);
             btnRename.TabIndex = 4;
-            btnRename.Text = "이름 변경";
+            btnRename.Text = "이름 변경 (Ctrl + 1)";
             btnRename.UseVisualStyleBackColor = false;
             btnRename.Click += btnRename_Click;
             // 
@@ -664,7 +679,7 @@
             btnChgComment.Name = "btnChgComment";
             btnChgComment.Size = new Size(304, 60);
             btnChgComment.TabIndex = 1;
-            btnChgComment.Text = "메모 변경";
+            btnChgComment.Text = "메모 변경 (Ctrl + 2)";
             btnChgComment.UseVisualStyleBackColor = false;
             btnChgComment.Click += btnChgComment_Click;
             // 
@@ -682,7 +697,7 @@
             btnShowConf.Name = "btnShowConf";
             btnShowConf.Size = new Size(304, 60);
             btnShowConf.TabIndex = 2;
-            btnShowConf.Text = "구성 표시";
+            btnShowConf.Text = "구성 표시 (Ctrl + 3)";
             btnShowConf.UseVisualStyleBackColor = false;
             btnShowConf.Click += btnShowConf_Click;
             // 
@@ -700,20 +715,9 @@
             btnTrainningHistory.Name = "btnTrainningHistory";
             btnTrainningHistory.Size = new Size(305, 60);
             btnTrainningHistory.TabIndex = 3;
-            btnTrainningHistory.Text = "훈련 기록";
+            btnTrainningHistory.Text = "훈련 기록 (Ctrl + 4)";
             btnTrainningHistory.UseVisualStyleBackColor = false;
             btnTrainningHistory.Click += btnTrainningHistory_Click;
-            // 
-            // btnModelTypeHelp
-            // 
-            btnModelTypeHelp.Font = new Font("맑은 고딕", 9.857143F, FontStyle.Regular, GraphicsUnit.Point, 129);
-            btnModelTypeHelp.Location = new Point(669, 86);
-            btnModelTypeHelp.Name = "btnModelTypeHelp";
-            btnModelTypeHelp.Size = new Size(40, 41);
-            btnModelTypeHelp.TabIndex = 12;
-            btnModelTypeHelp.Text = "？";
-            btnModelTypeHelp.UseVisualStyleBackColor = true;
-            btnModelTypeHelp.Click += btnModelTypeHelp_Click;
             // 
             // TrainerUI
             // 
