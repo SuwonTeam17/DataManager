@@ -510,6 +510,29 @@ namespace DataManager.UserControls
             }
         }
 
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            switch (keyData)
+            {
+                case Keys.Space:
+                    BtnPlay_Click(null, EventArgs.Empty);
+                    return true;
+                case Keys.Left:
+                    MoveFrame(-1);
+                    return true;
+                case Keys.Right:
+                    MoveFrame(1);
+                    return true;
+                case Keys.Left | Keys.Shift:
+                    MoveFrame(-5);
+                    return true;
+                case Keys.Right | Keys.Shift:
+                    MoveFrame(5);
+                    return true;
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
         private void btnLoadTub_Click(object sender, EventArgs e)
         {
             string root = AppPaths.EditedData;
