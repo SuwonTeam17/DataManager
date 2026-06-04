@@ -52,6 +52,10 @@ namespace DataManager.UserControls
         private bool isDraggingTimeline = false;
 
 
+        // ── 기존 frameStep을 double로 변경하고 누적 변수 추가 ──────────────────
+        private double frameStep = 1.0;       // 1배속: 1.0, 2배속: 2.0, 0.5배속: 0.5
+        private double accumulatedFrame = 0.0; // 소수점 프레임 누적 계산용 변수
+
         public TubManagerUI()
         {
             InitializeComponent();
@@ -83,12 +87,16 @@ namespace DataManager.UserControls
             playTimer = new System.Windows.Forms.Timer();
             playTimer.Tick += PlayTimer_Tick;
 
+            // 배속을 직관적인 정수 형태로 선택할 수 있게 콤보박스 아이템 설정
+            // 0.50 배속 항목 추가
             comboBox1.Items.Clear();
-            comboBox1.Items.AddRange(new object[] { "0.50", "1.00", "1.50", "2.00" });
-            comboBox1.SelectedIndex = 1;
+            comboBox1.Items.AddRange(new object[] { "0.50", "1.00", "2.00", "3.00", "4.00" });
+            comboBox1.SelectedIndex = 1; // 기본값 1.00배속 위치
 
-            int _baseInterval = 60;
-            playTimer.Interval = (int)(_baseInterval / 1.00);
+            // 배속과 상관없이 타이머 주기는 60ms로 고정! (디스크 부하 방지)
+            playTimer.Interval = 60;
+
+            
 
             comboBox1.SelectedIndexChanged += ComboBox1_SelectedIndexChanged;
             trkProgress.Scroll += TrkProgress_Scroll;
@@ -702,33 +710,46 @@ namespace DataManager.UserControls
                 return;
             }
 
-            // 현재 위치 다음(+1)에서 '숨겨지지 않은' 유효한 다음 인덱스를 찾습니다.
-            int _next = FindNearestVisibleIndex(currentFrameIndex + 1, direction: 1);
+            // 1. 현재 타이머 틱에서 이동해야 할 배속(정수+소수점)을 누적합산합니다.
+            accumulatedFrame += frameStep;
 
-            // [구간 재생 모드인 경우]
+            // 2. 누적된 값에서 정수 부분(실제 이동할 프레임 수)만 추출합니다.
+            int stepsToMove = (int)Math.Floor(accumulatedFrame);
+
+            // 3. 만약 0.5배속이라서 아직 정수 값이 1 이상 쌓이지 않았다면, 다음 틱을 기다립니다.
+            if (stepsToMove < 1)
+            {
+                return;
+            }
+
+            // 4. 소수점 아래 남은 자릿수만 남기고 정수 부분은 차감합니다.
+            accumulatedFrame -= stepsToMove;
+
+            // 5. 계산된 정수 step만큼 현재 인덱스에서 전진합니다.
+            int nextTargetIndex = currentFrameIndex + stepsToMove;
+            int _next = FindNearestVisibleIndex(nextTargetIndex, direction: 1);
+
+            // [구간 재생 모드]
             if (isRangePlaying)
             {
-                // 다음 프레임이 유효하고, 선택된 구간의 종료 지점(Item2) 이내인 경우 정상 진행
                 if (_next > currentFrameIndex && _next <= selectedRange.Item2 && _next < drivingData.Count)
                 {
                     DisplayFrame(_next, direction: 1);
                 }
                 else
                 {
-                    // [수정] 구간 끝에 도달하면 멈추지 않고, 다시 구간의 시작점으로 인덱스를 되돌려 무한 반복합니다.
                     currentFrameIndex = selectedRange.Item1;
+                    accumulatedFrame = 0.0; // 구간 반복 시 누적치 초기화
 
-                    // 시작점 프레임 표시 (필터링 고려하여 가장 가까운 가시 프레임 찾기)
                     int startFrame = FindNearestVisibleIndex(currentFrameIndex, direction: 1);
                     if (startFrame >= selectedRange.Item1 && startFrame <= selectedRange.Item2)
                     {
                         DisplayFrame(startFrame, direction: 1);
                     }
-
                     ReportLog("알림", "구간의 끝에 도달하여 처음부터 다시 반복 재생합니다.");
                 }
             }
-            // [일반 재생 모드인 경우]
+            // [일반 재생 모드]
             else
             {
                 if (_next > currentFrameIndex && _next < drivingData.Count)
@@ -772,22 +793,18 @@ namespace DataManager.UserControls
         private void btnPlay_Click(object sender, EventArgs e)
         {
             if (drivingData == null || drivingData.Count == 0) return;
-
             btnPlay.FlatStyle = FlatStyle.Flat;
             btnPlay.FlatAppearance.BorderSize = 0;
 
-            // 1. [핵심 추가] 만약 '구간 재생 중'이었다면 -> 구간 재생을 끄고 일반 재생으로 모드 전환 (타이머는 유지)
+            // 1. 만약 '구간 재생 중'이었다면 -> 일반 재생으로 모드 전환
             if (isRangePlaying)
             {
                 isRangePlaying = false;
                 isPlaying = true;
-
-                // 일반 재생 버튼을 '■ 정지 (빨간색)' 상태로 변경
                 btnPlay.Text = "■ 정지";
                 btnPlay.ForeColor = Color.White;
                 btnPlay.BackColor = Color.FromArgb(210, 70, 70);
 
-                // 구간 재생 버튼은 대기 상태(보라색)로 돌려놓음
                 if (btnRangePlay != null)
                 {
                     btnRangePlay.Text = "🔁 구간 재생";
@@ -795,7 +812,7 @@ namespace DataManager.UserControls
                 }
 
                 ReportLog("알림", "구간 재생을 취소하고 이어서 일반 재생을 시작합니다.");
-                return; // 전환 완료 후 메서드 종료
+                return;
             }
 
             // 2. 일반 재생 중일 때 버튼을 누르면 -> 정지 처리
@@ -807,6 +824,24 @@ namespace DataManager.UserControls
             else
             {
                 playTimer.Stop(); // 타이머 안전 초기화
+
+                // ⭐ [추가된 로직] 마지막 프레임까지 도달한 상태에서 재생을 누르면 처음부터 재생
+                // FindNearestVisibleIndex를 이용해 마지막 유효 프레임 위치를 확인합니다.
+                int lastVisibleIdx = FindNearestVisibleIndex(drivingData.Count - 1, direction: -1);
+                if (currentFrameIndex >= lastVisibleIdx)
+                {
+                    currentFrameIndex = 0; // 인덱스를 처음으로 초기화
+                                           // 첫 번째 유효한 프레임을 찾아 화면을 갱신합니다.
+                    int firstVisibleIdx = FindNearestVisibleIndex(0, direction: 1);
+                    if (firstVisibleIdx >= 0)
+                    {
+                        DisplayFrame(firstVisibleIdx, direction: 1);
+                    }
+                    ReportLog("알림", "마지막 프레임에 도달하여 처음부터 다시 재생합니다.");
+                }
+
+                // 0.5배속 지원을 위한 소수점 누적 버퍼 초기화
+                accumulatedFrame = 0.0;
 
                 isPlaying = true;
                 playTimer.Start();
@@ -900,8 +935,9 @@ namespace DataManager.UserControls
         {
             if (comboBox1.SelectedItem != null && double.TryParse(comboBox1.SelectedItem.ToString(), out double _speed))
             {
-                int _baseInterval = 60;
-                playTimer.Interval = (int)(_baseInterval / _speed);
+                // 이제 반올림하지 않고 소수점 배속을 그대로 저장합니다.
+                frameStep = _speed;
+                accumulatedFrame = 0.0; // 배속이 바뀔 때 누적치 초기화
             }
         }
 
