@@ -114,7 +114,6 @@ namespace DataManager.UserControls
             cboSelectModelType.Items.Clear();
             cboSelectModelType.Items.Add("기본 주행 (Linear)");
             cboSelectModelType.Items.Add("분류형 주행 (Categorical)");
-            cboSelectModelType.Items.Add("기억형 주행 (RNN)");
             cboSelectModelType.Items.Add("추론형 주행 (Inferred)"); // ⭐ Behavior 대신 Inferred로 변경
             cboSelectModelType.Items.Add("입체 시각 주행 (3D)");
             cboSelectModelType.SelectedIndex = 0;
@@ -558,7 +557,6 @@ namespace DataManager.UserControls
             string displayType = cboSelectModelType.SelectedItem.ToString();
 
             if (displayType.Contains("Categorical")) selectedType = "categorical";
-            else if (displayType.Contains("RNN")) selectedType = "rnn";
             else if (displayType.Contains("Inferred")) selectedType = "inferred"; // ⭐ Contains와 변수명 변경
             else if (displayType.Contains("3D")) selectedType = "3d";
 
@@ -670,7 +668,7 @@ namespace DataManager.UserControls
             }
 
             // (테스트용 메시지 박스는 필요하시면 주석 해제하세요)
-            MessageBox.Show(windowsCommand, "명령어 복사하기");
+            //MessageBox.Show(windowsCommand, "명령어 복사하기");
 
             // 7. 백그라운드 프로세스 세팅
             ProcessStartInfo psi = new ProcessStartInfo();
@@ -2078,15 +2076,11 @@ namespace DataManager.UserControls
             modelHelp.AppendLine(" - 핸들 각도를 수십 개의 칸으로 쪼개서 확률로 계산합니다.");
             modelHelp.AppendLine(" - 사람이 부드럽게 꺾지 못하고 뚝뚝 끊어서 조종했어도 커브를 매끄럽게 잘 돕니다.\n");
 
-            modelHelp.AppendLine("■ 3. 기억형 주행 (RNN)");
-            modelHelp.AppendLine(" - 과거 3~4장의 사진 흐름을 기억하여 차체의 궤적과 속도감을 인지합니다.");
-            modelHelp.AppendLine(" - 훈련 속도가 조금 느리며, 라즈베리파이 사양에 따라 실제 주행 시 약간의 렉이 있을 수 있습니다.\n");
-
-            modelHelp.AppendLine("■ 4. 추론형 주행 (Inferred) ★강력 추천");
+            modelHelp.AppendLine("■ 3. 추론형 주행 (Inferred)");
             modelHelp.AppendLine(" - 인간의 불안정한 속도 데이터는 버리고, 오직 '핸들링'만 집중 학습합니다.");
             modelHelp.AppendLine(" - 속도는 핸들을 많이 꺾으면 알아서 줄어들도록 수학 공식이 제어하므로 주행이 아주 스마트합니다.\n");
 
-            modelHelp.AppendLine("■ 5. 입체 시각 주행 (3D)");
+            modelHelp.AppendLine("■ 4. 입체 시각 주행 (3D)");
             modelHelp.AppendLine(" - 시간과 공간을 입체적으로 분석하는 끝판왕 모델입니다.");
             modelHelp.AppendLine(" - 뇌 용량이 너무 커서 적은 데이터로는 트랙을 통째로 '암기'해버려 조기 종료(Early Stop)가 빨리 일어납니다. 아주 방대한 데이터가 필요합니다.");
 
