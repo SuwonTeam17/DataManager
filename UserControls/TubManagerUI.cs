@@ -1420,7 +1420,7 @@ namespace DataManager.UserControls
             }
 
             // ── 필터 상태 표시 (회색을 더 진한 DimGray로 변경) ──
-            using (Pen purplePen = new Pen(Color.FromArgb(142, 68, 173), 1))
+            using (Pen purplePen = new Pen(Color.FromArgb(255, 0, 128), 1))
             using (Pen grayPen = new Pen(Color.DarkOrange, 1)) // ★ Color.Gray에서 Color.DimGray(진한 쥐색)로 변경
             {
                 for (int i = 0; i < totalFrames; i++)
