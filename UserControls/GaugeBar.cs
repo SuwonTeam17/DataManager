@@ -9,13 +9,16 @@ namespace DataManager.UserControls
     {
         private double _value = 0.0;
 
+        public double Minimum { get; set; } = -1.0;
+        public double Maximum { get; set; } = 1.0;
+
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public double Value
         {
             get => _value;
             set
             {
-                _value = Math.Clamp(value, -1.0, 1.0);
+                _value = Math.Clamp(value, Minimum, Maximum);
                 Invalidate();
             }
         }
@@ -36,7 +39,8 @@ namespace DataManager.UserControls
                 g.FillRectangle(bgBrush, rect);
 
             int centerX = rect.Width / 2;
-            int barHalfWidth = (int)(_value * (rect.Width / 2.0));
+            double absMax = Math.Max(Math.Abs(Minimum), Math.Abs(Maximum));
+            int barHalfWidth = absMax > 0 ? (int)(_value / absMax * (rect.Width / 2.0)) : 0;
 
             if (barHalfWidth != 0)
             {
