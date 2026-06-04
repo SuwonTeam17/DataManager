@@ -1,5 +1,6 @@
 ﻿
 using System.Diagnostics;
+using System.Drawing.Interop;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -34,6 +35,15 @@ namespace DataManager.UserControls
 
         // 마우스를 꾹 누르고 드래그 중인지 기억하는 스위치
         private bool isDraggingModels = false;
+
+        // 1. 훈련 중 발생하는 모든 로그를 저장하는 기억 상자
+        private List<string> trainingLogs = new List<string>();
+
+        // 2. 현재 띄워진 실시간 로그 창을 조종하기 위한 리모컨
+        private LogForm currentLogForm = null;
+
+        // ⭐ [추가] 현재 돌고 있는 진짜 모델 이름을 기억할 변수
+        private string currentTrainingModelName = "";
 
         // ⭐ 한글 이름과 파이썬 변수명을 연결해 주는 공통 사전
         private readonly Dictionary<string, string> configMapping = new Dictionary<string, string>()
@@ -81,9 +91,8 @@ namespace DataManager.UserControls
             txtModelName.Enabled = enableControls;
             cboSelectModelType.Enabled = enableControls;
             cboSelectTransferModel.Enabled = enableControls;
-            txtComment .Enabled = enableControls;
-            chkShowTrainLog .Enabled = enableControls;
-            grpSetTrainSetting .Enabled = enableControls;
+            txtComment.Enabled = enableControls;
+            grpSetTrainSetting.Enabled = enableControls;
 
             // 2. ⭐ 방금 만든 동적 구성 설정 패널 전체를 한 방에 잠금!
             // 패널(flpConfCon) 자체를 꺼버리면 그 안의 모든 콤보박스와 텍스트박스도 같이 잠깁니다.
@@ -231,6 +240,8 @@ namespace DataManager.UserControls
         // ====================================================================
         private void btnSaveMyConf_Click(object sender, EventArgs e)
         {
+
+
             string filePath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\..\mycar\myconfig.py"));
 
             // 1. 파일이 없을 때 메인 폼의 로그박스 원격 호출
@@ -687,6 +698,17 @@ namespace DataManager.UserControls
             // (테스트용 메시지 박스는 필요하시면 주석 해제하세요)
             //MessageBox.Show(windowsCommand, "명령어 복사하기");
 
+            // 보이지 않는 기억 상자 초기화
+            trainingLogs.Clear();
+
+            if (currentLogForm != null && !currentLogForm.IsDisposed)
+            {
+                // 로그 창이 열려있다면 화면을 싹 비우고, 창 제목을 '새 모델명'으로 교체!
+                currentLogForm.ResetLog(modelName);
+            }
+
+            currentTrainingModelName = modelName;
+
             // 7. 백그라운드 프로세스 세팅
             ProcessStartInfo psi = new ProcessStartInfo();
             psi.FileName = "cmd.exe";
@@ -701,84 +723,34 @@ namespace DataManager.UserControls
             trainProcess = new Process();
             trainProcess.StartInfo = psi;
 
-            // ==============================================================
-            // 📺 [추가된 코드] 체크박스가 켜져 있다면 실시간 로그 창 즉석 생성!
-            // ==============================================================
-            if (chkShowTrainLog.Checked)
-            {
-                if (dynamicLogWindow == null || dynamicLogWindow.IsDisposed)
-                {
-                    // 껍데기 창(Form) 만들기
-                    dynamicLogWindow = new Form();
-                    dynamicLogWindow.Text = $"실시간 훈련 로그 모니터 [{modelName}]";
-
-                    // ⭐ FHD 모니터 안에도 쏙 들어가는 안전한 와이드 사이즈
-                    dynamicLogWindow.Size = new Size(1500, 600);
-                    dynamicLogWindow.StartPosition = FormStartPosition.CenterScreen;
-
-                    // 알맹이(ListView) 만들기
-                    dynamicLvLogs = new ListView();
-                    dynamicLvLogs.View = View.Details;
-                    dynamicLvLogs.Dock = DockStyle.Fill;
-                    dynamicLvLogs.Columns.Add("시간", 80);
-
-                    // ⭐ 창 크기에 맞춰서 시스템 메시지 너비도 확 늘려줍니다.
-                    dynamicLvLogs.Columns.Add("시스템 메시지", 1500);
-
-                    dynamicLogWindow.Controls.Add(dynamicLvLogs);
-                    dynamicLogWindow.Show();
-                }
-            }
-            // ==============================================================
-
             prgTrain.Value = 0;
             prgTrain.Maximum = 100;
 
-            // 훈련 시작 버튼 코드 어딘가에 있는 ErrorDataReceived 함수 수정!
             trainProcess.ErrorDataReceived += (s, args) =>
             {
                 if (!string.IsNullOrEmpty(args.Data))
                 {
-                    // 1. 눈에 안 보이는 특수문자 싹 다 지우기
                     string cleanError = Regex.Replace(args.Data, @"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "").Trim();
 
-                    // ⭐ [스팸 필터] 뒷문으로 들어오는 텐서플로우 경고 100% 차단!
                     if (cleanError.Contains("WARNING:absl:") ||
                         cleanError.Contains("Found untraced functions") ||
                         cleanError.Contains("These functions will not be directly callable"))
                     {
-                        return; // 로그 창에도 안 띄우고, 에러 수집도 안 하고 쿨하게 무시!
+                        return;
                     }
 
                     pythonErrorMessage += cleanError + Environment.NewLine;
 
-                    // 실시간 로그 창 띄우기
-                    if (chkShowTrainLog.Checked && dynamicLogWindow != null && !dynamicLogWindow.IsDisposed)
+                    // ⭐ 1. 텐서플로우 에러/경고도 무조건 기억 상자에 저장
+                    trainingLogs.Add(cleanError);
+
+                    // ⭐ 2. 만약 사용자가 [로그 보기] 창을 열어두었다면 실시간으로 쏘기!
+                    if (currentLogForm != null && !currentLogForm.IsDisposed)
                     {
-                        dynamicLogWindow.BeginInvoke((MethodInvoker)delegate
+                        currentLogForm.BeginInvoke((MethodInvoker)delegate
                         {
-                            ListViewItem item = new ListViewItem(DateTime.Now.ToString("HH:mm:ss"));
-                            item.SubItems.Add(cleanError);
-
-                            // ⭐ 3단 색상 분류기 
-                            if (cleanError.Contains("Error") || cleanError.Contains("Exception") || cleanError.Contains("Traceback"))
-                            {
-                                // 진짜 에러나 프로그램 터짐은 빨간색!
-                                item.ForeColor = Color.Red;
-                            }
-                            else if (cleanError.Contains("WARNING") || cleanError.Contains("W tensorflow"))
-                            {
-                                // 텐서플로우 경고 메시지는 주황색!
-                                item.ForeColor = Color.DarkOrange;
-                            }
-                            else
-                            {
-                                // INFO 로딩 메시지나 기타 정상적인 텍스트는 원래 색상(검은색)으로!
-                                item.ForeColor = Color.Black;
-                            }
-
-                            dynamicLvLogs.Items.Add(item);
-                            dynamicLvLogs.Items[dynamicLvLogs.Items.Count - 1].EnsureVisible();
+                            // 3단 색상 분류기는 4단계의 LogForm 내부로 이동했습니다!
+                            currentLogForm.AppendLog(cleanError, false);
                         });
                     }
                 }
@@ -1776,66 +1748,24 @@ namespace DataManager.UserControls
                     string line = sb.ToString();
                     sb.Clear();
 
-                    // ⭐ [핵심] 텐서플로우가 몰래 넣은 특수 기호(ANSI 코드) 완벽 제거!
                     string cleanLine = Regex.Replace(line, @"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "").Trim();
-
                     if (string.IsNullOrWhiteSpace(cleanLine)) continue;
-
-                    // 일반 스트림 앞문 방어
                     if (cleanLine.Contains("WARNING:") || cleanLine.Contains("OneAPI")) continue;
 
-                    // ==============================================================
-                    // 📺 로그 창에 데이터 쏘기 (진행률 바 스마트 덮어쓰기)
-                    // ==============================================================
-                    if (chkShowTrainLog.Checked && dynamicLogWindow != null && !dynamicLogWindow.IsDisposed)
+                    // ⭐ 1. 일단 기억 상자에 무조건 기록! (창이 닫혀있어도 기록됨)
+                    trainingLogs.Add(cleanLine);
+
+                    // ⭐ 2. 창이 열려있다면 스마트 덮어쓰기 권한을 LogForm에게 던져줌
+                    if (currentLogForm != null && !currentLogForm.IsDisposed)
                     {
                         bool isProgressBar = cleanLine.Contains("[=") || cleanLine.Contains("ETA:") || cleanLine.Contains("step - loss:");
 
-                        dynamicLogWindow.BeginInvoke((MethodInvoker)delegate
+                        currentLogForm.BeginInvoke((MethodInvoker)delegate
                         {
-                            if (isProgressBar)
-                            {
-                                // ⭐ [핵심] 찌꺼기 방지 역탐색 추적 시스템!
-                                // 무조건 마지막 줄만 보는 게 아니라, 최근 5줄을 뒤져서 '아직 안 끝난(ETA:)' 프로그레스 바를 찾습니다.
-                                ListViewItem targetItem = null;
-                                for (int i = dynamicLvLogs.Items.Count - 1; i >= Math.Max(0, dynamicLvLogs.Items.Count - 5); i--)
-                                {
-                                    // "ETA:" 글자가 포함되어 있다면 아직 달리고 있는(미완성) 프로그레스 바입니다.
-                                    if (dynamicLvLogs.Items[i].SubItems[1].Text.Contains("ETA:"))
-                                    {
-                                        targetItem = dynamicLvLogs.Items[i];
-                                        break; // 찾았으면 더 위로 올라갈 필요 없이 중지!
-                                    }
-                                }
-
-                                if (targetItem != null)
-                                {
-                                    // 새치기한 INFO 로그들이 밑에 깔려 있더라도, 기어코 찾아내서 텍스트만 깔끔하게 갈아끼웁니다!
-                                    targetItem.SubItems[1].Text = cleanLine;
-                                }
-                                else
-                                {
-                                    // 안 끝난 프로그레스 바가 없으면 (새로운 에포크의 시작이라면) 쿨하게 새 줄 추가
-                                    ListViewItem item = new ListViewItem(DateTime.Now.ToString("HH:mm:ss"));
-                                    item.SubItems.Add(cleanLine);
-                                    dynamicLvLogs.Items.Add(item);
-                                }
-                            }
-                            else
-                            {
-                                // 프로그레스 바가 아닌 일반 텍스트(Epoch, INFO 등)는 무조건 새 줄로 추가
-                                ListViewItem item = new ListViewItem(DateTime.Now.ToString("HH:mm:ss"));
-                                item.SubItems.Add(cleanLine);
-                                dynamicLvLogs.Items.Add(item);
-                            }
-
-                            // 항상 최신 로그가 보이도록 스크롤
-                            dynamicLvLogs.Items[dynamicLvLogs.Items.Count - 1].EnsureVisible();
+                            currentLogForm.AppendLog(cleanLine, isProgressBar);
                         });
                     }
-                    // ==============================================================
 
-                    // 깨끗해진 텍스트를 하리님의 실시간 파싱 함수로 보냅니다!
                     ParseRealTimeStep(cleanLine);
                 }
                 else
@@ -2204,6 +2134,135 @@ namespace DataManager.UserControls
 
             // 위에서 우리가 지정한 단축키가 아니라면, 원래 윈도우가 하던 대로 키 입력을 처리하게 둡니다.
             return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void btnShowLog_Click(object sender, EventArgs e)
+        {
+            // ⭐ 텍스트박스 대신 전역 변수를 확인합니다. (만약 훈련 시작 전이라면 기본값 "대기 중")
+            string displayModelName = string.IsNullOrEmpty(currentTrainingModelName)
+                                      ? "대기 중"
+                                      : currentTrainingModelName;
+
+            if (currentLogForm == null || currentLogForm.IsDisposed)
+            {
+                // 훈련 중인 '진짜 모델 이름'을 가지고 창을 엽니다!
+                currentLogForm = new LogForm(displayModelName, trainingLogs);
+                currentLogForm.Show();
+            }
+            else
+            {
+                currentLogForm.BringToFront();
+            }
+        }
+    }
+
+    // =====================================================================
+    // 📺 독립적으로 작동하는 실시간 로그 전용 창 (하리님의 로직 100% 이식)
+    // =====================================================================
+    public partial class LogForm : Form
+    {
+        private ListView dynamicLvLogs;
+
+        public LogForm(string modelName, List<string> pastLogs)
+        {
+            // 1. 하리님의 UI 껍데기 세팅
+            this.Text = $"실시간 훈련 로그 모니터 [{modelName}]";
+            this.Size = new Size(1500, 600);
+            this.StartPosition = FormStartPosition.CenterScreen;
+
+            dynamicLvLogs = new ListView();
+            dynamicLvLogs.View = View.Details;
+            dynamicLvLogs.Dock = DockStyle.Fill;
+            dynamicLvLogs.Columns.Add("시간", 80);
+            dynamicLvLogs.Columns.Add("시스템 메시지", 1500);
+            this.Controls.Add(dynamicLvLogs);
+
+            // 2. 창이 켜지자마자, 과거에 기억해 둔 로그들을 1초 만에 촥! 복원합니다.
+            foreach (string log in pastLogs)
+            {
+                bool isProgressBar = log.Contains("[=") || log.Contains("ETA:") || log.Contains("step - loss:");
+                AppendLog(log, isProgressBar);
+            }
+        }
+
+        // ⭐ 메인 폼이 "화면 지워!" 라고 명령할 때 쓸 지우개 함수
+        public void ClearScreen()
+        {
+            // UI 스레드 충돌 방지를 위해 안전하게 지우기
+            if (this.InvokeRequired)
+            {
+                this.Invoke((MethodInvoker)delegate { dynamicLvLogs.Items.Clear(); });
+            }
+            else
+            {
+                dynamicLvLogs.Items.Clear();
+            }
+        }
+
+
+        // ==============================================================
+        // ⭐ 화면을 하얗게 지우고, 창 제목(모델 이름)을 새롭게 바꿔주는 함수
+        // ==============================================================
+        public void ResetLog(string newModelName)
+        {
+            if (this.InvokeRequired)
+            {
+                this.Invoke((MethodInvoker)delegate
+                {
+                    dynamicLvLogs.Items.Clear();
+                    this.Text = $"실시간 훈련 로그 모니터 [{newModelName}]";
+                });
+            }
+            else
+            {
+                dynamicLvLogs.Items.Clear();
+                this.Text = $"실시간 훈련 로그 모니터 [{newModelName}]";
+            }
+        }
+
+        // ⭐ 메인 폼에서 데이터를 던져주면 화면에 그리는 함수
+        public void AppendLog(string message, bool isProgressBar)
+        {
+            if (isProgressBar)
+            {
+                // 하리님의 찌꺼기 방지 역탐색 추적 시스템!
+                ListViewItem targetItem = null;
+                for (int i = dynamicLvLogs.Items.Count - 1; i >= Math.Max(0, dynamicLvLogs.Items.Count - 5); i--)
+                {
+                    if (dynamicLvLogs.Items[i].SubItems[1].Text.Contains("ETA:"))
+                    {
+                        targetItem = dynamicLvLogs.Items[i];
+                        break;
+                    }
+                }
+
+                if (targetItem != null)
+                {
+                    targetItem.SubItems[1].Text = message;
+                    return; // 덮어썼으니 여기서 종료!
+                }
+            }
+
+            // 프로그레스 바가 아니거나, 새 프로그레스 바의 시작일 때
+            ListViewItem item = new ListViewItem(DateTime.Now.ToString("HH:mm:ss"));
+            item.SubItems.Add(message);
+
+            // 하리님의 3단 색상 분류기
+            if (message.Contains("Error") || message.Contains("Exception") || message.Contains("Traceback"))
+            {
+                item.ForeColor = Color.Red;
+            }
+            else if (message.Contains("WARNING") || message.Contains("W tensorflow"))
+            {
+                item.ForeColor = Color.DarkOrange;
+            }
+            else
+            {
+                item.ForeColor = Color.Black;
+            }
+
+            dynamicLvLogs.Items.Add(item);
+            dynamicLvLogs.Items[dynamicLvLogs.Items.Count - 1].EnsureVisible();
         }
     }
 }
