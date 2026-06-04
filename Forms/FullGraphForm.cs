@@ -39,7 +39,7 @@ namespace DataManager.Forms
 
         private void BuildLayout()
         {
-            chartAngle    = CreateChart("조향각 (Angle)");
+            chartAngle    = CreateChart("조향각 (°)", -54.0, 54.0, 18.0);
             chartThrottle = CreateChart("가속값 (Throttle)");
             chartError    = CreateErrorChart();
 
@@ -117,7 +117,7 @@ namespace DataManager.Forms
             return chart;
         }
 
-        private static Chart CreateChart(string title)
+        private static Chart CreateChart(string title, double yMin = -1.2, double yMax = 1.2, double yInterval = 0.4)
         {
             var chart = new Chart { Dock = DockStyle.Fill, Margin = new Padding(0, 0, 0, 4) };
             chart.AntiAliasing = AntiAliasingStyles.None;
@@ -128,9 +128,9 @@ namespace DataManager.Forms
             area.AxisX.MajorGrid.LineColor = Color.LightGray;
             area.AxisX.MinorGrid.Enabled = false;
             area.AxisY.Title = title;
-            area.AxisY.Minimum = -1.2;
-            area.AxisY.Maximum = 1.2;
-            area.AxisY.Interval = 0.4;
+            area.AxisY.Minimum = yMin;
+            area.AxisY.Maximum = yMax;
+            area.AxisY.Interval = yInterval;
             area.AxisY.IsStartedFromZero = false;
             area.AxisY.MajorGrid.LineColor = Color.LightGray;
 
@@ -180,7 +180,7 @@ namespace DataManager.Forms
 
             foreach (var f in userFrames)
             {
-                userAngleSeries.Points.AddXY(f.Index, f.Angle);
+                userAngleSeries.Points.AddXY(f.Index, f.Angle * 45.0);
                 userThrottleSeries.Points.AddXY(f.Index, f.Throttle);
             }
 
@@ -208,7 +208,7 @@ namespace DataManager.Forms
                 {
                     if (angles.TryGetValue(idx, out double a))
                     {
-                        aSeries.Points.AddXY(idx, a);
+                        aSeries.Points.AddXY(idx, a * 45.0);
                         if (userAngleMap.TryGetValue(idx, out double ua))
                             aErrSeries.Points.AddXY(idx, Math.Abs(ua - a));
                     }

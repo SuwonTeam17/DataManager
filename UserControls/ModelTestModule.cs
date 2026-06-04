@@ -60,6 +60,9 @@ namespace DataManager.UserControls
         {
             InitializeComponent();
 
+            gaugeBar2.Minimum = -100.0;
+            gaugeBar2.Maximum = 100.0;
+
             picImage.SizeMode = PictureBoxSizeMode.Zoom;
             picImage.Paint += PicImage_Paint;
 
@@ -76,8 +79,8 @@ namespace DataManager.UserControls
             };
             pnlSetting.Controls.Add(lblModelType);
 
-            lblAngle.Font = new Font("Consolas", 9f, FontStyle.Bold);
-            lblThrottle.Font = new Font("Consolas", 9f, FontStyle.Bold);
+            lblAngle.Font = new Font("Consolas", 11f, FontStyle.Bold);
+            lblThrottle.Font = new Font("Consolas", 11f, FontStyle.Bold);
             lblAngle.Text = "조향각\n-";
             lblThrottle.Text = "가속값\n-";
             pnlData.Resize += PnlData_Resize;
@@ -106,9 +109,6 @@ namespace DataManager.UserControls
                 area.AxisX.Maximum = 5;
                 area.AxisX.Interval = 1;
                 area.AxisX.MajorGrid.LineColor = Color.LightGray;
-                area.AxisY.Minimum = -1.2;
-                area.AxisY.Maximum = 1.2;
-                area.AxisY.Interval = 0.5;
                 area.AxisY.IsStartedFromZero = false;
 
                 // 현재 프레임(0) 강조 세로선
@@ -120,6 +120,22 @@ namespace DataManager.UserControls
                     Interval = 0
                 };
                 area.AxisX.StripLines.Add(strip);
+            }
+
+            // 조향각 차트: 실제 각도(°) 단위 (-45° ~ +45°, 여유 포함)
+            {
+                var area = chart1.ChartAreas[0];
+                area.AxisY.Minimum = -54.0;
+                area.AxisY.Maximum = 54.0;
+                area.AxisY.Interval = 18.0;
+            }
+
+            // 가속값 차트: 퍼센트 값 (-100 ~ +100)
+            {
+                var area = chart2.ChartAreas[0];
+                area.AxisY.Minimum = -120.0;
+                area.AxisY.Maximum = 120.0;
+                area.AxisY.Interval = 50.0;
             }
 
             string c1Area = chart1.ChartAreas[0].Name;
@@ -140,13 +156,13 @@ namespace DataManager.UserControls
         {
             if (frameAnglePilot.TryGetValue(currentFrameIndex, out double pa) &&
                 frameAngleUser.TryGetValue(currentFrameIndex, out double ua))
-                lblAngleError.Text = $"조향각 오차\n{Math.Abs(ua - pa):F4}";
+                lblAngleError.Text = $"조향각 오차\n{Math.Abs(ua - pa) * 45.0:F2}°";
             else
                 lblAngleError.Text = "조향각 오차\n-";
 
             if (frameThrottlePilot.TryGetValue(currentFrameIndex, out double pt) &&
                 frameThrottleUser.TryGetValue(currentFrameIndex, out double ut))
-                lblThrottleError.Text = $"가속값 오차\n{Math.Abs(ut - pt):F4}";
+                lblThrottleError.Text = $"가속값 오차\n{Math.Abs(ut - pt) * 100.0:F1}";
             else
                 lblThrottleError.Text = "가속값 오차\n-";
         }
@@ -392,8 +408,10 @@ namespace DataManager.UserControls
 
                         if (capturedIdx == currentFrameIndex)
                         {
-                            lblAngle.Text = $"조향각\n사용자:{FormatVal(currentActualAngle)} 자율:{FormatVal(pa)}";
-                            lblThrottle.Text = $"가속값\n사용자:{FormatVal(currentActualThrottle)} 자율:{FormatVal(pt)}";
+                            lblAngle.Text = $"조향각\n사용자:{FormatAngle(currentActualAngle)} 자율:{FormatAngle(pa)}";
+                            lblThrottle.Text = $"가속값\n사용자:{FormatThrottle(currentActualThrottle)} 자율:{FormatThrottle(pt)}";
+                            gaugeBar1.Value = Math.Clamp(pa, -1.0, 1.0);
+                            gaugeBar2.Value = pt * 100.0;
                             picImage.Invalidate();
                             UpdateErrorLabels();
                         }
@@ -511,11 +529,18 @@ namespace DataManager.UserControls
             }
             catch { }
 
-            lblAngle.Text = $"조향각\n{FormatVal(actualAngle)}";
-            lblThrottle.Text = $"가속값\n{FormatVal(actualThrottle)}";
+            lblAngle.Text = $"조향각\n{FormatAngle(actualAngle)}";
+            lblThrottle.Text = $"가속값\n{FormatThrottle(actualThrottle)}";
 
-            gaugeBar1.Value = Math.Clamp(actualAngle, -1.0, 1.0);
-            gaugeBar2.Value = Math.Clamp(actualThrottle, -1.0, 1.0);
+            if (frameAnglePilot.TryGetValue(frameIndex, out double gaugeA))
+                gaugeBar1.Value = Math.Clamp(gaugeA, -1.0, 1.0);
+            else
+                gaugeBar1.Value = 0.0;
+
+            if (frameThrottlePilot.TryGetValue(frameIndex, out double gaugeT))
+                gaugeBar2.Value = gaugeT * 100.0;
+            else
+                gaugeBar2.Value = 0.0;
 
             // 하단 그래프 다시 그리기
             RedrawCharts();
@@ -538,11 +563,14 @@ namespace DataManager.UserControls
             Debug.WriteLine($"[UpdatePrediction] currentActualAngle={currentActualAngle:F4} | currentActualThrottle={currentActualThrottle:F4}");
             Debug.WriteLine($"[UpdatePrediction] diff angle={predictedAngle - currentActualAngle:F4} | diff throttle={predictedThrottle - currentActualThrottle:F4}");
 
-            lblAngle.Text = $"조향각\n사용자:{FormatVal(currentActualAngle)} 자율:{FormatVal(predictedAngle)}";
-            lblThrottle.Text = $"가속값\n사용자:{FormatVal(currentActualThrottle)} 자율:{FormatVal(predictedThrottle)}";
+            lblAngle.Text = $"조향각\n사용자:{FormatAngle(currentActualAngle)} 자율:{FormatAngle(predictedAngle)}";
+            lblThrottle.Text = $"가속값\n사용자:{FormatThrottle(currentActualThrottle)} 자율:{FormatThrottle(predictedThrottle)}";
 
             frameAnglePilot[currentFrameIndex] = predictedAngle;
             frameThrottlePilot[currentFrameIndex] = predictedThrottle;
+
+            gaugeBar1.Value = Math.Clamp(predictedAngle, -1.0, 1.0);
+            gaugeBar2.Value = predictedThrottle * 100.0;
 
             picImage.Invalidate();
             RedrawCharts();
@@ -563,13 +591,13 @@ namespace DataManager.UserControls
             {
                 int idx = currentFrameIndex + offset;
                 if (frameAngleUser.TryGetValue(idx, out double ua))
-                    seriesAngleUser.Points.AddXY(offset, ua);
+                    seriesAngleUser.Points.AddXY(offset, ua * 45.0);
                 if (frameAnglePilot.TryGetValue(idx, out double pa))
-                    seriesAnglePilot.Points.AddXY(offset, pa);
+                    seriesAnglePilot.Points.AddXY(offset, pa * 45.0);
                 if (frameThrottleUser.TryGetValue(idx, out double ut))
-                    seriesThrottleUser.Points.AddXY(offset, ut);
+                    seriesThrottleUser.Points.AddXY(offset, ut * 100.0);
                 if (frameThrottlePilot.TryGetValue(idx, out double pt))
-                    seriesThrottlePilot.Points.AddXY(offset, pt);
+                    seriesThrottlePilot.Points.AddXY(offset, pt * 100.0);
             }
 
             chart1.ResumeLayout();
@@ -735,8 +763,10 @@ namespace DataManager.UserControls
                         // 현재 보여주는 프레임이 center인 경우에만 레이블/오버레이 갱신
                         if (capturedIdx == centerFrame && _latestWindowCenter == centerFrame)
                         {
-                            lblAngle.Text = $"조향각\n사용자:{FormatVal(currentActualAngle)} 자율:{FormatVal(pa)}";
-                            lblThrottle.Text = $"가속값\n사용자:{FormatVal(currentActualThrottle)} 자율:{FormatVal(pt)}";
+                            lblAngle.Text = $"조향각\n사용자:{FormatAngle(currentActualAngle)} 자율:{FormatAngle(pa)}";
+                            lblThrottle.Text = $"가속값\n사용자:{FormatThrottle(currentActualThrottle)} 자율:{FormatThrottle(pt)}";
+                            gaugeBar1.Value = Math.Clamp(pa, -1.0, 1.0);
+                            gaugeBar2.Value = pt * 100.0;
                             picImage.Invalidate();
                             UpdateErrorLabels();
                         }
@@ -817,6 +847,8 @@ namespace DataManager.UserControls
         }
 
         private static string FormatVal(double v) => v < 0 ? $"{v:F3}" : $" {v:F3}";
+        private static string FormatAngle(double v) { double deg = v * 45.0; return deg < 0 ? $"{deg:F1}°" : $" {deg:F1}°"; }
+        private static string FormatThrottle(double v) { double pct = v * 100.0; return pct < 0 ? $"{pct:F1}" : $" {pct:F1}"; }
 
         private void picImage_Click(object sender, EventArgs e) { }
 
