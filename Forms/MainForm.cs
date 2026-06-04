@@ -8,6 +8,7 @@ namespace DataManager
     public partial class MainForm : Form
     {
         // ⭐ 1. 화면들을 클래스 전역 변수로 딱 한 번만 미리 선언해 둡니다.
+        private DataCollectionUI dataCollectionUI;
         private TubManagerUI tubUI;
         private TrainerUI trainerUI;
         private PilotArenaUI pilotArenaUI;
@@ -26,6 +27,7 @@ namespace DataManager
         // 화면들을 최초 1회 생성하고 설정하는 함수
         private void InitializeScreens()
         {
+            dataCollectionUI = new DataCollectionUI();
             tubUI = new TubManagerUI();
             trainerUI = new TrainerUI();
             pilotArenaUI = new PilotArenaUI();
@@ -36,6 +38,7 @@ namespace DataManager
             pilotArenaUI.OnLogReported += AppendLogToListView;
 
             // 모든 화면을 메인 패널에 꽉 채워서 넣고 일단 다 숨깁니다.
+            AddScreenToPanel(dataCollectionUI);
             AddScreenToPanel(tubUI);
             AddScreenToPanel(trainerUI);
             AddScreenToPanel(pilotArenaUI);
@@ -85,6 +88,7 @@ namespace DataManager
         private void SetActiveTab(Button activeBtn)
         {
             // 모든 탭 버튼을 비활성 색상으로 초기화
+            btnDataCollectionForm.BackColor = Color.FromArgb(100, 110, 130);
             btnChgTubForm.BackColor = Color.FromArgb(100, 110, 130);
             btnChgTrainerForm.BackColor = Color.FromArgb(100, 110, 130);
             btnChgPilotForm.BackColor = Color.FromArgb(100, 110, 130);
@@ -94,6 +98,12 @@ namespace DataManager
         }
 
         // ⭐ 4. 이제 버튼을 누를 때 new 객체를 만들지 않고, 아까 만든 변수를 넘깁니다.
+        private void btnDataCollectionForm_Click(object sender, EventArgs e)
+        {
+            SetActiveTab(btnDataCollectionForm);
+            SwitchScreen(dataCollectionUI);
+        }
+
         private void btnChgTubForm_Click(object sender, EventArgs e)
         {
             SetActiveTab(btnChgTubForm);
