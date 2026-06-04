@@ -120,6 +120,8 @@ namespace DataManager.UserControls
                 // ⭐ [추가] 화면 확장/축소 시 타임라인을 다시 그리도록 이벤트 연결
                 pnlTimeStamp.Resize += PnlTimeStamp_Resize;
             }
+
+
         }
 
         private void btnFileLoad_Click(object sender, EventArgs e)
@@ -1472,7 +1474,177 @@ namespace DataManager.UserControls
             pnlTimeStamp?.Invalidate();
         }
 
-        
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            // 수식키(Ctrl, Shift, Alt)를 제외한 순수 키 코드 추출
+            Keys keyCode = keyData & Keys.KeyCode;
+            Keys modifiers = keyData & Keys.Modifiers;
+
+            // 1. [신규] Ctrl + Shift 조합키 처리
+            if (modifiers == (Keys.Control | Keys.Shift))
+            {
+                if (keyCode == Keys.S) // Ctrl + Shift + S : 저장 경로 지정
+                {
+                    btnSaveRoute_Click(this, EventArgs.Empty);
+
+                    return true;
+                }
+            }
+
+            if (modifiers == Keys.Shift)
+            {
+                switch (keyCode)
+                {
+                    case Keys.Left: // Shift + 왼쪽 방향키
+                        btn5FrameLeft_Click(this, EventArgs.Empty);
+                        return true;
+
+                    case Keys.Right: // Shift + 오른쪽 방향키
+                        btn5FrameRight_Click(this, EventArgs.Empty);
+                        return true;
+                }
+            }
+
+
+            // 2. [신규] Ctrl 조합키 처리
+            if (modifiers == Keys.Control)
+            {
+                switch (keyCode)
+                {
+                    case Keys.O: // Ctrl + O : 주행데이터 가져오기
+                        btnFileLoad_Click(this, EventArgs.Empty);
+                        return true;
+
+                    case Keys.S: // Ctrl + S : 데이터 저장
+
+                        btnSaveData_Click(this, EventArgs.Empty);
+
+                        return true;
+
+                    case Keys.Delete: // Ctrl + Delete : 폴더 삭제 (안전장치)
+
+                        btnDelFolder_Click(this, EventArgs.Empty);
+
+                        return true;
+                }
+            }
+
+            // 3. 일반 단일 키 입력 처리 (기존 기능 유지)
+            if (modifiers == Keys.None)
+            {
+                switch (keyCode)
+                {
+                    // 데이터 편집 제어 (U: 적용, I: 취소, O: 초기화)
+                    case Keys.U:
+
+                        btnApplyFillter_Click(this, EventArgs.Empty);
+                        
+                        return true;
+                    case Keys.I:
+
+                        btnCancelFillter_Click(this, EventArgs.Empty);
+                        
+                        return true;
+                    case Keys.O:
+
+                        btnInitFillterSet_Click(this, EventArgs.Empty);
+                        
+                        return true;
+
+                    // [변경 사항] 방향키 위/아래 -> 재생 속도 조절 (숫자 1, 2 대체)
+                    case Keys.Up: // 위쪽 방향키 : 재생 속도 빠르게
+                        if (comboBox1 != null && comboBox1.SelectedIndex < comboBox1.Items.Count - 1)
+                        {
+                            comboBox1.SelectedIndex++;
+                        }
+                        return true;
+
+                    case Keys.Down: // 아래쪽 방향키 : 재생 속도 느리게
+                        if (comboBox1 != null && comboBox1.SelectedIndex > 0)
+                        {
+                            comboBox1.SelectedIndex--;
+                        }
+                        return true;
+
+                    // 1프레임씩 이동 (방향키)
+                    case Keys.Left:
+                        btnFrameLeft_Click(this, EventArgs.Empty);
+                        return true;
+                    case Keys.Right:
+                        btnFrameRight_Click(this, EventArgs.Empty);
+                        return true;
+
+                    
+
+                    // 재생 / 정지 (스페이스바)
+                    case Keys.Space:
+                        btnPlay_Click(this, EventArgs.Empty);
+                        return true;
+
+                    // 구간 재생 (탭 키)
+                    case Keys.Tab:
+                        btnRangePlay_Click(this, EventArgs.Empty);
+                        return true;
+
+                    // 왼쪽, 오른쪽 구간 선택 ([ , ] 키)
+                    case Keys.OemOpenBrackets:
+                        btnLeftRange_Click(this, EventArgs.Empty);
+                        return true;
+                    case Keys.OemCloseBrackets:
+                        btnRightRange_Click(this, EventArgs.Empty);
+                        return true;
+
+                    // 전체 선택 (P 키)
+                    case Keys.P:
+                        btnAllRange_Click(this, EventArgs.Empty);
+                        return true;
+                }
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void ShowShortcutGuide()
+        {
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+
+            sb.AppendLine("⚡ [재생 및 프레임 조작]");
+            sb.AppendLine("• Space\t\t: 재생 / 정지");
+            sb.AppendLine("• ← / →\t\t: 1프레임 이동");
+            sb.AppendLine("• Shift + ← / →\t: 5프레임 이동");
+            sb.AppendLine("• ↑ / ↓\t\t: 재생 속도 빠르게 / 느리게 (0.5x ~ 4.0x)"); // 변경됨
+            sb.AppendLine();
+
+            sb.AppendLine("🎬 [구간 선택 및 재생]");
+            sb.AppendLine("• [\t\t: 왼쪽 구간(시작점) 선택");
+            sb.AppendLine("• ]\t\t: 오른쪽 구간(끝점) 선택");
+            sb.AppendLine("• P\t\t: 전체 구간 선택");
+            sb.AppendLine("• Tab\t\t: 선택 구간만 반복 재생");
+            sb.AppendLine();
+
+            sb.AppendLine("✏️ [데이터 값 편집]");
+            sb.AppendLine("• U\t\t: 변경 사항 적용 (Apply)");
+            sb.AppendLine("• I\t\t: 편집 내용 취소 (Cancel)");
+            sb.AppendLine("• O\t\t: 원본 데이터로 초기화 (Reset)");
+            sb.AppendLine();
+
+            sb.AppendLine("💾 [파일 및 폴더 관리]");
+            sb.AppendLine("• Ctrl + O\t: 주행 데이터 가져오기");
+            sb.AppendLine("• Ctrl + S\t: 데이터 파일 저장");
+            sb.AppendLine("• Ctrl + Shift + S\t: 저장 경로 지정");
+            sb.AppendLine("• Ctrl + Delete\t: 현재 폴더 삭제 (안전장치)");
+
+            // 메세지 박스 출력 (정보 아이콘 형태)
+            MessageBox.Show(sb.ToString(), "프로그램 단축키 안내 가이드", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+
+        private void btnEx_Click(object sender, EventArgs e)
+        {
+            // 이전 답변에서 만든 단축키 가이드 메서드 호출
+            ShowShortcutGuide();
+        }
 
     }
 }
