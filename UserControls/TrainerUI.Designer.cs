@@ -99,16 +99,16 @@
             lblConfigHelp.AutoSize = true;
             lblConfigHelp.Font = new Font("맑은 고딕", 11F);
             lblConfigHelp.ForeColor = Color.FromArgb(60, 72, 92);
-            lblConfigHelp.Location = new Point(956, 40);
+            lblConfigHelp.Location = new Point(1048, 32);
             lblConfigHelp.Name = "lblConfigHelp";
-            lblConfigHelp.Size = new Size(311, 36);
+            lblConfigHelp.Size = new Size(250, 36);
             lblConfigHelp.TabIndex = 11;
-            lblConfigHelp.Text = "각 구성 설정에 대한 설명";
+            lblConfigHelp.Text = "각 설정에 대한 설명";
             // 
             // btnConfigHelp
             // 
             btnConfigHelp.Font = new Font("맑은 고딕", 15.8571434F, FontStyle.Bold, GraphicsUnit.Point, 129);
-            btnConfigHelp.Location = new Point(1273, 30);
+            btnConfigHelp.Location = new Point(1306, 22);
             btnConfigHelp.Name = "btnConfigHelp";
             btnConfigHelp.Size = new Size(52, 54);
             btnConfigHelp.TabIndex = 10;
@@ -121,7 +121,7 @@
             label2.AutoSize = true;
             label2.Font = new Font("맑은 고딕", 11F);
             label2.ForeColor = Color.FromArgb(60, 72, 92);
-            label2.Location = new Point(578, 40);
+            label2.Location = new Point(670, 27);
             label2.Name = "label2";
             label2.Size = new Size(250, 36);
             label2.TabIndex = 3;
@@ -161,12 +161,12 @@
             btnSaveMyConf.FlatStyle = FlatStyle.Flat;
             btnSaveMyConf.Font = new Font("맑은 고딕", 12F, FontStyle.Bold);
             btnSaveMyConf.ForeColor = Color.White;
-            btnSaveMyConf.Location = new Point(1404, 6);
+            btnSaveMyConf.Location = new Point(1366, 6);
             btnSaveMyConf.Margin = new Padding(5, 6, 5, 6);
             btnSaveMyConf.Name = "btnSaveMyConf";
-            btnSaveMyConf.Size = new Size(219, 78);
+            btnSaveMyConf.Size = new Size(257, 78);
             btnSaveMyConf.TabIndex = 4;
-            btnSaveMyConf.Text = "구성값 저장";
+            btnSaveMyConf.Text = "학습 설정값 저장";
             btnSaveMyConf.UseVisualStyleBackColor = false;
             btnSaveMyConf.Click += btnSaveMyConf_Click;
             // 
@@ -177,7 +177,7 @@
             cboAddConfCount.Font = new Font("맑은 고딕", 9.5F);
             cboAddConfCount.FormattingEnabled = true;
             cboAddConfCount.Items.AddRange(new object[] { "1", "2", "3", "4" });
-            cboAddConfCount.Location = new Point(850, 40);
+            cboAddConfCount.Location = new Point(942, 34);
             cboAddConfCount.Margin = new Padding(5, 6, 5, 6);
             cboAddConfCount.Name = "cboAddConfCount";
             cboAddConfCount.Size = new Size(76, 38);
@@ -192,7 +192,7 @@
             btnAddConf.FlatStyle = FlatStyle.Flat;
             btnAddConf.Font = new Font("맑은 고딕", 11F);
             btnAddConf.ForeColor = Color.White;
-            btnAddConf.Location = new Point(490, 30);
+            btnAddConf.Location = new Point(567, 22);
             btnAddConf.Margin = new Padding(5, 6, 5, 6);
             btnAddConf.Name = "btnAddConf";
             btnAddConf.Size = new Size(46, 60);
@@ -206,12 +206,12 @@
             // 
             lblAddConfSetter.Font = new Font("맑은 고딕", 11F);
             lblAddConfSetter.ForeColor = Color.FromArgb(60, 72, 92);
-            lblAddConfSetter.Location = new Point(283, 30);
+            lblAddConfSetter.Location = new Point(361, 22);
             lblAddConfSetter.Margin = new Padding(5, 0, 5, 0);
             lblAddConfSetter.Name = "lblAddConfSetter";
-            lblAddConfSetter.Size = new Size(197, 46);
+            lblAddConfSetter.Size = new Size(196, 46);
             lblAddConfSetter.TabIndex = 1;
-            lblAddConfSetter.Text = "구성 설정 추가";
+            lblAddConfSetter.Text = "학습 설정 추가";
             lblAddConfSetter.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // lblConfEditor
@@ -220,9 +220,9 @@
             lblConfEditor.Location = new Point(5, 6);
             lblConfEditor.Margin = new Padding(5, 6, 5, 6);
             lblConfEditor.Name = "lblConfEditor";
-            lblConfEditor.Size = new Size(255, 78);
+            lblConfEditor.Size = new Size(361, 78);
             lblConfEditor.TabIndex = 0;
-            lblConfEditor.Text = "구성 편집";
+            lblConfEditor.Text = "학습 상세 설정";
             lblConfEditor.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // pnlTrainer
@@ -549,7 +549,6 @@
             lvwModel.UseCompatibleStateImageBehavior = false;
             lvwModel.View = View.Details;
             lvwModel.SelectedIndexChanged += lvwModel_SelectedIndexChanged;
-            lvwModel.KeyDown += lstModels_KeyDown;
             lvwModel.MouseDown += lvwModel_MouseDown;
             lvwModel.MouseMove += lvwModel_MouseMove;
             lvwModel.MouseUp += lvwModel_MouseUp;

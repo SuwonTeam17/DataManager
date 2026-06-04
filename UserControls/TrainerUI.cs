@@ -57,6 +57,18 @@ namespace DataManager.UserControls
         };
 
         // ==============================================================
+        // 🔍 구성 설정 개수를 확인하고 추가 버튼 상태를 제어하는 함수
+        // ==============================================================
+        private void CheckConfLimit()
+        {
+            // flpConfCon 패널 안에 들어있는 항목(컨트롤)의 개수를 셉니다.
+            int currentCount = flpConfCon.Controls.Count;
+
+            // 개수가 6개보다 적을 때만 추가 버튼 활성화 (6개 이상이 되면 알아서 false가 됨)
+            btnAddConf.Enabled = (currentCount < 6);
+        }
+
+        // ==============================================================
         // 🔒 훈련 상태에 따른 UI 전체 잠금/해제 제어 스위치
         // ==============================================================
         private void ToggleUIState(bool isTraining)
@@ -202,6 +214,7 @@ namespace DataManager.UserControls
             // ⭐ [해결책] FlowLayoutPanel의 크기가 변할 때(창 크기 조절 시) 실시간으로 비율 재계산!
             this.flpConfCon.SizeChanged += (s, args) => SyncAllPanelSizes();
             // ==========================================================
+
         }
 
         private int GetItemsPerRow()
@@ -391,6 +404,8 @@ namespace DataManager.UserControls
                 flpConfCon.Controls.Remove(rowPanel);
                 rowPanel.Dispose();
                 SyncAllPanelSizes();
+
+                CheckConfLimit();
             };
 
             TextBox txtSetConf_New = new TextBox();
@@ -405,6 +420,8 @@ namespace DataManager.UserControls
             // 어차피 여기서 SyncAllPanelSizes()가 불리면서 정확한 크기와 위치가 재계산되므로
             // 초기 생성 시의 Width나 Location 수학 계산은 과감히 생략했습니다.
             SyncAllPanelSizes();
+
+            CheckConfLimit();
         }
 
         // ====================================================================
@@ -1564,6 +1581,8 @@ namespace DataManager.UserControls
                     CreateConfigRowWithData(koreanKey, setting.Value);
                 }
             }
+
+            CheckConfLimit();
         }
 
         // 복원 전용 동적 UI 생성 도우미 (btnAddConf_Click의 로직과 완벽히 일치함)
@@ -2018,49 +2037,6 @@ namespace DataManager.UserControls
             }
         }
 
-        // ⭐ 리스트박스에서 키보드가 눌렸을 때 실행되는 이벤트
-        private void lstModels_KeyDown(object sender, KeyEventArgs e)
-        {
-            // 1. 눌린 키가 'Delete' 키인지 확인
-            if (e.KeyCode == Keys.Delete)
-            {
-                // ⭐ 기존에 만들어둔 삭제 버튼을 "프로그램이 대신 마우스로 클릭" 해줍니다!
-                btnDelete.PerformClick();
-            }
-
-            // 💡 컨트롤(Ctrl) 키가 눌려있는 상태일 때만 내부 조사를 시작합니다.
-            if (e.Control)
-            {
-                // 1️⃣ [Ctrl + 1] ➔ 이름 변경 (btnRename)
-                if ((e.KeyCode == Keys.D1 || e.KeyCode == Keys.NumPad1) && btnRename.Enabled)
-                {
-                    btnRename_Click(sender, e);
-                    SetKeyHandled(e);
-                }
-
-                // 2️⃣ [Ctrl + 2] ➔ 메모 변경 (btnChgComment)
-                else if ((e.KeyCode == Keys.D2 || e.KeyCode == Keys.NumPad2) && btnChgComment.Enabled)
-                {
-                    btnChgComment_Click(sender, e);
-                    SetKeyHandled(e);
-                }
-
-                // 3️⃣ [Ctrl + 3] ➔ 구성 표시 (btnShowConf)
-                else if ((e.KeyCode == Keys.D3 || e.KeyCode == Keys.NumPad3) && btnShowConf.Enabled)
-                {
-                    btnShowConf_Click(sender, e);
-                    SetKeyHandled(e);
-                }
-
-                // 4️⃣ [Ctrl + 4] ➔ 훈련 기록 보기 (btnTrainningHistory)
-                else if ((e.KeyCode == Keys.D4 || e.KeyCode == Keys.NumPad4) && btnTrainningHistory.Enabled)
-                {
-                    btnTrainningHistory_Click(sender, e);
-                    SetKeyHandled(e);
-                }
-            }
-        }
-
         private void btnModelTypeHelp_Click(object sender, EventArgs e)
         {
             // 문자열을 깔끔하게 조립하기 위한 StringBuilder
@@ -2137,11 +2113,97 @@ namespace DataManager.UserControls
             btnDelete.Enabled = true;
         }
 
-        // 💡 중복되는 키 처리 완료 코드를 깔끔하게 묶어주는 헬퍼 함수
-        private void SetKeyHandled(KeyEventArgs e)
+        // ==============================================================
+        // 👑 [마스터 단축키 감시기] 폼 안의 어디에 있든 키보드 입력을 가장 먼저 낚아챕니다!
+        // ==============================================================
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
-            e.Handled = true;
-            e.SuppressKeyPress = true; // 윈도우 특유의 '띵~' 거리는 경고음 방지
+            // 1️⃣ [Ctrl + 1] ➔ 이름 변경
+            if (keyData == (Keys.Control | Keys.D1) || keyData == (Keys.Control | Keys.NumPad1))
+            {
+                // 버튼이 활성화(Enabled) 상태일 때만 PerformClick()으로 마우스 클릭을 100% 똑같이 흉내 냅니다!
+                if (btnRename.Enabled) btnRename.PerformClick();
+                return true; // "단축키 처리 완료! 다른 애들은 이 키 입력 무시해!" 라는 뜻
+            }
+
+            // 2️⃣ [Ctrl + 2] ➔ 메모 변경
+            else if (keyData == (Keys.Control | Keys.D2) || keyData == (Keys.Control | Keys.NumPad2))
+            {
+                if (btnChgComment.Enabled) btnChgComment.PerformClick();
+                return true;
+            }
+
+            // 3️⃣ [Ctrl + 3] ➔ 구성 표시
+            else if (keyData == (Keys.Control | Keys.D3) || keyData == (Keys.Control | Keys.NumPad3))
+            {
+                if (btnShowConf.Enabled) btnShowConf.PerformClick();
+                return true;
+            }
+
+            // 4️⃣ [Ctrl + 4] ➔ 훈련 기록 보기
+            else if (keyData == (Keys.Control | Keys.D4) || keyData == (Keys.Control | Keys.NumPad4))
+            {
+                if (btnTrainningHistory.Enabled) btnTrainningHistory.PerformClick();
+                return true;
+            }
+
+            // 5️⃣ ⭐ [Delete] ➔ 모델 삭제
+            else if (keyData == Keys.Delete)
+            {
+                if (btnDelete.Enabled) btnDelete.PerformClick();
+                return true;
+            }
+
+            // ==========================================================
+            // 6️⃣ ⭐ [Shift + Enter] ➔ 학습(훈련) 시작!
+            // ==========================================================
+            else if (keyData == (Keys.Enter))
+            {
+                // 훈련 버튼(예: btnTrain)이 활성화되어 있을 때만 실행
+                if (btnTrain.Enabled) btnTrain.PerformClick();
+                return true;
+            }
+
+            // ==========================================================
+            // 7️⃣ ⭐ [Ctrl + Plus(+)] ➔ 구성 설정 추가 (텍스트박스 꼬임 방지!)
+            // ==========================================================
+            // 💡 복잡한 껍데기(Shift, Alt 등)를 벗겨내고 사용자가 누른 '순수 알맹이 키'만 추출합니다.
+            Keys keyCode = keyData & Keys.KeyCode;
+
+            // Ctrl 키가 눌려있고 && 알맹이 키가 숫자패드(+) 이거나 일반 키보드(=/+) 일 때!
+            if ((keyData & Keys.Control) == Keys.Control && (keyCode == Keys.Add || keyCode == Keys.Oemplus))
+            {
+                if (btnAddConf.Enabled) btnAddConf.PerformClick();
+                return true;
+            }
+
+            // ==========================================================
+            // 8️⃣ ⭐ [Ctrl + Minus(-)] ➔ 마지막 구성 설정 삭제 (실행 취소 느낌!)
+            // 숫자패드의 '-' 키(Subtract) 이거나, 일반 키보드의 '-' 키(OemMinus)일 때 작동
+            // ==========================================================
+            else if ((keyData & Keys.Control) == Keys.Control && (keyCode == Keys.Subtract || keyCode == Keys.OemMinus))
+            {
+                // 💡 패널 안에 설정(컨트롤)이 1개라도 남아있을 때만 지웁니다.
+                if (flpConfCon.Controls.Count > 0)
+                {
+                    // 1. 패널에서 가장 마지막(맨 아래)에 있는 항목의 번호를 찾습니다.
+                    int lastIndex = flpConfCon.Controls.Count - 1;
+
+                    // 2. 그 마지막 항목을 콕 집어냅니다.
+                    Control lastItem = flpConfCon.Controls[lastIndex];
+
+                    // 3. 화면(패널)에서 제거하고, 메모리에서도 완전히 부숴버립니다(Dispose).
+                    flpConfCon.Controls.RemoveAt(lastIndex);
+                    lastItem.Dispose();
+
+                    // 4. ⭐ 항목이 줄어들었으니, 아까 만든 검사기를 돌려서 '추가(+)' 버튼의 잠금을 다시 풀어줍니다!
+                    CheckConfLimit();
+                }
+                return true;
+            }
+
+            // 위에서 우리가 지정한 단축키가 아니라면, 원래 윈도우가 하던 대로 키 입력을 처리하게 둡니다.
+            return base.ProcessCmdKey(ref msg, keyData);
         }
     }
 }
