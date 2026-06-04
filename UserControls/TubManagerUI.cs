@@ -27,6 +27,11 @@ namespace DataManager.UserControls
             public string SessionId { get; set; }
             public long TimestampMs { get; set; }
             public string Mode { get; set; }
+
+            // ── [신규 추가] 필터 상태 기억용 ──
+            public bool IsInverted { get; set; }  // 색상 반전 여부
+            public bool IsGrayscale { get; set; } // 흑백 적용 여부
+
         }
 
         public event Action<string, string, string> OnLogReported;
@@ -43,6 +48,10 @@ namespace DataManager.UserControls
 
         // 필터로 인해 "숨김 처리"할 프레임 인덱스 집합 (실제 삭제 X, 뷰에서만 스킵)
         private HashSet<int> filteredHideSet = new HashSet<int>();
+
+        // 기존 코드 근처에 아래 2줄을 추가합니다.
+        private HashSet<int> filteredInvertSet = new HashSet<int>();
+        private HashSet<int> filteredGrayscaleSet = new HashSet<int>();
 
 
         private readonly string baseEditedPath = AppPaths.EditedData;
@@ -1039,6 +1048,8 @@ namespace DataManager.UserControls
                     filteredFrameMap.Remove(_i);
                 }
                 filteredHideSet.Remove(_i);
+                filteredInvertSet.Remove(_i);
+                filteredGrayscaleSet.Remove(_i);
             }
 
             bool _anyImageFilter = chkInverseColor.Checked
@@ -1050,24 +1061,41 @@ namespace DataManager.UserControls
             {
                 var _frame = drivingData[_i];
 
-                // ── 삭제(숨김) 필터 ──────────────────────────────
+                // ── [위치 변경] 이미지 변환 필터 상태(선) 먼저 기록 ─────────────────────
+                // 이렇게 하면 아래에서 이미지 제거(continue)를 만나더라도 타임라인 선은 정상적으로 기록됩니다.
+                if (chkApplyBlackWhite.Checked)
+                {
+                    filteredGrayscaleSet.Add(_i);
+                }
+                if (chkInverseColor.Checked)
+                {
+                    filteredInvertSet.Add(_i);
+                }
+
+                // ── 삭제(숨김) 필터 ───────────────────────────────────────────────
+                bool _shouldHide = false;
+
                 if (chkDelThrottle.Checked && _frame.Throttle >= -(double)numLeftThrottle.Value && _frame.Throttle <= (double)numRightThrottle.Value)
                 {
                     filteredHideSet.Add(_i);
-                    continue;
+                    _shouldHide = true;
                 }
                 if (chkDelAngle.Checked && _frame.Throttle >= -(double)numLeftAngle.Value && _frame.Throttle <= (double)numRightAngle.Value)
                 {
                     filteredHideSet.Add(_i);
-                    continue;
+                    _shouldHide = true;
                 }
                 if (chkRemoveImage.Checked)
                 {
                     filteredHideSet.Add(_i);
-                    continue;
+                    _shouldHide = true;
                 }
 
-                // ── 이미지 변환 필터 ─────────────────────────────
+                // 숨김 처리된 프레임이라면, 실제 이미지 변환(Bitmap 생성)은 건너뜁니다. (성능 최적화)
+                if (_shouldHide) continue;
+
+
+                // ── 실제 이미지 변환 및 저장 ───────────────────────────────────────
                 if (!_anyImageFilter) continue;
                 if (string.IsNullOrEmpty(_frame.ImagePath) || !File.Exists(_frame.ImagePath)) continue;
 
@@ -1075,6 +1103,7 @@ namespace DataManager.UserControls
                 using (var _src = new Bitmap(_frame.ImagePath))
                     _bmp = new Bitmap(_src); // 원본 복사본
 
+                // 위에서 이미 선 데이터(Set)는 저장했으므로, 여기서는 순수 이미지 변환만 수행합니다.
                 if (chkApplyBlackWhite.Checked) _bmp = ApplyGrayscale(_bmp);
                 if (chkInverseColor.Checked) _bmp = ApplyInvert(_bmp);
                 if (chkSetBright.Checked) _bmp = ApplyBrightness(_bmp, trkSetBright.Value);
@@ -1086,7 +1115,7 @@ namespace DataManager.UserControls
             UpdateChart();
             DisplayFrame(currentFrameIndex);
 
-            // ── 타임라인 갱신 추가 ──
+            // ── 타임라인 갱신 ──
             pnlTimeStamp?.Invalidate();
 
             int _hiddenCount = filteredHideSet.Count(x => x >= _start && x <= _end);
@@ -1103,6 +1132,8 @@ namespace DataManager.UserControls
 
             filteredFrameMap.Clear();
             filteredHideSet.Clear();
+            filteredInvertSet.Clear();
+            filteredGrayscaleSet.Clear();
 
             UpdateChart();
             DisplayFrame(currentFrameIndex);
@@ -1352,14 +1383,12 @@ namespace DataManager.UserControls
             int height = pnlTimeStamp.Height;
             int totalFrames = drivingData.Count;
 
-            // ── [추가] 타임라인 배경에 썸네일 이미지 그리기 ──
-            // 패널 크기에 맞춰 약 8개의 이미지 분할 표시 (크기에 따라 조절 가능)
+            // ── 기존 로직: 타임라인 배경에 썸네일 이미지 그리기 ──
             int thumbnailCount = 8;
             int thumbWidth = width / thumbnailCount;
 
             for (int i = 0; i < thumbnailCount; i++)
             {
-                // 각 칸에 해당하는 프레임 인덱스 계산
                 int targetFrameIdx = (int)((double)i / thumbnailCount * (totalFrames - 1));
                 if (targetFrameIdx >= 0 && targetFrameIdx < totalFrames)
                 {
@@ -1368,11 +1397,9 @@ namespace DataManager.UserControls
                     {
                         try
                         {
-                            // 디스크에서 이미지를 잠깐 가져와 지정된 칸에 맞게 그려줌
                             using (Image thumbImg = Image.FromFile(imgPath))
                             {
                                 Rectangle rect = new Rectangle(i * thumbWidth, 0, thumbWidth, height);
-                                // 이미지가 찌그러지지 않고 꽉 차게 그리기 위해 래핑
                                 g.DrawImage(thumbImg, rect);
                             }
                         }
@@ -1386,9 +1413,31 @@ namespace DataManager.UserControls
             int endX = (int)((double)selectedRange.Item2 / (totalFrames - 1) * width);
             if (startX <= endX && endX > 0)
             {
-                using (SolidBrush rangeBrush = new SolidBrush(Color.FromArgb(120, 173, 216, 230))) // 투명도 약간 낮춤
+                using (SolidBrush rangeBrush = new SolidBrush(Color.FromArgb(120, 173, 216, 230)))
                 {
                     g.FillRectangle(rangeBrush, startX, 0, Math.Max(1, endX - startX), height);
+                }
+            }
+
+            // ── 필터 상태 표시 (회색을 더 진한 DimGray로 변경) ──
+            using (Pen purplePen = new Pen(Color.FromArgb(142, 68, 173), 1))
+            using (Pen grayPen = new Pen(Color.DarkOrange, 1)) // ★ Color.Gray에서 Color.DimGray(진한 쥐색)로 변경
+            {
+                for (int i = 0; i < totalFrames; i++)
+                {
+                    int x = (int)((double)i / (totalFrames - 1) * width);
+
+                    // 1. 색상 반전 -> 최상단 보라색 선 (Y: 0 ~ 1)
+                    if (filteredInvertSet.Contains(i))
+                    {
+                        g.DrawLine(purplePen, x, 0, x, 2);
+                    }
+
+                    // 2. 흑백 적용 -> 그 아래 진한 회색 선 (Y: 2 ~ 3)
+                    if (filteredGrayscaleSet.Contains(i))
+                    {
+                        g.DrawLine(grayPen, x, 3, x, 4);
+                    }
                 }
             }
 
@@ -1405,15 +1454,12 @@ namespace DataManager.UserControls
                 }
             }
 
-            // ── 기존 로직 3. 현재 재생 위치(Playhead) 표시 (빨간색이나 파란색 선) ──
+            // ── 기존 로직 3. 현재 재생 위치(Playhead) 표시 (파란색 선) ──
             int currentX = (int)((double)currentFrameIndex / (totalFrames - 1) * width);
-            using (Pen playheadPen = new Pen(Color.Blue, 3)) // 이미지 위에 잘 보이도록 빨간색 추천
+            using (Pen playheadPen = new Pen(Color.Blue, 3))
             {
                 g.DrawLine(playheadPen, currentX, 0, currentX, height);
             }
-
-
-
         }
         // ── [오류 해결] 마우스 다운(클릭) 이벤트 메서드 ──
         private void PnlTimeStamp_MouseDown(object sender, MouseEventArgs e)
