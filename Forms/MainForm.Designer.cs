@@ -32,7 +32,8 @@
             btnChgTrainerForm = new Button();
             btnChgPilotForm = new Button();
             pnlChgForm = new Panel();
-            btnDataCollectionForm = new Button();
+            btnChgModelDrivingForm = new Button();
+            btnChgDataCollectionForm = new Button();
             pnlLog = new Panel();
             lvwLogBox = new ListView();
             시간 = new ColumnHeader();
@@ -97,7 +98,8 @@
             // pnlChgForm
             // 
             pnlChgForm.BackColor = Color.FromArgb(40, 50, 70);
-            pnlChgForm.Controls.Add(btnDataCollectionForm);
+            pnlChgForm.Controls.Add(btnChgModelDrivingForm);
+            pnlChgForm.Controls.Add(btnChgDataCollectionForm);
             pnlChgForm.Controls.Add(btnChgTrainerForm);
             pnlChgForm.Controls.Add(btnChgTubForm);
             pnlChgForm.Controls.Add(btnChgPilotForm);
@@ -108,22 +110,39 @@
             pnlChgForm.Size = new Size(950, 40);
             pnlChgForm.TabIndex = 4;
             // 
-            // btnDataCollectionForm
+            // btnChgModelDrivingForm
             // 
-            btnDataCollectionForm.BackColor = Color.FromArgb(100, 110, 130);
-            btnDataCollectionForm.Cursor = Cursors.Hand;
-            btnDataCollectionForm.FlatAppearance.BorderSize = 0;
-            btnDataCollectionForm.FlatStyle = FlatStyle.Flat;
-            btnDataCollectionForm.Font = new Font("맑은 고딕", 10F, FontStyle.Bold);
-            btnDataCollectionForm.ForeColor = Color.White;
-            btnDataCollectionForm.Location = new Point(0, 0);
-            btnDataCollectionForm.Margin = new Padding(0);
-            btnDataCollectionForm.Name = "btnDataCollectionForm";
-            btnDataCollectionForm.Size = new Size(160, 40);
-            btnDataCollectionForm.TabIndex = 3;
-            btnDataCollectionForm.Text = "데이터 수집";
-            btnDataCollectionForm.UseVisualStyleBackColor = false;
-            btnDataCollectionForm.Click += btnDataCollectionForm_Click;
+            btnChgModelDrivingForm.BackColor = Color.FromArgb(100, 110, 130);
+            btnChgModelDrivingForm.Cursor = Cursors.Hand;
+            btnChgModelDrivingForm.FlatAppearance.BorderSize = 0;
+            btnChgModelDrivingForm.FlatStyle = FlatStyle.Flat;
+            btnChgModelDrivingForm.Font = new Font("맑은 고딕", 10F, FontStyle.Bold);
+            btnChgModelDrivingForm.ForeColor = Color.White;
+            btnChgModelDrivingForm.Location = new Point(640, 0);
+            btnChgModelDrivingForm.Margin = new Padding(0);
+            btnChgModelDrivingForm.Name = "btnChgModelDrivingForm";
+            btnChgModelDrivingForm.Size = new Size(160, 40);
+            btnChgModelDrivingForm.TabIndex = 4;
+            btnChgModelDrivingForm.Text = "모델 주행";
+            btnChgModelDrivingForm.UseVisualStyleBackColor = false;
+            btnChgModelDrivingForm.Click += btnChgModelDrivingForm_Click;
+            // 
+            // btnChgDataCollectionForm
+            // 
+            btnChgDataCollectionForm.BackColor = Color.FromArgb(100, 110, 130);
+            btnChgDataCollectionForm.Cursor = Cursors.Hand;
+            btnChgDataCollectionForm.FlatAppearance.BorderSize = 0;
+            btnChgDataCollectionForm.FlatStyle = FlatStyle.Flat;
+            btnChgDataCollectionForm.Font = new Font("맑은 고딕", 10F, FontStyle.Bold);
+            btnChgDataCollectionForm.ForeColor = Color.White;
+            btnChgDataCollectionForm.Location = new Point(0, 0);
+            btnChgDataCollectionForm.Margin = new Padding(0);
+            btnChgDataCollectionForm.Name = "btnChgDataCollectionForm";
+            btnChgDataCollectionForm.Size = new Size(160, 40);
+            btnChgDataCollectionForm.TabIndex = 3;
+            btnChgDataCollectionForm.Text = "데이터 수집";
+            btnChgDataCollectionForm.UseVisualStyleBackColor = false;
+            btnChgDataCollectionForm.Click += btnChgDataCollectionForm_Click;
             // 
             // pnlLog
             // 
@@ -205,6 +224,7 @@
         private ColumnHeader 시간;
         private ColumnHeader 타입;
         private ColumnHeader 메시지;
-        private Button btnDataCollectionForm;
+        private Button btnChgDataCollectionForm;
+        private Button btnChgModelDrivingForm;
     }
 }
