@@ -118,7 +118,32 @@ namespace DataManager.UserControls
             };
             _driveInputService.Start();
 
-            this.Load += (s, e) => this.Focus();
+            this.Load += (s, e) =>
+            {
+                // 1. DropDownList 상태인 콤보박스의 첫 번째 항목("generated_track")을 초기 선택 (빈 칸 해결)
+                if (cboMapList != null && cboMapList.Items.Count > 0)
+                {
+                    cboMapList.SelectedIndex = 0;
+                }
+                if (cboThrottleType != null && cboThrottleType.Items.Count > 0)
+                {
+                    cboThrottleType.SelectedIndex = 0;
+                }
+
+                // 2. 콤보박스에 포커스가 잡혀 파랗게 변하는 현상 방지 (파란색 강조 해결)
+                // 처음 눌러야 하는 시뮬레이터 시작 버튼으로 포커스를 가로채 옵니다.
+                if (btnStartSim != null)
+                {
+                    this.BeginInvoke(new Action(() =>
+                    {
+                        btnStartSim.Focus();
+                    }));
+                }
+                else
+                {
+                    this.Focus(); // btnStartSim이 없을 경우의 방어 코드
+                }
+            };
 
             this.HandleDestroyed += (s, e) =>
             {
@@ -203,20 +228,26 @@ namespace DataManager.UserControls
         }
 
         // ── 버튼 이벤트 ──────────────────────────
-        private void btnStartSim_Click(object sender, EventArgs e)
+        private async void btnStartSim_Click(object sender, EventArgs e)
         {
+            // 1. 콤보박스에서 선택된 맵 이름 가져오기
+            string envName = cboMapList.Text.Trim();
+
+            // 맵 목록 예시: donkey-generated-track-v0 등이 combo에 들어있어야 합니다.
+            if (string.IsNullOrEmpty(envName))
+            {
+                envName = "generated_track"; // 방어 코드용 기본값
+            }
+
+            // 2. 시뮬레이터 실행
             _processService.StartSimulator(SimPath);
+
+            // 3. 파이썬 서버 실행시 맵 이름 전달
+            _processService.StartPython(PythonExe, MycarDir, envName);
+            ReportLog("알림", $"시뮬레이터 및 서버 시작됨 (선택된 맵: {envName})");
+
             btnStartSim.Enabled = false;
-        }
 
-        private async void btnStartPython_Click(object sender, EventArgs e)
-        {
-            string tubPathFile = System.IO.Path.Combine(MycarDir, "current_tub_path.txt");
-            if (System.IO.File.Exists(tubPathFile))
-                System.IO.File.Delete(tubPathFile);
-
-            _processService.StartPython(PythonExe, MycarDir);
-            btnStartPython.Enabled = false;
             await Task.Delay(7000);
             btnConnect.Enabled = true;
         }
@@ -227,6 +258,52 @@ namespace DataManager.UserControls
             btnConnect.Text = "연결됨";
             btnConnect.Enabled = false;
             _cameraService.StartStream("http://localhost:8887/video");
+        }
+
+        private void btnInit_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // 1. 켜져 있는 시뮬레이터 및 파이썬 백그라운드 프로세스가 있다면 모두 종료
+                _processService.StopAll();
+
+                // 2. 카메라 뷰어(picCamera) 이미지 자원 해제 및 초기화
+                if (picCamera != null)
+                {
+                    // 메모리 누수 방지를 위해 기존에 떠 있던 이미지가 있다면 Dispose 처리
+                    if (picCamera.Image != null)
+                    {
+                        picCamera.Image.Dispose();
+                    }
+                    picCamera.Image = null; // 화면을 빈 상태(회색 또는 흰색 바탕)로 리셋
+                    picCamera.Refresh();    // UI 강제 갱신
+                }
+
+                // 3. 버튼 활성화 상태 및 UI 컨트롤 초기화
+                btnStartSim.Enabled = true;       // 시뮬레이터/파이썬 통합 실행 버튼 다시 활성화
+                btnConnect.Enabled = false;       // 연결 버튼은 서버가 꺼졌으므로 비활성화
+
+                // 💡 만약 연결 상태를 나타내는 UI 텍스트나 통신이 끊겼다면 텍스트도 초기화
+                if (btnConnect.Text == "연결됨")
+                {
+                    btnConnect.Text = "서버 연결";   // 토글 버튼 상태 원상복구
+                }
+
+                // 4. 기록(Recording) 체크박스도 안전하게 해제 및 비활성화
+                chkRecording.Checked = false;
+
+                MessageBox.Show("시뮬레이터와 파이썬 서버를 종료하고 통신 연결 설정을 초기화했습니다.",
+                    "초기화 완료", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                // 로그 출력
+                ReportLog("알림", "사용자 요청에 의해 시뮬레이터 및 파이썬 엔진 프로세스 초기화 완료");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"초기화 진행 중 오류가 발생했습니다:\n{ex.Message}", "에러",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ReportLog("오류", $"초기화 실패: {ex.Message}");
+            }
         }
 
         private void btnKeyBoard_Click(object sender, EventArgs e)
@@ -253,51 +330,75 @@ namespace DataManager.UserControls
 
         private void HighlightButton(Button active)
         {
-            btnKeyBoard.BackColor = Color.FromArgb(100, 150, 210);
-            btnJoyStick.BackColor = Color.FromArgb(100, 150, 210);
-            btnGamePad.BackColor = Color.FromArgb(100, 150, 210);
-            active.BackColor = Color.FromArgb(67, 130, 220);
+            btnKeyBoard.BackColor = Color.FromArgb(140, 185, 245);
+            btnJoyStick.BackColor = Color.FromArgb(140, 185, 245);
+            btnGamePad.BackColor = Color.FromArgb(140, 185, 245);
+            active.BackColor = Color.FromArgb(40, 95, 175);
         }
 
         // ── [변경됨] CustomFolderBrowser 연동 폴더 로직 ──────────────────
 
         private void btnNewFolder_Click(object sender, EventArgs e)
         {
-            // AppPaths.MycarData (mycar/data) 경로 자동 빌드 및 확인
+            // 1. 기준이 되는 기본 데이터 폴더 경로 지정 (mycar/data)
             string baseDataPath = AppPaths.MycarData;
+
             if (!Directory.Exists(baseDataPath))
             {
                 Directory.CreateDirectory(baseDataPath);
             }
 
-            // CustomFolderBrowser를 열어 생성할 '부모 폴더' 위치 지정 유도
-            using var browser = new CustomFolderBrowser(baseDataPath, "새 폴더를 생성할 위치 선택");
-            if (browser.ShowDialog(this) != DialogResult.OK) return;
-
-            // Microsoft.VisualBasic 내장 InputBox 활용하여 하위 폴더명 입력받기
+            // 2. Microsoft.VisualBasic 내장 InputBox 활용하여 새 폴더명 직접 입력받기
             string folderName = Microsoft.VisualBasic.Interaction.InputBox(
-                "생성할 새 폴더 이름을 입력하세요", "새 폴더 생성", "");
+                "mycar/data 폴더 내부에 생성할 새 폴더 이름을 입력하세요.", "새 주행 데이터 폴더 생성", "");
 
+            // 취소 버튼을 누르거나 공백으로 두었을 때 예외 처리
             if (string.IsNullOrWhiteSpace(folderName)) return;
 
-            string newPath = Path.Combine(browser.SelectedPath, folderName);
+            // 금지된 특수문자나 폴더명 필터링 (윈도우 파일 시스템 기준 방어 코드)
+            foreach (char c in Path.GetInvalidFileNameChars())
+            {
+                if (folderName.Contains(c))
+                {
+                    MessageBox.Show("폴더 이름에 특수문자(\\, /, :, *, ?, \", <, >, |)를 포함할 수 없습니다.",
+                        "이름 오류", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+            }
 
+            // 3. 최종 경로 조합 (mycar/data/입력한폴더명)
+            string newPath = Path.Combine(baseDataPath, folderName);
+
+            // 중복 검사
             if (Directory.Exists(newPath))
             {
-                MessageBox.Show("이미 존재하는 폴더 이름입니다.", "오류",
+                MessageBox.Show("이미 존재하는 폴더 이름입니다.\n다른 이름을 입력해 주세요.", "중복 오류",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            Directory.CreateDirectory(newPath);
-            MessageBox.Show($"폴더가 생성되었습니다.\n{newPath}", "완료",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
+            try
+            {
+                // 4. 실제 폴더 생성 진행
+                Directory.CreateDirectory(newPath);
 
-            // 생성한 폴더를 바로 현재 활성 경로로 자동 지정
-            _activeDataDir = newPath;
-            lblSelectedFolderRoute.Text = newPath;
-            chkRecording.Enabled = true;
-            UpdateDataPath(_activeDataDir);
+                MessageBox.Show($"새 주행 데이터 저장 폴더가 생성되었습니다!\n\n경로: {newPath}", "생성 완료",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                // 생성된 폴더를 현재 활성 저장 경로로 자동 지정 및 UI 연동
+                _activeDataDir = newPath;
+                lblSelectedFolderRoute.Text = newPath;
+                chkRecording.Enabled = true;
+
+                // 로그 기록
+                ReportLog("알림", $"새 데이터 저장 폴더 생성 및 자동 지정 완료: {folderName}");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"폴더 생성 중 시스템 오류가 발생했습니다:\n{ex.Message}", "에러",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ReportLog("오류", $"새 폴더 생성 실패: {ex.Message}");
+            }
         }
 
         private void btnSelectFolder_Click(object sender, EventArgs e)
@@ -362,7 +463,7 @@ namespace DataManager.UserControls
         private void btnUnSelectFolder_Click(object sender, EventArgs e)
         {
             _activeDataDir = "";
-            lblSelectedFolderRoute.Text = "";
+            lblSelectedFolderRoute.Text = "(선택된 폴더 경로)";
             chkRecording.Checked = false;
             chkRecording.Enabled = false;
         }

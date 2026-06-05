@@ -21,9 +21,9 @@
         private void InitializeComponent()
         {
             pnlConnect = new Panel();
+            btnInit = new Button();
             cboMapList = new ComboBox();
             chkRecording = new CheckBox();
-            btnStartPython = new Button();
             btnStartSim = new Button();
             btnConnect = new Button();
             pnlData = new Panel();
@@ -62,9 +62,9 @@
             // pnlConnect
             // 
             pnlConnect.BackColor = Color.FromArgb(250, 251, 253);
+            pnlConnect.Controls.Add(btnInit);
             pnlConnect.Controls.Add(cboMapList);
             pnlConnect.Controls.Add(chkRecording);
-            pnlConnect.Controls.Add(btnStartPython);
             pnlConnect.Controls.Add(btnStartSim);
             pnlConnect.Controls.Add(btnConnect);
             pnlConnect.Dock = DockStyle.Top;
@@ -73,15 +73,34 @@
             pnlConnect.Size = new Size(950, 50);
             pnlConnect.TabIndex = 1;
             // 
+            // btnInit
+            // 
+            btnInit.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+            btnInit.BackColor = Color.FromArgb(210, 70, 70);
+            btnInit.Cursor = Cursors.Hand;
+            btnInit.FlatAppearance.BorderSize = 0;
+            btnInit.FlatStyle = FlatStyle.Flat;
+            btnInit.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnInit.ForeColor = Color.White;
+            btnInit.Location = new Point(232, 10);
+            btnInit.Name = "btnInit";
+            btnInit.Size = new Size(94, 30);
+            btnInit.TabIndex = 4;
+            btnInit.Text = "초기화";
+            btnInit.UseVisualStyleBackColor = false;
+            btnInit.Click += btnInit_Click;
+            // 
             // cboMapList
             // 
             cboMapList.BackColor = Color.White;
+            cboMapList.DropDownStyle = ComboBoxStyle.DropDownList;
             cboMapList.FlatStyle = FlatStyle.Flat;
             cboMapList.Font = new Font("맑은 고딕", 9.5F);
             cboMapList.FormattingEnabled = true;
-            cboMapList.Location = new Point(378, 12);
+            cboMapList.Items.AddRange(new object[] { "generated_track", "generated_road", "warehouse", "sparkfun_avc", "mountain_track", "roboracingleague_1", "mini_monaco", "warren", "circuit_launch", "waveshare" });
+            cboMapList.Location = new Point(343, 14);
             cboMapList.Name = "cboMapList";
-            cboMapList.Size = new Size(130, 25);
+            cboMapList.Size = new Size(162, 25);
             cboMapList.TabIndex = 0;
             // 
             // chkRecording
@@ -97,23 +116,6 @@
             chkRecording.Text = "녹화 중";
             chkRecording.UseVisualStyleBackColor = true;
             chkRecording.CheckedChanged += chkRecording_CheckedChanged;
-            // 
-            // btnStartPython
-            // 
-            btnStartPython.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
-            btnStartPython.BackColor = Color.FromArgb(67, 130, 220);
-            btnStartPython.Cursor = Cursors.Hand;
-            btnStartPython.FlatAppearance.BorderSize = 0;
-            btnStartPython.FlatStyle = FlatStyle.Flat;
-            btnStartPython.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
-            btnStartPython.ForeColor = Color.White;
-            btnStartPython.Location = new Point(132, 10);
-            btnStartPython.Name = "btnStartPython";
-            btnStartPython.Size = new Size(120, 30);
-            btnStartPython.TabIndex = 2;
-            btnStartPython.Text = "파이썬 서버 시작";
-            btnStartPython.UseVisualStyleBackColor = false;
-            btnStartPython.Click += btnStartPython_Click;
             // 
             // btnStartSim
             // 
@@ -142,9 +144,9 @@
             btnConnect.FlatStyle = FlatStyle.Flat;
             btnConnect.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnConnect.ForeColor = Color.White;
-            btnConnect.Location = new Point(258, 10);
+            btnConnect.Location = new Point(132, 10);
             btnConnect.Name = "btnConnect";
-            btnConnect.Size = new Size(110, 30);
+            btnConnect.Size = new Size(94, 30);
             btnConnect.TabIndex = 0;
             btnConnect.Text = "서버 연결";
             btnConnect.UseVisualStyleBackColor = false;
@@ -324,7 +326,7 @@
             // 
             // btnKeyBoard
             // 
-            btnKeyBoard.BackColor = Color.FromArgb(100, 150, 210);
+            btnKeyBoard.BackColor = Color.FromArgb(140, 185, 245);
             btnKeyBoard.Cursor = Cursors.Hand;
             btnKeyBoard.FlatAppearance.BorderSize = 0;
             btnKeyBoard.FlatStyle = FlatStyle.Flat;
@@ -340,7 +342,7 @@
             // 
             // btnGamePad
             // 
-            btnGamePad.BackColor = Color.FromArgb(100, 150, 210);
+            btnGamePad.BackColor = Color.FromArgb(140, 185, 245);
             btnGamePad.Cursor = Cursors.Hand;
             btnGamePad.FlatAppearance.BorderSize = 0;
             btnGamePad.FlatStyle = FlatStyle.Flat;
@@ -356,7 +358,7 @@
             // 
             // btnJoyStick
             // 
-            btnJoyStick.BackColor = Color.FromArgb(100, 150, 210);
+            btnJoyStick.BackColor = Color.FromArgb(140, 185, 245);
             btnJoyStick.Cursor = Cursors.Hand;
             btnJoyStick.FlatAppearance.BorderSize = 0;
             btnJoyStick.FlatStyle = FlatStyle.Flat;
@@ -410,6 +412,7 @@
             // cboThrottleType
             // 
             cboThrottleType.BackColor = Color.White;
+            cboThrottleType.DropDownStyle = ComboBoxStyle.DropDownList;
             cboThrottleType.FlatStyle = FlatStyle.Flat;
             cboThrottleType.Font = new Font("맑은 고딕", 9F);
             cboThrottleType.FormattingEnabled = true;
@@ -418,7 +421,6 @@
             cboThrottleType.Name = "cboThrottleType";
             cboThrottleType.Size = new Size(92, 23);
             cboThrottleType.TabIndex = 0;
-            cboThrottleType.Text = "최댓값";
             // 
             // pnlCamera
             // 
@@ -473,7 +475,6 @@
         private Panel pnlCamera;
         private PictureBox picCamera;
         private Button btnConnect;
-        private Button btnStartPython;
         private Button btnStartSim;
         private Panel pnlControlJoystick;
         private Panel pnlView;
@@ -495,5 +496,6 @@
         private Label lblSetThrottle;
         private Button btnUnSelectFolder;
         private Button btnDelFolder;
+        private Button btnInit;
     }
 }
