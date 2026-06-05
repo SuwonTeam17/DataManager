@@ -21,6 +21,7 @@
         private void InitializeComponent()
         {
             pnlConnect = new Panel();
+            lblDataCollection = new Label();
             btnInit = new Button();
             cboMapList = new ComboBox();
             chkRecording = new CheckBox();
@@ -62,6 +63,7 @@
             // pnlConnect
             // 
             pnlConnect.BackColor = Color.FromArgb(250, 251, 253);
+            pnlConnect.Controls.Add(lblDataCollection);
             pnlConnect.Controls.Add(btnInit);
             pnlConnect.Controls.Add(cboMapList);
             pnlConnect.Controls.Add(chkRecording);
@@ -73,6 +75,15 @@
             pnlConnect.Size = new Size(950, 50);
             pnlConnect.TabIndex = 1;
             // 
+            // lblDataCollection
+            // 
+            lblDataCollection.Font = new Font("맑은 고딕", 20F, FontStyle.Bold);
+            lblDataCollection.Location = new Point(0, 0);
+            lblDataCollection.Name = "lblDataCollection";
+            lblDataCollection.Size = new Size(195, 40);
+            lblDataCollection.TabIndex = 5;
+            lblDataCollection.Text = "데이터 수집기";
+            // 
             // btnInit
             // 
             btnInit.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
@@ -82,7 +93,7 @@
             btnInit.FlatStyle = FlatStyle.Flat;
             btnInit.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnInit.ForeColor = Color.White;
-            btnInit.Location = new Point(232, 10);
+            btnInit.Location = new Point(429, 10);
             btnInit.Name = "btnInit";
             btnInit.Size = new Size(94, 30);
             btnInit.TabIndex = 4;
@@ -98,7 +109,7 @@
             cboMapList.Font = new Font("맑은 고딕", 9.5F);
             cboMapList.FormattingEnabled = true;
             cboMapList.Items.AddRange(new object[] { "generated_track", "generated_road", "warehouse", "sparkfun_avc", "mountain_track", "roboracingleague_1", "mini_monaco", "warren", "circuit_launch", "waveshare" });
-            cboMapList.Location = new Point(343, 14);
+            cboMapList.Location = new Point(540, 14);
             cboMapList.Name = "cboMapList";
             cboMapList.Size = new Size(162, 25);
             cboMapList.TabIndex = 0;
@@ -109,7 +120,7 @@
             chkRecording.Enabled = false;
             chkRecording.Font = new Font("맑은 고딕", 9.5F);
             chkRecording.ForeColor = Color.FromArgb(60, 72, 92);
-            chkRecording.Location = new Point(517, 14);
+            chkRecording.Location = new Point(714, 14);
             chkRecording.Name = "chkRecording";
             chkRecording.Size = new Size(71, 21);
             chkRecording.TabIndex = 3;
@@ -126,7 +137,7 @@
             btnStartSim.FlatStyle = FlatStyle.Flat;
             btnStartSim.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnStartSim.ForeColor = Color.White;
-            btnStartSim.Location = new Point(4, 10);
+            btnStartSim.Location = new Point(201, 10);
             btnStartSim.Name = "btnStartSim";
             btnStartSim.Size = new Size(122, 30);
             btnStartSim.TabIndex = 1;
@@ -144,7 +155,7 @@
             btnConnect.FlatStyle = FlatStyle.Flat;
             btnConnect.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnConnect.ForeColor = Color.White;
-            btnConnect.Location = new Point(132, 10);
+            btnConnect.Location = new Point(329, 10);
             btnConnect.Name = "btnConnect";
             btnConnect.Size = new Size(94, 30);
             btnConnect.TabIndex = 0;
@@ -297,7 +308,7 @@
             lblThrottle.Name = "lblThrottle";
             lblThrottle.Size = new Size(130, 57);
             lblThrottle.TabIndex = 3;
-            lblThrottle.Text = "스로틀";
+            lblThrottle.Text = "속도";
             lblThrottle.TextAlign = ContentAlignment.TopCenter;
             // 
             // lblAngle
@@ -309,7 +320,7 @@
             lblAngle.Name = "lblAngle";
             lblAngle.Size = new Size(130, 57);
             lblAngle.TabIndex = 2;
-            lblAngle.Text = "조향각";
+            lblAngle.Text = "각도";
             lblAngle.TextAlign = ContentAlignment.TopCenter;
             // 
             // pnlControlType
@@ -389,11 +400,11 @@
             lblSetThrottle.AutoSize = true;
             lblSetThrottle.Font = new Font("맑은 고딕", 9.5F);
             lblSetThrottle.ForeColor = Color.FromArgb(60, 72, 92);
-            lblSetThrottle.Location = new Point(6, 9);
+            lblSetThrottle.Location = new Point(19, 8);
             lblSetThrottle.Name = "lblSetThrottle";
-            lblSetThrottle.Size = new Size(78, 17);
+            lblSetThrottle.Size = new Size(65, 17);
             lblSetThrottle.TabIndex = 2;
-            lblSetThrottle.Text = "스로틀 설정";
+            lblSetThrottle.Text = "속도 설정";
             lblSetThrottle.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // cboThrottleMax
@@ -497,5 +508,6 @@
         private Button btnUnSelectFolder;
         private Button btnDelFolder;
         private Button btnInit;
+        private Label lblDataCollection;
     }
 }
