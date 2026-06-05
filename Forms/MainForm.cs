@@ -33,6 +33,7 @@ namespace DataManager
             pilotArenaUI = new PilotArenaUI();
 
             // 로그 이벤트 연결 (한 번만 하면 됨)
+            dataCollectionUI.OnLogReported += AppendLogToListView;
             tubUI.OnLogReported += AppendLogToListView;
             trainerUI.OnLogReported += AppendLogToListView;
             pilotArenaUI.OnLogReported += AppendLogToListView;
