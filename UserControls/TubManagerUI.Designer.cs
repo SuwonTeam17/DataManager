@@ -231,7 +231,7 @@
             // 
             // btnEx
             // 
-            btnEx.Font = new Font("한컴 말랑말랑 Bold", 9F, FontStyle.Bold, GraphicsUnit.Point, 129);
+            btnEx.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 129);
             btnEx.Location = new Point(366, 5);
             btnEx.Name = "btnEx";
             btnEx.Size = new Size(29, 27);

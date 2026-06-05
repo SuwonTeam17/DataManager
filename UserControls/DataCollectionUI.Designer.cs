@@ -7,10 +7,6 @@
         /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary> 
-        /// 사용 중인 모든 리소스를 정리합니다.
-        /// </summary>
-        /// <param name="disposing">관리되는 리소스를 삭제해야 하면 true이고, 그렇지 않으면 false입니다.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -22,10 +18,6 @@
 
         #region 구성 요소 디자이너에서 생성한 코드
 
-        /// <summary> 
-        /// 디자이너 지원에 필요한 메서드입니다. 
-        /// 이 메서드의 내용을 코드 편집기로 수정하지 마세요.
-        /// </summary>
         private void InitializeComponent()
         {
             pnlConnect = new Panel();
@@ -69,6 +61,7 @@
             // 
             // pnlConnect
             // 
+            pnlConnect.BackColor = Color.FromArgb(250, 251, 253);
             pnlConnect.Controls.Add(cboMapList);
             pnlConnect.Controls.Add(chkRecording);
             pnlConnect.Controls.Add(btnStartPython);
@@ -77,141 +70,203 @@
             pnlConnect.Dock = DockStyle.Top;
             pnlConnect.Location = new Point(0, 0);
             pnlConnect.Name = "pnlConnect";
-            pnlConnect.Size = new Size(750, 96);
+            pnlConnect.Size = new Size(950, 50);
             pnlConnect.TabIndex = 1;
             // 
             // cboMapList
             // 
+            cboMapList.BackColor = Color.White;
+            cboMapList.FlatStyle = FlatStyle.Flat;
+            cboMapList.Font = new Font("맑은 고딕", 9.5F);
             cboMapList.FormattingEnabled = true;
-            cboMapList.Location = new Point(109, 54);
+            cboMapList.Location = new Point(378, 12);
             cboMapList.Name = "cboMapList";
-            cboMapList.Size = new Size(121, 23);
+            cboMapList.Size = new Size(130, 25);
             cboMapList.TabIndex = 0;
             // 
             // chkRecording
             // 
             chkRecording.AutoSize = true;
-            chkRecording.Location = new Point(3, 54);
+            chkRecording.Enabled = false;
+            chkRecording.Font = new Font("맑은 고딕", 9.5F);
+            chkRecording.ForeColor = Color.FromArgb(60, 72, 92);
+            chkRecording.Location = new Point(517, 14);
             chkRecording.Name = "chkRecording";
-            chkRecording.Size = new Size(80, 19);
+            chkRecording.Size = new Size(71, 21);
             chkRecording.TabIndex = 3;
-            chkRecording.Text = "Recording";
+            chkRecording.Text = "녹화 중";
             chkRecording.UseVisualStyleBackColor = true;
             chkRecording.CheckedChanged += chkRecording_CheckedChanged;
             // 
             // btnStartPython
             // 
-            btnStartPython.Location = new Point(109, 3);
+            btnStartPython.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+            btnStartPython.BackColor = Color.FromArgb(67, 130, 220);
+            btnStartPython.Cursor = Cursors.Hand;
+            btnStartPython.FlatAppearance.BorderSize = 0;
+            btnStartPython.FlatStyle = FlatStyle.Flat;
+            btnStartPython.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnStartPython.ForeColor = Color.White;
+            btnStartPython.Location = new Point(132, 10);
             btnStartPython.Name = "btnStartPython";
-            btnStartPython.Size = new Size(100, 45);
+            btnStartPython.Size = new Size(120, 30);
             btnStartPython.TabIndex = 2;
-            btnStartPython.Text = "Start Python Server";
-            btnStartPython.UseVisualStyleBackColor = true;
+            btnStartPython.Text = "파이썬 서버 시작";
+            btnStartPython.UseVisualStyleBackColor = false;
             btnStartPython.Click += btnStartPython_Click;
             // 
             // btnStartSim
             // 
-            btnStartSim.Location = new Point(3, 3);
+            btnStartSim.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+            btnStartSim.BackColor = Color.FromArgb(67, 130, 220);
+            btnStartSim.Cursor = Cursors.Hand;
+            btnStartSim.FlatAppearance.BorderSize = 0;
+            btnStartSim.FlatStyle = FlatStyle.Flat;
+            btnStartSim.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnStartSim.ForeColor = Color.White;
+            btnStartSim.Location = new Point(4, 10);
             btnStartSim.Name = "btnStartSim";
-            btnStartSim.Size = new Size(100, 45);
+            btnStartSim.Size = new Size(122, 30);
             btnStartSim.TabIndex = 1;
-            btnStartSim.Text = "Start Simulator";
-            btnStartSim.UseVisualStyleBackColor = true;
+            btnStartSim.Text = "시뮬레이터 시작";
+            btnStartSim.UseVisualStyleBackColor = false;
             btnStartSim.Click += btnStartSim_Click;
             // 
             // btnConnect
             // 
+            btnConnect.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+            btnConnect.BackColor = Color.FromArgb(72, 175, 120);
+            btnConnect.Cursor = Cursors.Hand;
             btnConnect.Enabled = false;
-            btnConnect.Location = new Point(215, 3);
+            btnConnect.FlatAppearance.BorderSize = 0;
+            btnConnect.FlatStyle = FlatStyle.Flat;
+            btnConnect.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnConnect.ForeColor = Color.White;
+            btnConnect.Location = new Point(258, 10);
             btnConnect.Name = "btnConnect";
-            btnConnect.Size = new Size(100, 45);
+            btnConnect.Size = new Size(110, 30);
             btnConnect.TabIndex = 0;
-            btnConnect.Text = "Connect Server";
-            btnConnect.UseVisualStyleBackColor = true;
+            btnConnect.Text = "서버 연결";
+            btnConnect.UseVisualStyleBackColor = false;
             btnConnect.Click += btnConnect_Click;
             // 
             // pnlData
             // 
+            pnlData.BackColor = Color.FromArgb(250, 251, 253);
             pnlData.Controls.Add(btnUnSelectFolder);
             pnlData.Controls.Add(btnDelFolder);
             pnlData.Controls.Add(lblSelectedFolderRoute);
             pnlData.Controls.Add(btnNewFolder);
             pnlData.Controls.Add(btnSelectFolder);
             pnlData.Dock = DockStyle.Bottom;
-            pnlData.Location = new Point(0, 520);
+            pnlData.Location = new Point(0, 716);
             pnlData.Name = "pnlData";
-            pnlData.Size = new Size(750, 80);
+            pnlData.Size = new Size(950, 50);
             pnlData.TabIndex = 2;
             // 
             // btnUnSelectFolder
             // 
-            btnUnSelectFolder.Location = new Point(3, 42);
+            btnUnSelectFolder.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+            btnUnSelectFolder.BackColor = Color.FromArgb(140, 148, 160);
+            btnUnSelectFolder.Cursor = Cursors.Hand;
+            btnUnSelectFolder.FlatAppearance.BorderSize = 0;
+            btnUnSelectFolder.FlatStyle = FlatStyle.Flat;
+            btnUnSelectFolder.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnUnSelectFolder.ForeColor = Color.White;
+            btnUnSelectFolder.Location = new Point(356, 10);
             btnUnSelectFolder.Name = "btnUnSelectFolder";
-            btnUnSelectFolder.Size = new Size(120, 35);
+            btnUnSelectFolder.Size = new Size(90, 30);
             btnUnSelectFolder.TabIndex = 4;
-            btnUnSelectFolder.Text = "UnSelect Folder";
-            btnUnSelectFolder.UseVisualStyleBackColor = true;
+            btnUnSelectFolder.Text = "선택 해제";
+            btnUnSelectFolder.UseVisualStyleBackColor = false;
             btnUnSelectFolder.Click += btnUnSelectFolder_Click;
             // 
             // btnDelFolder
             // 
-            btnDelFolder.Location = new Point(129, 3);
+            btnDelFolder.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+            btnDelFolder.BackColor = Color.FromArgb(210, 70, 70);
+            btnDelFolder.Cursor = Cursors.Hand;
+            btnDelFolder.FlatAppearance.BorderSize = 0;
+            btnDelFolder.FlatStyle = FlatStyle.Flat;
+            btnDelFolder.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnDelFolder.ForeColor = Color.White;
+            btnDelFolder.Location = new Point(136, 10);
             btnDelFolder.Name = "btnDelFolder";
-            btnDelFolder.Size = new Size(120, 35);
+            btnDelFolder.Size = new Size(90, 30);
             btnDelFolder.TabIndex = 3;
-            btnDelFolder.Text = "Delect Folder";
-            btnDelFolder.UseVisualStyleBackColor = true;
+            btnDelFolder.Text = "폴더 삭제";
+            btnDelFolder.UseVisualStyleBackColor = false;
             btnDelFolder.Click += btnDelFolder_Click;
             // 
             // lblSelectedFolderRoute
             // 
-            lblSelectedFolderRoute.Location = new Point(255, 42);
+            lblSelectedFolderRoute.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+            lblSelectedFolderRoute.Font = new Font("맑은 고딕", 9F);
+            lblSelectedFolderRoute.ForeColor = Color.FromArgb(120, 130, 150);
+            lblSelectedFolderRoute.Location = new Point(454, 10);
             lblSelectedFolderRoute.Name = "lblSelectedFolderRoute";
-            lblSelectedFolderRoute.Size = new Size(361, 35);
+            lblSelectedFolderRoute.Size = new Size(330, 30);
             lblSelectedFolderRoute.TabIndex = 2;
-            lblSelectedFolderRoute.Text = "Selected Folder Route";
+            lblSelectedFolderRoute.Text = "(선택된 폴더 경로)";
             lblSelectedFolderRoute.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // btnNewFolder
             // 
-            btnNewFolder.Location = new Point(3, 3);
+            btnNewFolder.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+            btnNewFolder.BackColor = Color.FromArgb(67, 130, 220);
+            btnNewFolder.Cursor = Cursors.Hand;
+            btnNewFolder.FlatAppearance.BorderSize = 0;
+            btnNewFolder.FlatStyle = FlatStyle.Flat;
+            btnNewFolder.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnNewFolder.ForeColor = Color.White;
+            btnNewFolder.Location = new Point(4, 10);
             btnNewFolder.Name = "btnNewFolder";
-            btnNewFolder.Size = new Size(120, 35);
+            btnNewFolder.Size = new Size(126, 30);
             btnNewFolder.TabIndex = 1;
-            btnNewFolder.Text = "Create New Folder";
-            btnNewFolder.UseVisualStyleBackColor = true;
+            btnNewFolder.Text = "새 저장 폴더 생성";
+            btnNewFolder.UseVisualStyleBackColor = false;
             btnNewFolder.Click += btnNewFolder_Click;
             // 
             // btnSelectFolder
             // 
-            btnSelectFolder.Location = new Point(129, 42);
+            btnSelectFolder.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+            btnSelectFolder.BackColor = Color.FromArgb(210, 140, 40);
+            btnSelectFolder.Cursor = Cursors.Hand;
+            btnSelectFolder.FlatAppearance.BorderSize = 0;
+            btnSelectFolder.FlatStyle = FlatStyle.Flat;
+            btnSelectFolder.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnSelectFolder.ForeColor = Color.White;
+            btnSelectFolder.Location = new Point(232, 10);
             btnSelectFolder.Name = "btnSelectFolder";
-            btnSelectFolder.Size = new Size(120, 35);
+            btnSelectFolder.Size = new Size(118, 30);
             btnSelectFolder.TabIndex = 0;
-            btnSelectFolder.Text = "Select Folder";
-            btnSelectFolder.UseVisualStyleBackColor = true;
+            btnSelectFolder.Text = "저장 경로 지정";
+            btnSelectFolder.UseVisualStyleBackColor = false;
             btnSelectFolder.Click += btnSelectFolder_Click;
             // 
             // pnlControl
             // 
+            pnlControl.BackColor = Color.FromArgb(245, 247, 250);
             pnlControl.Controls.Add(pnlControlJoystick);
             pnlControl.Controls.Add(pnlView);
             pnlControl.Dock = DockStyle.Right;
-            pnlControl.Location = new Point(490, 96);
+            pnlControl.Location = new Point(690, 50);
             pnlControl.Name = "pnlControl";
-            pnlControl.Size = new Size(260, 424);
+            pnlControl.Size = new Size(260, 666);
             pnlControl.TabIndex = 3;
             // 
             // pnlControlJoystick
             // 
+            pnlControlJoystick.BackColor = Color.FromArgb(30, 30, 30);
             pnlControlJoystick.Dock = DockStyle.Fill;
             pnlControlJoystick.Location = new Point(0, 123);
             pnlControlJoystick.Name = "pnlControlJoystick";
-            pnlControlJoystick.Size = new Size(260, 301);
+            pnlControlJoystick.Size = new Size(260, 543);
             pnlControlJoystick.TabIndex = 1;
             // 
             // pnlView
             // 
+            pnlView.BackColor = Color.FromArgb(250, 251, 253);
             pnlView.Controls.Add(pnlDirection);
             pnlView.Controls.Add(pnlControlType);
             pnlView.Controls.Add(pnlSetThrottle);
@@ -234,25 +289,30 @@
             // lblThrottle
             // 
             lblThrottle.Dock = DockStyle.Fill;
+            lblThrottle.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            lblThrottle.ForeColor = Color.FromArgb(72, 175, 120);
             lblThrottle.Location = new Point(130, 0);
             lblThrottle.Name = "lblThrottle";
             lblThrottle.Size = new Size(130, 57);
             lblThrottle.TabIndex = 3;
-            lblThrottle.Text = "Throttle";
+            lblThrottle.Text = "스로틀";
             lblThrottle.TextAlign = ContentAlignment.TopCenter;
             // 
             // lblAngle
             // 
             lblAngle.Dock = DockStyle.Left;
+            lblAngle.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            lblAngle.ForeColor = Color.FromArgb(67, 130, 220);
             lblAngle.Location = new Point(0, 0);
             lblAngle.Name = "lblAngle";
             lblAngle.Size = new Size(130, 57);
             lblAngle.TabIndex = 2;
-            lblAngle.Text = "Angle";
+            lblAngle.Text = "조향각";
             lblAngle.TextAlign = ContentAlignment.TopCenter;
             // 
             // pnlControlType
             // 
+            pnlControlType.BackColor = Color.FromArgb(250, 251, 253);
             pnlControlType.Controls.Add(btnKeyBoard);
             pnlControlType.Controls.Add(btnGamePad);
             pnlControlType.Controls.Add(btnJoyStick);
@@ -264,36 +324,55 @@
             // 
             // btnKeyBoard
             // 
-            btnKeyBoard.Location = new Point(91, 0);
+            btnKeyBoard.BackColor = Color.FromArgb(100, 150, 210);
+            btnKeyBoard.Cursor = Cursors.Hand;
+            btnKeyBoard.FlatAppearance.BorderSize = 0;
+            btnKeyBoard.FlatStyle = FlatStyle.Flat;
+            btnKeyBoard.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnKeyBoard.ForeColor = Color.White;
+            btnKeyBoard.Location = new Point(88, 0);
             btnKeyBoard.Name = "btnKeyBoard";
-            btnKeyBoard.Size = new Size(81, 34);
+            btnKeyBoard.Size = new Size(86, 34);
             btnKeyBoard.TabIndex = 1;
-            btnKeyBoard.Text = "KeyBoard";
-            btnKeyBoard.UseVisualStyleBackColor = true;
+            btnKeyBoard.Text = "키보드";
+            btnKeyBoard.UseVisualStyleBackColor = false;
             btnKeyBoard.Click += btnKeyBoard_Click;
             // 
             // btnGamePad
             // 
-            btnGamePad.Location = new Point(178, 0);
+            btnGamePad.BackColor = Color.FromArgb(100, 150, 210);
+            btnGamePad.Cursor = Cursors.Hand;
+            btnGamePad.FlatAppearance.BorderSize = 0;
+            btnGamePad.FlatStyle = FlatStyle.Flat;
+            btnGamePad.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnGamePad.ForeColor = Color.White;
+            btnGamePad.Location = new Point(176, 0);
             btnGamePad.Name = "btnGamePad";
-            btnGamePad.Size = new Size(82, 34);
+            btnGamePad.Size = new Size(84, 34);
             btnGamePad.TabIndex = 2;
-            btnGamePad.Text = "GamePad";
-            btnGamePad.UseVisualStyleBackColor = true;
+            btnGamePad.Text = "게임패드";
+            btnGamePad.UseVisualStyleBackColor = false;
             btnGamePad.Click += btnGamePad_Click;
             // 
             // btnJoyStick
             // 
-            btnJoyStick.Location = new Point(3, 0);
+            btnJoyStick.BackColor = Color.FromArgb(100, 150, 210);
+            btnJoyStick.Cursor = Cursors.Hand;
+            btnJoyStick.FlatAppearance.BorderSize = 0;
+            btnJoyStick.FlatStyle = FlatStyle.Flat;
+            btnJoyStick.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnJoyStick.ForeColor = Color.White;
+            btnJoyStick.Location = new Point(0, 0);
             btnJoyStick.Name = "btnJoyStick";
-            btnJoyStick.Size = new Size(82, 34);
+            btnJoyStick.Size = new Size(86, 34);
             btnJoyStick.TabIndex = 0;
-            btnJoyStick.Text = "JoyStick";
-            btnJoyStick.UseVisualStyleBackColor = true;
+            btnJoyStick.Text = "조이스틱";
+            btnJoyStick.UseVisualStyleBackColor = false;
             btnJoyStick.Click += btnJoyStick_Click;
             // 
             // pnlSetThrottle
             // 
+            pnlSetThrottle.BackColor = Color.FromArgb(250, 251, 253);
             pnlSetThrottle.Controls.Add(lblSetThrottle);
             pnlSetThrottle.Controls.Add(cboThrottleMax);
             pnlSetThrottle.Controls.Add(cboThrottleType);
@@ -301,54 +380,63 @@
             pnlSetThrottle.Location = new Point(0, 91);
             pnlSetThrottle.Name = "pnlSetThrottle";
             pnlSetThrottle.Size = new Size(260, 32);
-            pnlSetThrottle.TabIndex = 0;
+            pnlSetThrottle.TabIndex = 2;
             // 
             // lblSetThrottle
             // 
             lblSetThrottle.AutoSize = true;
-            lblSetThrottle.Location = new Point(16, 9);
+            lblSetThrottle.Font = new Font("맑은 고딕", 9.5F);
+            lblSetThrottle.ForeColor = Color.FromArgb(60, 72, 92);
+            lblSetThrottle.Location = new Point(6, 9);
             lblSetThrottle.Name = "lblSetThrottle";
-            lblSetThrottle.Size = new Size(69, 15);
+            lblSetThrottle.Size = new Size(78, 17);
             lblSetThrottle.TabIndex = 2;
-            lblSetThrottle.Text = "Set Throttle";
+            lblSetThrottle.Text = "스로틀 설정";
             lblSetThrottle.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // cboThrottleMax
             // 
+            cboThrottleMax.BackColor = Color.White;
+            cboThrottleMax.FlatStyle = FlatStyle.Flat;
+            cboThrottleMax.Font = new Font("맑은 고딕", 9F);
             cboThrottleMax.FormattingEnabled = true;
             cboThrottleMax.Items.AddRange(new object[] { "100%", "90%", "80%", "70%", "60%", "50%", "40%", "30%", "20%", "10%" });
-            cboThrottleMax.Location = new Point(196, 6);
+            cboThrottleMax.Location = new Point(188, 6);
             cboThrottleMax.Name = "cboThrottleMax";
-            cboThrottleMax.Size = new Size(58, 23);
+            cboThrottleMax.Size = new Size(66, 23);
             cboThrottleMax.TabIndex = 1;
             cboThrottleMax.Text = "100%";
             // 
             // cboThrottleType
             // 
+            cboThrottleType.BackColor = Color.White;
+            cboThrottleType.FlatStyle = FlatStyle.Flat;
+            cboThrottleType.Font = new Font("맑은 고딕", 9F);
             cboThrottleType.FormattingEnabled = true;
-            cboThrottleType.Items.AddRange(new object[] { "Maximum", "Constant" });
-            cboThrottleType.Location = new Point(98, 6);
+            cboThrottleType.Items.AddRange(new object[] { "최대값", "고정값" });
+            cboThrottleType.Location = new Point(90, 6);
             cboThrottleType.Name = "cboThrottleType";
             cboThrottleType.Size = new Size(92, 23);
             cboThrottleType.TabIndex = 0;
-            cboThrottleType.Text = "Maximum";
+            cboThrottleType.Text = "최대값";
             // 
             // pnlCamera
             // 
+            pnlCamera.BackColor = Color.FromArgb(20, 20, 30);
             pnlCamera.Controls.Add(picCamera);
             pnlCamera.Dock = DockStyle.Fill;
-            pnlCamera.Location = new Point(0, 96);
+            pnlCamera.Location = new Point(0, 50);
             pnlCamera.Name = "pnlCamera";
-            pnlCamera.Size = new Size(490, 424);
+            pnlCamera.Size = new Size(690, 666);
             pnlCamera.TabIndex = 4;
             // 
             // picCamera
             // 
-            picCamera.BackColor = Color.Black;
+            picCamera.BackColor = Color.FromArgb(20, 20, 30);
             picCamera.Dock = DockStyle.Fill;
             picCamera.Location = new Point(0, 0);
             picCamera.Name = "picCamera";
-            picCamera.Size = new Size(490, 424);
+            picCamera.Size = new Size(690, 666);
             picCamera.SizeMode = PictureBoxSizeMode.Zoom;
             picCamera.TabIndex = 0;
             picCamera.TabStop = false;
@@ -357,12 +445,13 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
+            BackColor = Color.FromArgb(245, 247, 250);
             Controls.Add(pnlCamera);
             Controls.Add(pnlControl);
             Controls.Add(pnlData);
             Controls.Add(pnlConnect);
             Name = "DataCollectionUI";
-            Size = new Size(750, 600);
+            Size = new Size(950, 766);
             pnlConnect.ResumeLayout(false);
             pnlConnect.PerformLayout();
             pnlData.ResumeLayout(false);

@@ -277,7 +277,7 @@ namespace DataManager.UserControls
         }
 
 
-        
+
 
 
         private void btnDelFolder_Click(object sender, EventArgs e)
@@ -290,37 +290,26 @@ namespace DataManager.UserControls
             {
                 browser.AllowFileSelection = true;
 
-                if (browser.ShowDialog(this) == DialogResult.OK)
+                if (browser.ShowDialog(this) != DialogResult.OK) return;
+
+                string _targetDelPath = browser.SelectedPath;
+
+                // 맨 뒤에 인수로 'ReportLog' 메서드 자체를 전달합니다!
+                // 이제 CustomFolderBrowser 내부에서 알아서 ReportLog를 실시간으로 작동시킵니다.
+                bool isDeleted = CustomFolderBrowser.SafeDeleteDirectoryImmediate(
+                    _targetDelPath,
+                    root,
+                    "mycar/data/EditedData",
+                    ReportLog
+                );
+
+                // 삭제 성공 시 남은 UI 상태 처리만 깔끔하게 수행
+                if (isDeleted)
                 {
-                    string _targetDelPath = browser.SelectedPath;
-
-                    if (_targetDelPath.Equals(root, StringComparison.OrdinalIgnoreCase))
+                    if (targetSavePath == _targetDelPath)
                     {
-                        MessageBox.Show("EditedData 내부에 생성된 하위 가공 폴더만 삭제할 수 있습니다.", "보안 경고");
-                        return;
-                    }
-
-                    string _folderName = Path.GetFileName(_targetDelPath);
-                    DialogResult _confirm = MessageBox.Show($"[{_folderName}] 폴더와 내부 데이터 파일들을 정말 영구 삭제하시겠습니까?", "폴더 삭제 확인", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
-
-                    if (_confirm == DialogResult.Yes)
-                    {
-                        try
-                        {
-                            Directory.Delete(_targetDelPath, true);
-                            ReportLog("알림", $"편집 폴더 삭제 완료: {_folderName}");
-
-                            if (targetSavePath == _targetDelPath)
-                            {
-                                targetSavePath = string.Empty;
-                                lblSaveRoute.Text = "선택된 저장 경로 없음";
-                            }
-                            MessageBox.Show("폴더가 삭제되었습니다.", "성공");
-                        }
-                        catch (Exception _ex)
-                        {
-                            ReportLog("오류", $"폴더 삭제 실패: {_ex.Message}");
-                        }
+                        targetSavePath = string.Empty;
+                        lblSaveRoute.Text = "선택된 저장 경로 없음";
                     }
                 }
             }
