@@ -413,12 +413,12 @@
             cboThrottleType.FlatStyle = FlatStyle.Flat;
             cboThrottleType.Font = new Font("맑은 고딕", 9F);
             cboThrottleType.FormattingEnabled = true;
-            cboThrottleType.Items.AddRange(new object[] { "최대값", "고정값" });
+            cboThrottleType.Items.AddRange(new object[] { "최댓값", "고정값" });
             cboThrottleType.Location = new Point(90, 6);
             cboThrottleType.Name = "cboThrottleType";
             cboThrottleType.Size = new Size(92, 23);
             cboThrottleType.TabIndex = 0;
-            cboThrottleType.Text = "최대값";
+            cboThrottleType.Text = "최댓값";
             // 
             // pnlCamera
             // 

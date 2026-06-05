@@ -64,9 +64,57 @@ namespace DataManager.UserControls
 
             _driveInputService.OnInputChanged += (angle, throttle) =>
             {
-                _connectionService.SendControl(angle, throttle, chkRecording.Checked);
+                // 1. cboThrottleMax에 선택된 % 문자열을 숫자로 파싱 (기본값: 100% -> 1.0f)
+                float maxRatio = 1.0f;
+                if (cboThrottleMax != null && cboThrottleMax.SelectedItem != null)
+                {
+                    string maxStr = cboThrottleMax.SelectedItem.ToString().Replace("%", "").Trim();
+                    if (float.TryParse(maxStr, out float percent))
+                    {
+                        maxRatio = percent / 100f; // 예: 90 -> 0.9f
+                    }
+                }
+
+                // 2. cboThrottleType 모드에 따른 스로틀(Throttle) 변형 계산
+                float processedThrottle = throttle;
+
+                if (cboThrottleType != null && cboThrottleType.SelectedItem != null)
+                {
+                    string typeMode = cboThrottleType.SelectedItem.ToString();
+
+                    if (typeMode == "최댓값")
+                    {
+                        // 전진(+)일 때는 maxRatio를 넘지 못하게, 후진(-)일 때는 -maxRatio보다 낮아지지 않게 제한
+                        if (processedThrottle > 0)
+                            processedThrottle = Math.Min(processedThrottle, maxRatio);
+                        else if (processedThrottle < 0)
+                            processedThrottle = Math.Max(processedThrottle, -maxRatio);
+                    }
+                    else if (typeMode == "고정값")
+                    {
+                        // 가만히 정지 상태(0)가 아닐 때만 강제로 값 고정 처리
+                        // 입력 장치의 미세한 쏠림 노이즈(데드존)를 감안하여 0.01f 기준으로 판별합니다.
+                        if (processedThrottle > 0.01f)
+                        {
+                            processedThrottle = maxRatio;
+                        }
+                        else if (processedThrottle < -0.01f)
+                        {
+                            processedThrottle = -maxRatio; // 후진 고정
+                        }
+                        else
+                        {
+                            processedThrottle = 0f; // 완전 중립일 땐 0 유지
+                        }
+                    }
+                }
+
+                // 원본 throttle 대신 가공된 processedThrottle을 서버로 전송합니다!
+                _connectionService.SendControl(angle, processedThrottle, chkRecording.Checked);
+
+                // UI 게이지 바에도 가공된 결과 값을 투영합니다.
                 if (_barAngle != null) _barAngle.Value = angle;
-                if (_barThrottle != null) _barThrottle.Value = throttle;
+                if (_barThrottle != null) _barThrottle.Value = processedThrottle;
             };
             _driveInputService.Start();
 
