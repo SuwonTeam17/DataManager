@@ -400,7 +400,7 @@
             cboThrottleMax.FlatStyle = FlatStyle.Flat;
             cboThrottleMax.Font = new Font("맑은 고딕", 9F);
             cboThrottleMax.FormattingEnabled = true;
-            cboThrottleMax.Items.AddRange(new object[] { "100%", "90%", "80%", "70%", "60%", "50%", "40%", "30%", "20%", "10%" });
+            cboThrottleMax.Items.AddRange(new object[] { "100%", "95%", "90%", "85%", "80%", "75%", "70%", "60%", "50%", "40%", "30%", "20%", "10%" });
             cboThrottleMax.Location = new Point(188, 6);
             cboThrottleMax.Name = "cboThrottleMax";
             cboThrottleMax.Size = new Size(66, 23);
