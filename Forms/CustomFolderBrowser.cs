@@ -14,7 +14,7 @@ namespace DataManager
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         [Browsable(false)]
-        public bool AllowFileSelection { get; set; } = false;
+        public bool AllowFileSelection { get; set; } = true;
 
         private readonly string _rootPath;
         private string _currentPath;
