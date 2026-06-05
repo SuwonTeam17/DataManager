@@ -45,6 +45,8 @@ namespace DataManager.UserControls
         // ⭐ [추가] 현재 돌고 있는 진짜 모델 이름을 기억할 변수
         private string currentTrainingModelName = "";
 
+        private Chart mainTrainChart;
+
         // ⭐ 한글 이름과 파이썬 변수명을 연결해 주는 공통 사전
         private readonly Dictionary<string, string> configMapping = new Dictionary<string, string>()
         {
@@ -217,12 +219,51 @@ namespace DataManager.UserControls
         {
             InitializeComponent();
 
+            pnlGraph.Dock = DockStyle.Fill;
+            pnlConfEditor.Dock = DockStyle.Fill;
+            pnlViewerAndEditor.Dock = DockStyle.Fill;
+
+            // 2. 📈 실시간 그래프(Chart) 세팅 및 pnlGraph에 넣기
+            mainTrainChart = new Chart();
+            mainTrainChart.Dock = DockStyle.Fill;
+
+            ChartArea area = new ChartArea("MainArea");
+            area.AxisX.Title = "Epoch (반복 횟수)";
+            area.AxisY.Title = "Loss (오차율)";
+
+            // ==============================================================
+            // ⭐ [추가] 가로, 세로 눈금선(Grid) 깔끔하게 지우기!
+            // ==============================================================
+            area.AxisX.MajorGrid.Enabled = false; // 세로선(X축 기준) 제거
+            area.AxisY.MajorGrid.Enabled = false; // 가로선(Y축 기준) 제거
+
+            mainTrainChart.ChartAreas.Add(area);
+
+            Series sLoss = new Series("Loss"); // 파란 선 (학습 오차)
+            sLoss.ChartType = SeriesChartType.Line;
+            sLoss.BorderWidth = 3;
+            sLoss.Color = Color.DodgerBlue;
+
+            Series sValLoss = new Series("ValLoss"); // 빨간 선 (테스트 오차)
+            sValLoss.ChartType = SeriesChartType.Line;
+            sValLoss.BorderWidth = 3;
+            sValLoss.Color = Color.Tomato;
+
+            mainTrainChart.Series.Add(sLoss);
+            mainTrainChart.Series.Add(sValLoss);
+            mainTrainChart.Legends.Add(new Legend("Legend1"));
+
+            // ⭐ 만든 차트를 하리님의 pnlGraph 패널 안에 쏙 넣습니다!
+            pnlGraph.Controls.Add(mainTrainChart);
+
             this.cboAddConfCount.SelectedIndexChanged += new System.EventHandler(this.cboAddConfCount_SelectedIndexChanged);
 
             // ==========================================================
             // ⭐ [해결책] FlowLayoutPanel의 크기가 변할 때(창 크기 조절 시) 실시간으로 비율 재계산!
             this.flpConfCon.SizeChanged += (s, args) => SyncAllPanelSizes();
             // ==========================================================
+
+            btnChartTab.PerformClick();
 
         }
 
@@ -708,6 +749,15 @@ namespace DataManager.UserControls
             }
 
             currentTrainingModelName = modelName;
+
+            // ==============================================================
+            // 🧹 새 훈련 시작 시 메인 차트에 그려진 선(점)들 싹 지우기!
+            // ==============================================================
+            if (mainTrainChart != null)
+            {
+                mainTrainChart.Series["Loss"].Points.Clear();
+                mainTrainChart.Series["ValLoss"].Points.Clear();
+            }
 
             // 7. 백그라운드 프로세스 세팅
             ProcessStartInfo psi = new ProcessStartInfo();
@@ -1845,6 +1895,33 @@ namespace DataManager.UserControls
                     historyLoss.Add(finalLoss);
                     historyValLoss.Add(valLoss);
 
+
+                    // ==============================================================
+                    // 📈 메인 화면 그래프에 실시간으로 점 찍기!
+                    // UI 스레드 충돌을 막기 위해 안전하게(BeginInvoke) 그립니다.
+                    // ==============================================================
+                    if (mainTrainChart != null && mainTrainChart.IsHandleCreated)
+                    {
+                        // 최신 에포크 번호 (수첩에 적힌 개수)
+                        int currentEpoch = historyLoss.Count;
+
+                        // 추출한 오차율 값 임시 저장 (변수명은 하리님 파싱 코드에 맞게 수정하세요!)
+                        double currentLoss = finalLoss;
+                        double currentValLoss = valLoss;
+
+                        this.BeginInvoke((MethodInvoker)delegate
+                        {
+                            // 파란 선(Loss) 점 찍기
+                            mainTrainChart.Series["Loss"].Points.AddXY(currentEpoch, currentLoss);
+
+                            // 빨간 선(Val Loss) 점 찍기 (값이 0보다 클 때만 찍도록 방어막)
+                            if (currentValLoss > 0)
+                            {
+                                mainTrainChart.Series["ValLoss"].Points.AddXY(currentEpoch, currentValLoss);
+                            }
+                        });
+                    }
+
                     this.BeginInvoke((MethodInvoker)delegate
                     {
                         lblLoss.Text = $"학습 오차율 : {finalLoss:F4}";
@@ -2153,6 +2230,47 @@ namespace DataManager.UserControls
             {
                 currentLogForm.BringToFront();
             }
+        }
+
+        // ==============================================================
+        // 🔄 커스텀 탭 화면 전환 매니저 (하리님 맞춤형)
+        // ==============================================================
+        private void SwitchPanel(Panel activePanel, Button activeButton)
+        {
+            // 1. 모든 패널을 일단 화면에서 숨깁니다.
+            pnlGraph.Visible = false;
+            pnlConfEditor.Visible = false;
+            pnlViewerAndEditor.Visible = false;
+
+            // 2. 사용자가 선택한 패널만 보이게 하고 맨 앞으로 끌어옵니다.
+            activePanel.Visible = true;
+            activePanel.BringToFront();
+
+            // ==============================================================
+            // 🎨 버튼 색상 전환 로직 (버튼 이름은 하리님의 실제 이름으로 맞춰주세요!)
+            // ==============================================================
+            // 일단 3개 버튼 모두 기본 색상(예: 파란색 바 바탕색)으로 되돌립니다.
+            btnChartTab.BackColor = Color.CornflowerBlue;
+            btnConfigEditorTab.BackColor = Color.CornflowerBlue;
+            btnViewerAndEditorTab.BackColor = Color.CornflowerBlue;
+
+            // 방금 누른 버튼만 눌린 느낌을 주는 어두운 색상이나 튀는 색상으로 변경!
+            activeButton.BackColor = Color.RoyalBlue;
+        }
+
+        private void btnChartTab_Click(object sender, EventArgs e)
+        {
+            SwitchPanel(pnlGraph, btnChartTab);
+        }
+
+        private void btnConfigEditorTab_Click(object sender, EventArgs e)
+        {
+            SwitchPanel(pnlConfEditor, btnConfigEditorTab);
+        }
+
+        private void btnViewerAndEditorTab_Click(object sender, EventArgs e)
+        {
+            SwitchPanel(pnlViewerAndEditor, btnViewerAndEditorTab);
         }
     }
 
