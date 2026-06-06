@@ -41,8 +41,18 @@ namespace DataManager.UserControls
         private bool isPlaying = false;
         private bool isRangePlaying = false; // [추가] 구간 재생 중인지 여부 변수
         private System.Windows.Forms.Timer playTimer;
-        private Tuple<int, int> selectedRange = new Tuple<int, int>(0, 0);
+        // [기존 코드 제거] private Tuple<int, int> selectedRange = new Tuple<int, int>(0, 0);
 
+        // [신규 변수 등록]
+        public class RangeSegment
+        {
+            public int Start { get; set; }
+            public int End { get; set; }
+            public RangeSegment(int start, int end) { Start = start; End = end; }
+        }
+
+        private List<RangeSegment> selectedRanges = new List<RangeSegment>();
+        private int activeRangeIndex = -1; // 현재 편집/재생 중인 구간 (-1이면 없음)
         // 임시 필터 적용 이미지 저장소 (key: drivingData 인덱스, value: 가공된 Bitmap)
         private Dictionary<int, Bitmap> filteredFrameMap = new Dictionary<int, Bitmap>();
 
@@ -732,21 +742,35 @@ namespace DataManager.UserControls
             // [구간 재생 모드]
             if (isRangePlaying)
             {
-                if (_next > currentFrameIndex && _next <= selectedRange.Item2 && _next < drivingData.Count)
+                // [수정] 현재 활성화된 다중 구간 인덱스가 안전한 범위 내에 있는지 검사
+                if (selectedRanges != null && activeRangeIndex >= 0 && activeRangeIndex < selectedRanges.Count)
                 {
-                    DisplayFrame(_next, direction: 1);
+                    var currentRange = selectedRanges[activeRangeIndex];
+
+                    // 현재 활성화된 구간의 End 범위 안인지 체크
+                    if (_next > currentFrameIndex && _next <= currentRange.End && _next < drivingData.Count)
+                    {
+                        DisplayFrame(_next, direction: 1);
+                    }
+                    else
+                    {
+                        // 현재 구간의 Start 지점으로 되돌아감
+                        currentFrameIndex = currentRange.Start;
+                        accumulatedFrame = 0.0; // 구간 반복 시 누적치 초기화
+
+                        int startFrame = FindNearestVisibleIndex(currentFrameIndex, direction: 1);
+                        if (startFrame >= currentRange.Start && startFrame <= currentRange.End)
+                        {
+                            DisplayFrame(startFrame, direction: 1);
+                        }
+                        ReportLog("알림", $"구간 [{activeRangeIndex + 1}]의 끝에 도달하여 처음부터 다시 반복 재생합니다.");
+                    }
                 }
                 else
                 {
-                    currentFrameIndex = selectedRange.Item1;
-                    accumulatedFrame = 0.0; // 구간 반복 시 누적치 초기화
-
-                    int startFrame = FindNearestVisibleIndex(currentFrameIndex, direction: 1);
-                    if (startFrame >= selectedRange.Item1 && startFrame <= selectedRange.Item2)
-                    {
-                        DisplayFrame(startFrame, direction: 1);
-                    }
-                    ReportLog("알림", "구간의 끝에 도달하여 처음부터 다시 반복 재생합니다.");
+                    // 예외 방어: 활성화된 구간 정보가 유효하지 않다면 구간 재생을 중단합니다.
+                    StopPlayback();
+                    ReportLog("경고", "활성화된 재생 구간 정보가 없어 재생을 중단합니다.");
                 }
             }
             // [일반 재생 모드]
@@ -858,26 +882,28 @@ namespace DataManager.UserControls
         {
             if (drivingData == null || drivingData.Count == 0) return;
 
-            // 구간 유효성 검사
-            if (selectedRange == null || selectedRange.Item1 >= selectedRange.Item2)
+            // [수정] 다중 구간 유효성 검사 (구간 목록이 비어있거나 활성화된 구간 인덱스가 잘못된 경우)
+            if (selectedRanges == null || selectedRanges.Count == 0 || activeRangeIndex < 0 || activeRangeIndex >= selectedRanges.Count)
             {
-                ReportLog("경고", "올바른 재생 구간이 선택되지 않았습니다.");
+                ReportLog("경고", "활성화된(선택된) 재생 구간이 없습니다. 타임라인의 구간을 클릭하거나 새로운 구간을 설정하세요.");
                 return;
             }
+
+            var currentRange = selectedRanges[activeRangeIndex];
 
             btnRangePlay.FlatStyle = FlatStyle.Flat;
             btnRangePlay.FlatAppearance.BorderSize = 0;
 
-            // 1. [핵심 추가] 만약 '일반 재생 중'이었다면 -> 일반 재생을 끄고 즉시 구간 재생 모드로 가로챕니다.
+            // 1. 만약 '일반 재생 중'이었다면 -> 일반 재생을 끄고 즉시 구간 재생 모드로 가로챕니다.
             if (isPlaying)
             {
                 isPlaying = false;
                 isRangePlaying = true;
 
-                // 현재 프레임 위치가 구간 범위를 벗어나 있다면 구간의 시작점으로 강제 점프
-                if (currentFrameIndex < selectedRange.Item1 || currentFrameIndex >= selectedRange.Item2)
+                // 현재 프레임 위치가 활성화된 구간 범위를 벗어나 있다면 구간의 시작점으로 강제 점프
+                if (currentFrameIndex < currentRange.Start || currentFrameIndex >= currentRange.End)
                 {
-                    currentFrameIndex = selectedRange.Item1;
+                    currentFrameIndex = currentRange.Start;
                     DisplayFrame(currentFrameIndex, direction: 1);
                 }
 
@@ -893,7 +919,7 @@ namespace DataManager.UserControls
                     btnPlay.BackColor = Color.FromArgb(72, 175, 120);
                 }
 
-                ReportLog("알림", "일반 재생을 중단하고 즉시 지정된 구간 재생으로 전환합니다.");
+                ReportLog("알림", $"일반 재생을 중단하고 즉시 지정된 구간 [{activeRangeIndex + 1}] 재생으로 전환합니다.");
                 return; // 전환 완료 후 메서드 종료
             }
 
@@ -908,9 +934,9 @@ namespace DataManager.UserControls
             playTimer.Stop();
             isRangePlaying = true;
 
-            if (currentFrameIndex < selectedRange.Item1 || currentFrameIndex >= selectedRange.Item2)
+            if (currentFrameIndex < currentRange.Start || currentFrameIndex >= currentRange.End)
             {
-                currentFrameIndex = selectedRange.Item1;
+                currentFrameIndex = currentRange.Start;
                 DisplayFrame(currentFrameIndex, direction: 1);
             }
 
@@ -926,7 +952,7 @@ namespace DataManager.UserControls
                 btnPlay.BackColor = Color.FromArgb(72, 175, 120);
             }
 
-            ReportLog("알림", $"{selectedRange.Item1}번부터 {selectedRange.Item2}번까지 구간 재생을 시작합니다.");
+            ReportLog("알림", $"[{activeRangeIndex + 1}번 구간] {currentRange.Start}번부터 {currentRange.End}번까지 구간 재생을 시작합니다.");
         }
 
 
@@ -953,18 +979,26 @@ namespace DataManager.UserControls
             // [방어 코드] 주행 데이터가 로드되지 않았다면 무시
             if (drivingData == null || drivingData.Count == 0) return;
 
-            // 현재 프레임이 기존 종료 범위보다 뒤에 있다면, 종료 범위도 현재 프레임으로 맞춰서 오류를 방지합니다.
-            if (currentFrameIndex > selectedRange.Item2)
+            // 활성화된 구간이 없다면 새로 생성하여 추가합니다.
+            if (activeRangeIndex == -1 || selectedRanges.Count == 0)
             {
-                selectedRange = new Tuple<int, int>(currentFrameIndex, currentFrameIndex);
+                selectedRanges.Add(new RangeSegment(currentFrameIndex, currentFrameIndex));
+                activeRangeIndex = selectedRanges.Count - 1;
+                ReportLog("알림", $"새로운 구간[{activeRangeIndex + 1}]의 시작 범위를 지정했습니다.");
             }
             else
             {
-                selectedRange = new Tuple<int, int>(currentFrameIndex, selectedRange.Item2);
+                // 이미 활성화된 구간이 존재하는 경우 데이터 수정
+                var currentRange = selectedRanges[activeRangeIndex];
+                if (currentFrameIndex > currentRange.End)
+                {
+                    currentRange.End = currentFrameIndex;
+                }
+                currentRange.Start = currentFrameIndex;
+                ReportLog("알림", $"구간[{activeRangeIndex + 1}]의 시작 범위 수정: {drivingData[currentFrameIndex].Index}번 프레임");
             }
 
             UpdateRangeLabel();
-            ReportLog("알림", $"시작 범위 지정: {drivingData[currentFrameIndex].Index}번 프레임");
         }
 
         private void btnRightRange_Click(object sender, EventArgs e)
@@ -972,28 +1006,40 @@ namespace DataManager.UserControls
             // [방어 코드] 주행 데이터가 로드되지 않았다면 무시
             if (drivingData == null || drivingData.Count == 0) return;
 
-            // 현재 프레임이 기존 시작 범위보다 앞에 있다면, 시작 범위도 현재 프레임으로 맞춰서 오류를 방지합니다.
-            if (currentFrameIndex < selectedRange.Item1)
+            // 만약 구간이 아예 생성되지 않은 상태에서 오른쪽 버튼을 눌렀다면 새로운 구간을 시작점=끝점으로 생성합니다.
+            if (activeRangeIndex == -1 || selectedRanges.Count == 0)
             {
-                selectedRange = new Tuple<int, int>(currentFrameIndex, currentFrameIndex);
+                selectedRanges.Add(new RangeSegment(currentFrameIndex, currentFrameIndex));
+                activeRangeIndex = selectedRanges.Count - 1;
+                ReportLog("알림", $"새로운 구간[{activeRangeIndex + 1}]의 종료 범위를 지정했습니다.");
             }
             else
             {
-                selectedRange = new Tuple<int, int>(selectedRange.Item1, currentFrameIndex);
+                // 이미 활성화된 구간이 존재하는 경우 데이터 수정
+                var currentRange = selectedRanges[activeRangeIndex];
+                if (currentFrameIndex < currentRange.Start)
+                {
+                    currentRange.Start = currentFrameIndex;
+                }
+                currentRange.End = currentFrameIndex;
+                ReportLog("알림", $"구간[{activeRangeIndex + 1}]의 종료 범위 수정: {drivingData[currentFrameIndex].Index}번 프레임");
             }
 
             UpdateRangeLabel();
-            ReportLog("알림", $"종료 범위 지정: {drivingData[currentFrameIndex].Index}번 프레임");
         }
+
+
 
         private void btnAllRange_Click(object sender, EventArgs e)
         {
-            if (drivingData.Count > 0)
-            {
-                selectedRange = new Tuple<int, int>(0, drivingData.Count - 1);
-                UpdateRangeLabel();
-                ReportLog("알림", "전체 범위가 선택되었습니다.");
-            }
+            if (drivingData == null || drivingData.Count == 0) return;
+
+            selectedRanges.Clear(); // 기존 다중 구간 초기화
+            selectedRanges.Add(new RangeSegment(0, drivingData.Count - 1));
+            activeRangeIndex = 0;
+
+            UpdateRangeLabel();
+            ReportLog("알림", "기존 구간 목록을 비우고 전체 범위가 선택되었습니다.");
         }
 
         private void UpdateRangeLabel()
@@ -1001,21 +1047,33 @@ namespace DataManager.UserControls
             // [방어 코드] 주행 데이터가 없으면 실행 안 함
             if (drivingData == null || drivingData.Count == 0) return;
 
-            int _start = selectedRange.Item1;
-            int _end = selectedRange.Item2;
+            // 만약 등록된 구간이 하나도 없거나 포커스가 유효하지 않은 경우
+            if (selectedRanges == null || selectedRanges.Count == 0 || activeRangeIndex == -1)
+            {
+                lblSelectedRange.Text = "선택된 범위 없음 (단축키 N 또는 [ 키로 생성)";
+                pnlTimeStamp?.Invalidate();
+                return;
+            }
+
+            // 현재 활성화된 구간을 기준으로 예외 처리 및 표시 작업 수행
+            var currentRange = selectedRanges[activeRangeIndex];
+            int _start = currentRange.Start;
+            int _end = currentRange.End;
 
             // 혹시 모를 인덱스 초과 및 역전 현상 최종 방어
             if (_start < 0) _start = 0;
             if (_end >= drivingData.Count) _end = drivingData.Count - 1;
             if (_start > _end) _start = _end;
 
-            // 범위 내 보이는 프레임 수 계산 (이제 무조건 0 이상의 개수가 보장됩니다)
-            int _visibleInRange = Enumerable.Range(_start, _end - _start + 1)
-                                            .Count(i => !filteredHideSet.Contains(i));
+            // 수정한 값 객체에 실시간 업데이트 반영
+            currentRange.Start = _start;
+            currentRange.End = _end;
+
             int _startDisplayIdx = drivingData[_start].Index;
             int _endDisplayIdx = drivingData[_end].Index;
 
-            lblSelectedRange.Text = $"선택된 범위 ({_startDisplayIdx}, {_endDisplayIdx})";
+            // 라벨 텍스트 표현 가공 (예시: 구간 [1 / 3] 선택됨 (100, 450))
+            lblSelectedRange.Text = $"구간 [{activeRangeIndex + 1}/{selectedRanges.Count}] ({_startDisplayIdx}, {_endDisplayIdx})";
 
             // ── 타임라인 갱신 추가 ──
             pnlTimeStamp?.Invalidate();
@@ -1025,20 +1083,32 @@ namespace DataManager.UserControls
         {
             if (drivingData.Count == 0) return;
 
-            int _start = selectedRange.Item1;
-            int _end = selectedRange.Item2;
-
-            // 이전 임시 결과 중 해당 범위만 초기화
-            for (int _i = _start; _i <= _end; _i++)
+            // ── 다중 구간 예외 처리 ──
+            if (selectedRanges == null || selectedRanges.Count == 0)
             {
-                if (filteredFrameMap.TryGetValue(_i, out Bitmap _old))
+                ReportLog("경고", "선택된 구간이 없습니다. P 키를 눌러 전체 구간을 지정하거나 새로운 구간을 설정하세요.");
+                return;
+            }
+
+            // 1단계: 선택된 모든 구간들에 대해 '이전 임시 결과 초기화'를 먼저 수행
+            foreach (var range in selectedRanges)
+            {
+                int _start = range.Start;
+                int _end = range.End;
+
+                for (int _i = _start; _i <= _end; _i++)
                 {
-                    _old.Dispose();
-                    filteredFrameMap.Remove(_i);
+                    if (_i < 0 || _i >= drivingData.Count) continue; // 배열 인덱스 초과 방지
+
+                    if (filteredFrameMap.TryGetValue(_i, out Bitmap _old))
+                    {
+                        _old.Dispose();
+                        filteredFrameMap.Remove(_i);
+                    }
+                    filteredHideSet.Remove(_i);
+                    filteredInvertSet.Remove(_i);
+                    filteredGrayscaleSet.Remove(_i);
                 }
-                filteredHideSet.Remove(_i);
-                filteredInvertSet.Remove(_i);
-                filteredGrayscaleSet.Remove(_i);
             }
 
             bool _anyImageFilter = chkInverseColor.Checked
@@ -1046,59 +1116,81 @@ namespace DataManager.UserControls
                                 || chkSetBright.Checked
                                 || chkSetBlur.Checked;
 
-            for (int _i = _start; _i <= _end; _i++)
+            // 총 카운트 집계용 변수
+            int totalHiddenCount = 0;
+            int totalFilteredCount = 0;
+
+            // 2단계: 선택된 모든 구간들을 순회하며 필터 및 변환 작업 적용
+            foreach (var range in selectedRanges)
             {
-                var _frame = drivingData[_i];
+                int _start = range.Start;
+                int _end = range.End;
 
-                // ── [위치 변경] 이미지 변환 필터 상태(선) 먼저 기록 ─────────────────────
-                // 이렇게 하면 아래에서 이미지 제거(continue)를 만나더라도 타임라인 선은 정상적으로 기록됩니다.
-                if (chkApplyBlackWhite.Checked)
+                for (int _i = _start; _i <= _end; _i++)
                 {
-                    filteredGrayscaleSet.Add(_i);
+                    if (_i < 0 || _i >= drivingData.Count) continue; // 배열 인덱스 초과 방지
+
+                    var _frame = drivingData[_i];
+
+                    // ── 이미지 변환 필터 상태(선) 먼저 기록 ──
+                    if (chkApplyBlackWhite.Checked)
+                    {
+                        filteredGrayscaleSet.Add(_i);
+                    }
+                    if (chkInverseColor.Checked)
+                    {
+                        filteredInvertSet.Add(_i);
+                    }
+
+                    // ── 삭제(숨김) 필터 ──
+                    bool _shouldHide = false;
+
+                    if (chkDelThrottle.Checked && _frame.Throttle >= -(double)numLeftThrottle.Value && _frame.Throttle <= (double)numRightThrottle.Value)
+                    {
+                        filteredHideSet.Add(_i);
+                        _shouldHide = true;
+                    }
+                    if (chkDelAngle.Checked && _frame.Throttle >= -(double)numLeftAngle.Value && _frame.Throttle <= (double)numRightAngle.Value)
+                    {
+                        filteredHideSet.Add(_i);
+                        _shouldHide = true;
+                    }
+                    if (chkRemoveImage.Checked)
+                    {
+                        filteredHideSet.Add(_i);
+                        _shouldHide = true;
+                    }
+
+                    // 숨김 처리된 프레임이라면 건너뜀
+                    if (_shouldHide)
+                    {
+                        totalHiddenCount++;
+                        continue;
+                    }
+
+                    // ── 실제 이미지 변환 및 저장 ──
+                    if (!_anyImageFilter) continue;
+                    if (string.IsNullOrEmpty(_frame.ImagePath) || !File.Exists(_frame.ImagePath)) continue;
+
+                    try
+                    {
+                        Bitmap _bmp;
+                        using (var _src = new Bitmap(_frame.ImagePath))
+                            _bmp = new Bitmap(_src); // 원본 복사본
+
+                        if (chkApplyBlackWhite.Checked) _bmp = ApplyGrayscale(_bmp);
+                        if (chkInverseColor.Checked) _bmp = ApplyInvert(_bmp);
+                        if (chkSetBright.Checked) _bmp = ApplyBrightness(_bmp, trkSetBright.Value);
+                        if (chkSetBlur.Checked) _bmp = ApplyBlur(_bmp, trkSetBlur.Value);
+
+                        filteredFrameMap[_i] = _bmp;
+                        totalFilteredCount++;
+                    }
+                    catch
+                    {
+                        /* 이미지 변환 오류 시 예외 처리 */
+                    }
                 }
-                if (chkInverseColor.Checked)
-                {
-                    filteredInvertSet.Add(_i);
-                }
-
-                // ── 삭제(숨김) 필터 ───────────────────────────────────────────────
-                bool _shouldHide = false;
-
-                if (chkDelThrottle.Checked && _frame.Throttle >= -(double)numLeftThrottle.Value && _frame.Throttle <= (double)numRightThrottle.Value)
-                {
-                    filteredHideSet.Add(_i);
-                    _shouldHide = true;
-                }
-                if (chkDelAngle.Checked && _frame.Throttle >= -(double)numLeftAngle.Value && _frame.Throttle <= (double)numRightAngle.Value)
-                {
-                    filteredHideSet.Add(_i);
-                    _shouldHide = true;
-                }
-                if (chkRemoveImage.Checked)
-                {
-                    filteredHideSet.Add(_i);
-                    _shouldHide = true;
-                }
-
-                // 숨김 처리된 프레임이라면, 실제 이미지 변환(Bitmap 생성)은 건너뜁니다. (성능 최적화)
-                if (_shouldHide) continue;
-
-
-                // ── 실제 이미지 변환 및 저장 ───────────────────────────────────────
-                if (!_anyImageFilter) continue;
-                if (string.IsNullOrEmpty(_frame.ImagePath) || !File.Exists(_frame.ImagePath)) continue;
-
-                Bitmap _bmp;
-                using (var _src = new Bitmap(_frame.ImagePath))
-                    _bmp = new Bitmap(_src); // 원본 복사본
-
-                // 위에서 이미 선 데이터(Set)는 저장했으므로, 여기서는 순수 이미지 변환만 수행합니다.
-                if (chkApplyBlackWhite.Checked) _bmp = ApplyGrayscale(_bmp);
-                if (chkInverseColor.Checked) _bmp = ApplyInvert(_bmp);
-                if (chkSetBright.Checked) _bmp = ApplyBrightness(_bmp, trkSetBright.Value);
-                if (chkSetBlur.Checked) _bmp = ApplyBlur(_bmp, trkSetBlur.Value);
-
-                filteredFrameMap[_i] = _bmp;
             }
 
             UpdateChart();
@@ -1107,10 +1199,8 @@ namespace DataManager.UserControls
             // ── 타임라인 갱신 ──
             pnlTimeStamp?.Invalidate();
 
-            int _hiddenCount = filteredHideSet.Count(x => x >= _start && x <= _end);
-            int _filteredCount = filteredFrameMap.Count(x => x.Key >= _start && x.Key <= _end);
-            ReportLog("알림", $"필터 적용 완료 — 숨김: {_hiddenCount}개, 이미지 변환: {_filteredCount}개 " +
-                              $"(범위: {drivingData[_start].Index} ~ {drivingData[_end].Index})");
+            // 알림 로그 출력 (모든 선택 영역에 적용된 누적 개수 출력)
+            ReportLog("알림", $"필터 적용 완료 (총 {selectedRanges.Count}개 구간) — 숨김: {totalHiddenCount}개, 이미지 변환: {totalFilteredCount}개 완료");
         }
 
         private void btnCancelFillter_Click(object sender, EventArgs e)
@@ -1397,20 +1487,37 @@ namespace DataManager.UserControls
                 }
             }
 
-            // ── 기존 로직 1. 선택된 범위(Range) 그리기 (연한 파란색 투명 배경) ──
-            int startX = (int)((double)selectedRange.Item1 / (totalFrames - 1) * width);
-            int endX = (int)((double)selectedRange.Item2 / (totalFrames - 1) * width);
-            if (startX <= endX && endX > 0)
+            // ── [수정] 다중 구간 범위(Ranges) 그리기 ──
+            // 기존 selectedRange 변수 하나 대신 리스트(selectedRanges) 전체를 돕니다.
+            for (int i = 0; i < selectedRanges.Count; i++)
             {
-                using (SolidBrush rangeBrush = new SolidBrush(Color.FromArgb(120, 173, 216, 230)))
+                var range = selectedRanges[i];
+                int startX = (int)((double)range.Start / (totalFrames - 1) * width);
+                int endX = (int)((double)range.End / (totalFrames - 1) * width);
+
+                if (startX <= endX && endX > 0)
                 {
-                    g.FillRectangle(rangeBrush, startX, 0, Math.Max(1, endX - startX), height);
+                    // 현재 조작 중인 활성화된 구간(activeRangeIndex)은 조금 더 진하게, 
+                    // 나머지 구간들은 연하게 구분해서 그려줍니다. (기존 연한 파란색 계열 유지)
+                    int alpha = (i == activeRangeIndex) ? 140 : 60;
+                    Color rangeColor = Color.FromArgb(alpha, 100, 149, 237); // CornflowerBlue 기반 투명색
+
+                    using (SolidBrush rangeBrush = new SolidBrush(rangeColor))
+                    {
+                        g.FillRectangle(rangeBrush, startX, 0, Math.Max(1, endX - startX), height);
+                    }
+
+                    // (선택 사항) 구간 위에 번호(1, 2, 3...)를 작게 텍스트로 표시
+                    using (Font numFont = new Font("Arial", 9, FontStyle.Bold))
+                    {
+                        g.DrawString((i + 1).ToString(), numFont, Brushes.White, startX + 3, 5);
+                    }
                 }
             }
 
             // ── 필터 상태 표시 (회색을 더 진한 DimGray로 변경) ──
             using (Pen purplePen = new Pen(Color.FromArgb(255, 0, 128), 1))
-            using (Pen grayPen = new Pen(Color.DarkOrange, 1)) // ★ Color.Gray에서 Color.DimGray(진한 쥐색)로 변경
+            using (Pen grayPen = new Pen(Color.DarkOrange, 1))
             {
                 for (int i = 0; i < totalFrames; i++)
                 {
@@ -1450,22 +1557,75 @@ namespace DataManager.UserControls
                 g.DrawLine(playheadPen, currentX, 0, currentX, height);
             }
         }
+
+
         // ── [오류 해결] 마우스 다운(클릭) 이벤트 메서드 ──
         private void PnlTimeStamp_MouseDown(object sender, MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Left && drivingData != null && drivingData.Count > 0)
+            if (drivingData == null || drivingData.Count <= 1) return;
+
+            if (e.Button == MouseButtons.Left)
             {
+                // 1. 드래그 시작 플래그 켜기 (핵심 누락되었던 부분)
                 isDraggingTimeline = true;
-                MoveTimelineToPosition(e.X);
+
+                int width = pnlTimeStamp.Width;
+                int totalFrames = drivingData.Count;
+
+                // 클릭한 X 좌표를 프레임 인덱스로 역산
+                double ratio = (double)e.X / width;
+                int clickedFrame = (int)(ratio * (totalFrames - 1));
+                clickedFrame = Math.Max(0, Math.Min(clickedFrame, totalFrames - 1));
+
+                // 2. 클릭한 프레임이 이미 지정된 다중 구간 중 어디에 포함되어 있는지 검사
+                bool found = false;
+                if (selectedRanges != null && selectedRanges.Count > 0)
+                {
+                    for (int i = 0; i < selectedRanges.Count; i++)
+                    {
+                        if (clickedFrame >= selectedRanges[i].Start && clickedFrame <= selectedRanges[i].End)
+                        {
+                            activeRangeIndex = i; // 해당 구간을 활성화
+                            found = true;
+                            ReportLog("알림", $"구간 {i + 1}이 선택되었습니다.");
+                            break;
+                        }
+                    }
+                }
+
+                // 구간 내부 클릭이 아니라면 현재 재생 위치를 클릭한 곳으로 변경
+                currentFrameIndex = clickedFrame;
+
+                // 화면 갱신
+                UpdateRangeLabel();
+                DisplayFrame(currentFrameIndex, direction: 0);
+                pnlTimeStamp.Invalidate();
             }
         }
 
         // ── [오류 해결] 마우스 무브(드래그) 이벤트 메서드 ──
         private void PnlTimeStamp_MouseMove(object sender, MouseEventArgs e)
         {
-            if (isDraggingTimeline && drivingData != null && drivingData.Count > 0)
+            // 마우스를 꾹 누른 채 움직이고 있을 때만 작동
+            if (isDraggingTimeline && drivingData != null && drivingData.Count > 1)
             {
-                MoveTimelineToPosition(e.X);
+                int width = pnlTimeStamp.Width;
+                int totalFrames = drivingData.Count;
+
+                // 마우스의 현재 X 좌표를 프레임 인덱스로 실시간 계산
+                double ratio = (double)e.X / width;
+                int targetFrame = (int)(ratio * (totalFrames - 1));
+                targetFrame = Math.Max(0, Math.Min(targetFrame, totalFrames - 1));
+
+                // 프레임 위치가 실제로 바뀔 때만 화면을 새로 그려 성능 최적화
+                if (currentFrameIndex != targetFrame)
+                {
+                    currentFrameIndex = targetFrame;
+
+                    // 이미지 및 화면 갱신 (지연 없도록 0 방향 전달)
+                    DisplayFrame(currentFrameIndex, direction: 0);
+                    pnlTimeStamp.Invalidate();
+                }
             }
         }
 
@@ -1474,6 +1634,7 @@ namespace DataManager.UserControls
         {
             if (e.Button == MouseButtons.Left)
             {
+                // 마우스를 떼면 드래그 상태 해제
                 isDraggingTimeline = false;
             }
         }
@@ -1522,7 +1683,6 @@ namespace DataManager.UserControls
                 if (keyCode == Keys.S) // Ctrl + Shift + S : 저장 경로 지정
                 {
                     btnSaveRoute_Click(this, EventArgs.Empty);
-
                     return true;
                 }
             }
@@ -1541,7 +1701,6 @@ namespace DataManager.UserControls
                 }
             }
 
-
             // 2. [신규] Ctrl 조합키 처리
             if (modifiers == Keys.Control)
             {
@@ -1552,15 +1711,11 @@ namespace DataManager.UserControls
                         return true;
 
                     case Keys.S: // Ctrl + S : 데이터 저장
-
                         btnSaveData_Click(this, EventArgs.Empty);
-
                         return true;
 
                     case Keys.Delete: // Ctrl + Delete : 폴더 삭제 (안전장치)
-
                         btnDelFolder_Click(this, EventArgs.Empty);
-
                         return true;
                 }
             }
@@ -1570,24 +1725,51 @@ namespace DataManager.UserControls
             {
                 switch (keyCode)
                 {
+                    // ── [신규 추가] M 키: 현재 재생 바(currentFrameIndex)가 위치한 구간 제거 ──
+                    case Keys.M:
+                        if (drivingData == null || drivingData.Count == 0) return true;
+
+                        int removeIndex = -1;
+                        // 현재 재생 위치가 포함된 구간의 인덱스 찾기
+                        for (int i = 0; i < selectedRanges.Count; i++)
+                        {
+                            if (currentFrameIndex >= selectedRanges[i].Start && currentFrameIndex <= selectedRanges[i].End)
+                            {
+                                removeIndex = i;
+                                break;
+                            }
+                        }
+
+                        if (removeIndex != -1)
+                        {
+                            selectedRanges.RemoveAt(removeIndex);
+
+                            // 포커스 인덱스 재조정
+                            if (selectedRanges.Count == 0) activeRangeIndex = -1;
+                            else activeRangeIndex = Math.Max(0, removeIndex - 1);
+
+                            UpdateRangeLabel();
+                            pnlTimeStamp?.Invalidate();
+                            ReportLog("알림", $"구간 [{removeIndex + 1}]을 삭제했습니다.");
+                        }
+                        else
+                        {
+                            ReportLog("알림", "현재 재생 위치에 삭제할 구간이 없습니다.");
+                        }
+                        return true;
+
                     // 데이터 편집 제어 (U: 적용, I: 취소, O: 초기화)
                     case Keys.U:
-
                         btnApplyFillter_Click(this, EventArgs.Empty);
-                        
                         return true;
                     case Keys.I:
-
                         btnCancelFillter_Click(this, EventArgs.Empty);
-                        
                         return true;
                     case Keys.O:
-
                         btnInitFillterSet_Click(this, EventArgs.Empty);
-                        
                         return true;
 
-                    // [변경 사항] 방향키 위/아래 -> 재생 속도 조절 (숫자 1, 2 대체)
+                    // 방향키 위/아래 -> 재생 속도 조절
                     case Keys.Up: // 위쪽 방향키 : 재생 속도 빠르게
                         if (comboBox1 != null && comboBox1.SelectedIndex < comboBox1.Items.Count - 1)
                         {
@@ -1610,8 +1792,6 @@ namespace DataManager.UserControls
                         btnFrameRight_Click(this, EventArgs.Empty);
                         return true;
 
-                    
-
                     // 재생 / 정지 (스페이스바)
                     case Keys.Space:
                         btnPlay_Click(this, EventArgs.Empty);
@@ -1622,19 +1802,82 @@ namespace DataManager.UserControls
                         btnRangePlay_Click(this, EventArgs.Empty);
                         return true;
 
-                    // 왼쪽, 오른쪽 구간 선택 ([ , ] 키)
-                    case Keys.OemOpenBrackets:
-                        btnLeftRange_Click(this, EventArgs.Empty);
-                        return true;
-                    case Keys.OemCloseBrackets:
-                        btnRightRange_Click(this, EventArgs.Empty);
-                        return true;
-
                     // 전체 선택 (P 키)
                     case Keys.P:
                         btnAllRange_Click(this, EventArgs.Empty);
                         return true;
                 }
+
+                // [ : 왼쪽 구간 설정 (새 구간 생성 또는 기존 구간 수정)
+                if (keyData == Keys.OemOpenBrackets) // '[' 키
+                {
+                    if (drivingData == null || drivingData.Count == 0) return true;
+
+                    // 활성화된 구간이 없거나 새로 만들어야 하는 타이밍이라면 추가
+                    if (activeRangeIndex == -1 || selectedRanges.Count == 0)
+                    {
+                        selectedRanges.Add(new RangeSegment(currentFrameIndex, currentFrameIndex));
+                        activeRangeIndex = selectedRanges.Count - 1;
+                        ReportLog("알림", $"새로운 구간({activeRangeIndex + 1})의 시작점을 설정했습니다.");
+                    }
+                    else
+                    {
+                        selectedRanges[activeRangeIndex].Start = currentFrameIndex;
+                        ReportLog("알림", $"구간({activeRangeIndex + 1})의 시작점을 수정했습니다.");
+                    }
+
+                    // [추가] 시작점 조정에 따른 자동 구간 병합 수행
+                    MergeOverlappingRanges();
+                    UpdateRangeLabel();
+                    pnlTimeStamp?.Invalidate();
+                    return true;
+                }
+
+                // ] : 오른쪽 구간 설정
+                if (keyData == Keys.OemCloseBrackets) // ']' 키
+                {
+                    if (drivingData == null || drivingData.Count == 0 || activeRangeIndex == -1) return true;
+
+                    var currentRange = selectedRanges[activeRangeIndex];
+                    if (currentFrameIndex >= currentRange.Start)
+                    {
+                        currentRange.End = currentFrameIndex;
+                        ReportLog("알림", $"구간({activeRangeIndex + 1})의 종료점을 설정했습니다.");
+                    }
+                    else
+                    {
+                        ReportLog("경고", "종료점은 시작점보다 뒤에 있어야 합니다.");
+                    }
+
+                    // [추가] 종료점 조정에 따른 자동 구간 병합 수행
+                    MergeOverlappingRanges();
+                    UpdateRangeLabel();
+                    pnlTimeStamp?.Invalidate();
+                    return true;
+                }
+
+                // N : 새로운 구간 추가 모드로 전환
+                if (keyData == Keys.N)
+                {
+                    activeRangeIndex = -1; // 인덱스를 초기화하여 다음 '['를 누를 때 새 구간이 생성되도록 유도
+                    ReportLog("알림", "새 구간 생성 대기 상태입니다. '[' 키를 눌러 시작점을 지정하세요.");
+                    return true;
+                }
+
+                // Delete : 현재 활성화된 구간 삭제 (기존 기능 유지)
+                if (keyData == Keys.Delete)
+                {
+                    if (activeRangeIndex >= 0 && activeRangeIndex < selectedRanges.Count)
+                    {
+                        selectedRanges.RemoveAt(activeRangeIndex);
+                        activeRangeIndex = selectedRanges.Count - 1; // 마지막 구간으로 포커스 이동
+                        ReportLog("알림", "선택된 구간을 삭제했습니다.");
+                        pnlTimeStamp?.Invalidate();
+                    }
+                    return true;
+                }
+
+                return base.ProcessCmdKey(ref msg, keyData);
             }
 
             return base.ProcessCmdKey(ref msg, keyData);
@@ -1648,14 +1891,17 @@ namespace DataManager.UserControls
             sb.AppendLine("• Space\t\t: 재생 / 정지");
             sb.AppendLine("• ← / →\t\t: 1프레임 이동");
             sb.AppendLine("• Shift + ← / →\t: 5프레임 이동");
-            sb.AppendLine("• ↑ / ↓\t\t: 재생 속도 빠르게 / 느리게 (0.5x ~ 4.0x)"); // 변경됨
+            sb.AppendLine("• ↑ / ↓\t\t: 재생 속도 빠르게 / 느리게 (0.5x ~ 4.0x)");
             sb.AppendLine();
 
             sb.AppendLine("🎬 [구간 선택 및 재생]");
-            sb.AppendLine("• [\t\t: 왼쪽 구간(시작점) 선택");
-            sb.AppendLine("• ]\t\t: 오른쪽 구간(끝점) 선택");
-            sb.AppendLine("• P\t\t: 전체 구간 선택");
-            sb.AppendLine("• Tab\t\t: 선택 구간만 반복 재생");
+            sb.AppendLine("• [\t\t: 활성 구간의 시작점(왼쪽) 설정");
+            sb.AppendLine("• ]\t\t: 활성 구간의 끝점(오른쪽) 설정");
+            sb.AppendLine("• N\t\t: 새로운 구간 추가 준비 (인덱스 초기화)"); // ★ 추가됨
+            sb.AppendLine("• M\t\t: 현재 재생 바 위치의 구간 삭제");        // ★ 추가됨
+            sb.AppendLine("• Delete\t\t: 마지막으로 조작한 활성 구간 삭제");
+            sb.AppendLine("• P\t\t: 전체 구간을 하나의 영역으로 선택");
+            sb.AppendLine("• Tab\t\t: 현재 선택된(활성) 구간만 반복 재생");
             sb.AppendLine();
 
             sb.AppendLine("✏️ [데이터 값 편집]");
@@ -1680,6 +1926,46 @@ namespace DataManager.UserControls
             // 이전 답변에서 만든 단축키 가이드 메서드 호출
             ShowShortcutGuide();
         }
+
+        private void MergeOverlappingRanges()
+        {
+            if (selectedRanges == null || selectedRanges.Count <= 1) return;
+
+            // 1. 시작점(Start) 기준으로 오름차순 정렬
+            var sorted = selectedRanges.OrderBy(r => r.Start).ToList();
+            var merged = new List<RangeSegment>();
+
+            var current = sorted[0];
+            merged.Add(current);
+
+            for (int i = 1; i < sorted.Count; i++)
+            {
+                var next = sorted[i];
+
+                // 현재 구간의 끝점(End)이 다음 구간의 시작점(Start) 이상이면 서로 겹쳐있는 상태
+                if (current.End >= next.Start)
+                {
+                    // 더 먼 끝점 좌표를 선택하여 확장 병합
+                    current.End = Math.Max(current.End, next.End);
+                }
+                else
+                {
+                    // 겹치지 않으면 분리된 독립 구간으로 보고 리스트에 추가
+                    current = next;
+                    merged.Add(current);
+                }
+            }
+
+            // 2. 병합된 최신 결과를 원본 리스트에 대입
+            selectedRanges = merged;
+
+            // 3. 현재 포커싱된 activeRangeIndex가 배열 인덱스 에러가 안 나도록 상한선 재설정
+            if (activeRangeIndex >= selectedRanges.Count)
+            {
+                activeRangeIndex = selectedRanges.Count - 1;
+            }
+        }
+
 
     }
 }
