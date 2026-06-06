@@ -118,7 +118,7 @@ namespace DataManager.Services.ModelDriving.Service
                         }
                         else if (modeInfo.Contains("3D") || modeInfo.Contains("입체"))
                         {
-                            _donkeyTypeArgument = "tflite_linear";
+                            _donkeyTypeArgument = "tflite_3D";
                             _isStereoCamera = true;
                             DetectedModelType = "입체 시각 주행 (3D)";
                         }

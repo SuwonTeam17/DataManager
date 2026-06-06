@@ -75,7 +75,7 @@ namespace DataManager.UserControls
             btnDrive.BackColor = Color.FromArgb(72, 175, 120); // 기본 초록색 복원
             btnDrive.ForeColor = Color.White;
 
-            lblLoadedModel.Text = "tflite 파일을 선택해주세요";
+            lblLoadedModel.Text = "선택된 모델 가중치 파일 없음";
 
             // 요구사항 인터페이스 순서 잠금 ([모델 가져오기] 버튼 활성화)
             btnLoadModel.Enabled = true;
