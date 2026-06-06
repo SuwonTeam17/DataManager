@@ -134,6 +134,16 @@ namespace DataManager.UserControls
                         // 서비스 내부의 가중치 경로 셋팅 및 meta.txt 자동 파싱 수행
                         _drivingService.LoadOrChangeModel(selectedFilePath);
 
+                        // 3D 모델 선택 시 즉시 경고
+                        if (_drivingService.DetectedModelType.Contains("3D") || _drivingService.DetectedModelType.Contains("입체"))
+                        {
+                            ReportLog("경고", "3D 모델은 현재 시뮬레이터 환경에서 실행이 지원되지 않습니다. 다른 모델을 선택해주세요.");
+                            lblLoadedModel.Text = $"⚠ 지원 불가: {fileName}";
+                            btnStartSim.Enabled = false;   // 다음 단계 진행 차단
+                            btnLoadModel.Enabled = true;   // 재선택 허용
+                            return;
+                        }
+
                         lblLoadedModel.Text = $"로드됨: {fileName}";
 
                         // [핵심 해결책] 모델 선택 성공 시, 초기화 전까지 재선택할 수 없도록 버튼을 잠급니다.

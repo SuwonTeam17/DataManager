@@ -116,12 +116,6 @@ namespace DataManager.Services.ModelDriving.Service
                             _donkeyTypeArgument = "tflite_inferred";
                             DetectedModelType = "추론형 주행 (Inferred)";
                         }
-                        else if (modeInfo.Contains("3D") || modeInfo.Contains("입체"))
-                        {
-                            _donkeyTypeArgument = "tflite_3D";
-                            _isStereoCamera = true;
-                            DetectedModelType = "입체 시각 주행 (3D)";
-                        }
                     }
                 }
             }
