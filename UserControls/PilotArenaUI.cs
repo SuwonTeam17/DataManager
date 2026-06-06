@@ -256,6 +256,12 @@ namespace DataManager.UserControls
             }
         }
 
+        private void BtnResetTransform_Click(object? sender, EventArgs e)
+        {
+            trkBright.Value = 0;
+            trkBlur.Value = 0;
+        }
+
         private void TrkTransform_ValueChanged(object? sender, EventArgs e)
         {
             lblBright.Text = $"밝기 : {trkBright.Value}";

@@ -29,6 +29,7 @@
             lblBlur = new Label();
             trkBright = new TrackBar();
             lblBright = new Label();
+            btnResetTransform = new Button();
             trkProgress = new TrackBar();
             lblSpeed = new Label();
             flpModule = new Panel();
@@ -55,7 +56,7 @@
             btnPlay.FlatStyle = FlatStyle.Flat;
             btnPlay.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnPlay.ForeColor = Color.White;
-            btnPlay.Location = new Point(720, 4);
+            btnPlay.Location = new Point(839, 4);
             btnPlay.Name = "btnPlay";
             btnPlay.Size = new Size(70, 30);
             btnPlay.TabIndex = 11;
@@ -70,7 +71,7 @@
             btn5FrameRight.FlatStyle = FlatStyle.Flat;
             btn5FrameRight.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btn5FrameRight.ForeColor = Color.White;
-            btn5FrameRight.Location = new Point(664, 4);
+            btn5FrameRight.Location = new Point(783, 4);
             btn5FrameRight.Name = "btn5FrameRight";
             btn5FrameRight.Size = new Size(52, 30);
             btn5FrameRight.TabIndex = 10;
@@ -85,7 +86,7 @@
             btn5FrameLeft.FlatStyle = FlatStyle.Flat;
             btn5FrameLeft.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btn5FrameLeft.ForeColor = Color.White;
-            btn5FrameLeft.Location = new Point(552, 4);
+            btn5FrameLeft.Location = new Point(671, 4);
             btn5FrameLeft.Name = "btn5FrameLeft";
             btn5FrameLeft.Size = new Size(52, 30);
             btn5FrameLeft.TabIndex = 9;
@@ -100,7 +101,7 @@
             btnFrameRight.FlatStyle = FlatStyle.Flat;
             btnFrameRight.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnFrameRight.ForeColor = Color.White;
-            btnFrameRight.Location = new Point(608, 4);
+            btnFrameRight.Location = new Point(727, 4);
             btnFrameRight.Name = "btnFrameRight";
             btnFrameRight.Size = new Size(52, 30);
             btnFrameRight.TabIndex = 8;
@@ -115,7 +116,7 @@
             btnFrameLeft.FlatStyle = FlatStyle.Flat;
             btnFrameLeft.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnFrameLeft.ForeColor = Color.White;
-            btnFrameLeft.Location = new Point(496, 4);
+            btnFrameLeft.Location = new Point(615, 4);
             btnFrameLeft.Name = "btnFrameLeft";
             btnFrameLeft.Size = new Size(52, 30);
             btnFrameLeft.TabIndex = 7;
@@ -132,6 +133,7 @@
             pnlSetting.Controls.Add(lblBlur);
             pnlSetting.Controls.Add(trkBright);
             pnlSetting.Controls.Add(lblBright);
+            pnlSetting.Controls.Add(btnResetTransform);
             pnlSetting.Controls.Add(trkProgress);
             pnlSetting.Controls.Add(lblPilotTest);
             pnlSetting.Controls.Add(btnPlay);
@@ -170,7 +172,7 @@
             comboBox1.Font = new Font("맑은 고딕", 9.5F);
             comboBox1.FormattingEnabled = true;
             comboBox1.Items.AddRange(new object[] { "0.25", "0.50", "1.00", "2.00", "3.00", "5.00", "10.00" });
-            comboBox1.Location = new Point(534, 38);
+            comboBox1.Location = new Point(643, 38);
             comboBox1.Name = "comboBox1";
             comboBox1.Size = new Size(62, 25);
             comboBox1.TabIndex = 19;
@@ -198,7 +200,7 @@
             trkBlur.LargeChange = 1;
             trkBlur.Location = new Point(310, 10);
             trkBlur.Name = "trkBlur";
-            trkBlur.Size = new Size(184, 22);
+            trkBlur.Size = new Size(154, 22);
             trkBlur.TabIndex = 17;
             trkBlur.TickStyle = TickStyle.None;
             // 
@@ -219,7 +221,7 @@
             trkBright.LargeChange = 1;
             trkBright.Location = new Point(310, 42);
             trkBright.Name = "trkBright";
-            trkBright.Size = new Size(184, 22);
+            trkBright.Size = new Size(154, 22);
             trkBright.TabIndex = 15;
             trkBright.TickStyle = TickStyle.None;
             // 
@@ -234,11 +236,27 @@
             lblBright.Text = "밝기 : 0.00";
             lblBright.TextAlign = ContentAlignment.MiddleRight;
             // 
+            // btnResetTransform
+            // 
+            btnResetTransform.BackColor = Color.FromArgb(140, 100, 185);
+            btnResetTransform.Cursor = Cursors.Hand;
+            btnResetTransform.FlatAppearance.BorderSize = 0;
+            btnResetTransform.FlatStyle = FlatStyle.Flat;
+            btnResetTransform.Font = new Font("맑은 고딕", 8.5F, FontStyle.Bold);
+            btnResetTransform.ForeColor = Color.White;
+            btnResetTransform.Location = new Point(467, 34);
+            btnResetTransform.Name = "btnResetTransform";
+            btnResetTransform.Size = new Size(105, 30);
+            btnResetTransform.TabIndex = 22;
+            btnResetTransform.Text = "변경사항 초기화";
+            btnResetTransform.UseVisualStyleBackColor = false;
+            btnResetTransform.Click += BtnResetTransform_Click;
+            // 
             // trkProgress
             // 
             trkProgress.AutoSize = false;
             trkProgress.LargeChange = 1;
-            trkProgress.Location = new Point(602, 38);
+            trkProgress.Location = new Point(704, 38);
             trkProgress.Name = "trkProgress";
             trkProgress.Size = new Size(213, 22);
             trkProgress.TabIndex = 13;
@@ -249,7 +267,7 @@
             lblSpeed.AutoSize = true;
             lblSpeed.Font = new Font("맑은 고딕", 9.5F);
             lblSpeed.ForeColor = Color.FromArgb(60, 72, 92);
-            lblSpeed.Location = new Point(496, 42);
+            lblSpeed.Location = new Point(605, 42);
             lblSpeed.Name = "lblSpeed";
             lblSpeed.Size = new Size(34, 17);
             lblSpeed.TabIndex = 20;
@@ -303,5 +321,6 @@
         private Label lblSpeed;
         private ComboBox comboBox1;
         private Button btnLoadTub;
+        private Button btnResetTransform;
     }
 }
