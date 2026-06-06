@@ -135,7 +135,7 @@ namespace DataManager.UserControls
                         _drivingService.LoadOrChangeModel(selectedFilePath);
 
                         // 3D 모델 선택 시 즉시 경고
-                        if (_drivingService.DetectedModelType.Contains("3D") || _drivingService.DetectedModelType.Contains("입체"))
+                        if (_drivingService.DetectedModelType.Contains("3D"))
                         {
                             ReportLog("경고", "3D 모델은 현재 시뮬레이터 환경에서 실행이 지원되지 않습니다. 다른 모델을 선택해주세요.");
                             lblLoadedModel.Text = $"⚠ 지원 불가: {fileName}";

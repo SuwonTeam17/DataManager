@@ -5,31 +5,51 @@ using System.IO;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+
 namespace DataManager.Services.DataCollection.Services
 {
     public class CameraService
     {
-        // 표시용 — Bitmap
         public event Action<Bitmap> OnFrameReceived;
-        // 저장용 — 원본 JPEG 바이트 (재인코딩 없이 그대로 저장)
         public event Action<byte[]> OnRawFrameReceived;
+
         private CancellationTokenSource _cts;
-        private static readonly HttpClient _http = new HttpClient
-        {
-            Timeout = System.Threading.Timeout.InfiniteTimeSpan
-        };
+        private Task _streamTask;
+
+        // static 제거 — 인스턴스마다 독립적인 HttpClient
+        private HttpClient _http;
+
         public void ProcessMessage(string json) { }
+
         public void StartStream(string url = "http://localhost:8887/video")
         {
-            StopStream();
+            StopStream(); // 이전 스트림 완전 종료 대기
+
+            // HttpClient도 새로 생성 (이전 연결 상태 완전 초기화)
+            _http = new HttpClient
+            {
+                Timeout = System.Threading.Timeout.InfiniteTimeSpan
+            };
+
             _cts = new CancellationTokenSource();
-            Task.Run(() => ReadMjpegStream(url, _cts.Token));
+            _streamTask = Task.Run(() => ReadMjpegStream(url, _cts.Token));
         }
+
         public void StopStream()
         {
             _cts?.Cancel();
+
+            // 이전 스트림 Task가 완전히 끝날 때까지 대기 (최대 2초)
+            try { _streamTask?.Wait(2000); } catch { }
+
             _cts = null;
+            _streamTask = null;
+
+            // HttpClient 정리
+            _http?.Dispose();
+            _http = null;
         }
+
         private async Task ReadMjpegStream(string url, CancellationToken token)
         {
             try
@@ -39,6 +59,7 @@ namespace DataManager.Services.DataCollection.Services
                 using var stream = await response.Content.ReadAsStreamAsync();
                 var accumulator = new List<byte>(1024 * 512);
                 var readBuffer = new byte[8192];
+
                 while (!token.IsCancellationRequested)
                 {
                     int bytesRead = await stream.ReadAsync(
@@ -55,6 +76,7 @@ namespace DataManager.Services.DataCollection.Services
                 System.Diagnostics.Debug.WriteLine($"[CAM] 오류: {ex.Message}");
             }
         }
+
         private void ExtractFrames(List<byte> buf)
         {
             while (true)
@@ -66,6 +88,7 @@ namespace DataManager.Services.DataCollection.Services
                     { start = i; break; }
                 }
                 if (start == -1) { buf.Clear(); break; }
+
                 int end = -1;
                 for (int i = start + 2; i < buf.Count - 1; i++)
                 {
@@ -73,16 +96,17 @@ namespace DataManager.Services.DataCollection.Services
                     { end = i + 1; break; }
                 }
                 if (end == -1) break;
+
                 int frameLen = end - start + 1;
                 byte[] frameRaw = new byte[frameLen];
                 buf.CopyTo(start, frameRaw, 0, frameLen);
                 buf.RemoveRange(0, end + 1);
-                // 원본 JPEG 바이트 그대로 전달 (저장용)
+
                 OnRawFrameReceived?.Invoke(frameRaw);
-                // Bitmap 변환 (표시용)
                 DecodeBitmap(frameRaw);
             }
         }
+
         private void DecodeBitmap(byte[] frameBytes)
         {
             try
