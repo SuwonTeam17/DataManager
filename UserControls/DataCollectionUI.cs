@@ -389,6 +389,7 @@ namespace DataManager.UserControls
                 _activeDataDir = newPath;
                 lblSelectedFolderRoute.Text = newPath;
                 chkRecording.Enabled = true;
+                UpdateDataPath(_activeDataDir);
 
                 // 로그 기록
                 ReportLog("알림", $"새 데이터 저장 폴더 생성 및 자동 지정 완료: {folderName}");
