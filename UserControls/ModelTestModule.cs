@@ -868,19 +868,29 @@ namespace DataManager.UserControls
         {
             float startX = w / 2f;
             float startY = h * 0.9f;
-            float length = h * (0.15f + 0.30f * (float)Math.Abs(throttle));
+            float length = h * (0.225f + 0.45f * (float)Math.Abs(throttle));
 
             double radians = angle * 45.0 * Math.PI / 180.0;
             float endX = startX + (float)(Math.Sin(radians) * length);
             float endY = startY - (float)(Math.Cos(radians) * length);
 
-            using var pen = new Pen(color, 4.5f) { EndCap = System.Drawing.Drawing2D.LineCap.Round, StartCap = System.Drawing.Drawing2D.LineCap.Round };
+            double lineAngle = Math.Atan2(endY - startY, endX - startX);
+            float arrowLen = 27f;
+            double spread = 25.0 * Math.PI / 180.0;
+
+            using var outline = new Pen(Color.FromArgb(color.A, Color.Black), 13f) { EndCap = System.Drawing.Drawing2D.LineCap.Round, StartCap = System.Drawing.Drawing2D.LineCap.Round };
+            g.DrawLine(outline, startX, startY, endX, endY);
+            g.DrawLine(outline, endX, endY,
+                endX - (float)(Math.Cos(lineAngle + spread) * arrowLen),
+                endY - (float)(Math.Sin(lineAngle + spread) * arrowLen));
+            g.DrawLine(outline, endX, endY,
+                endX - (float)(Math.Cos(lineAngle - spread) * arrowLen),
+                endY - (float)(Math.Sin(lineAngle - spread) * arrowLen));
+
+            using var pen = new Pen(color, 9f) { EndCap = System.Drawing.Drawing2D.LineCap.Round, StartCap = System.Drawing.Drawing2D.LineCap.Round };
             g.DrawLine(pen, startX, startY, endX, endY);
 
             // 화살촉
-            double lineAngle = Math.Atan2(endY - startY, endX - startX);
-            float arrowLen = 18f;
-            double spread = 25.0 * Math.PI / 180.0;
             g.DrawLine(pen, endX, endY,
                 endX - (float)(Math.Cos(lineAngle + spread) * arrowLen),
                 endY - (float)(Math.Sin(lineAngle + spread) * arrowLen));
