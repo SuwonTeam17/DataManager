@@ -386,10 +386,16 @@ namespace DataManager.UserControls
                     if (!frameImagePaths.TryGetValue(idx, out string? imgPath)) continue;
                     if (!File.Exists(imgPath)) continue;
 
-                    await _pythonStdin.WriteLineAsync(imgPath);
-                    await _pythonStdin.FlushAsync();
+                    // [핵심 보완] 루프 도중 '삭제/종료'로 인해 null이 되는 것을 방지하기 위해 지역 변수에 복사
+                    var stdin = _pythonStdin;
+                    var stdout = _pythonStdout;
+                    if (stdin == null || stdout == null) break;
 
-                    string? response = await _pythonStdout.ReadLineAsync();
+                    // 이제 전역 필드가 아닌, 안전하게 확보된 지역 변수(stdin)를 사용합니다.
+                    await stdin.WriteLineAsync(imgPath);
+                    await stdin.FlushAsync();
+
+                    string? response = await stdout.ReadLineAsync();
                     if (string.IsNullOrEmpty(response)) { _pythonReady = false; break; }
 
                     using var doc = JsonDocument.Parse(response);
@@ -736,10 +742,14 @@ namespace DataManager.UserControls
                     if (!frameImagePaths.TryGetValue(idx, out string? imgPath)) continue;
                     if (!File.Exists(imgPath)) continue;
 
-                    await _pythonStdin.WriteLineAsync(imgPath);
-                    await _pythonStdin.FlushAsync();
+                    var stdin = _pythonStdin;
+                    var stdout = _pythonStdout;
+                    if (stdin == null || stdout == null) break;
 
-                    string? response = await _pythonStdout.ReadLineAsync();
+                    await stdin.WriteLineAsync(imgPath);
+                    await stdin.FlushAsync();
+
+                    string? response = await stdout.ReadLineAsync();
                     if (string.IsNullOrEmpty(response))
                     {
                         _pythonReady = false;
