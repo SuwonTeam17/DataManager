@@ -2009,5 +2009,83 @@ namespace DataManager.UserControls
             }
         }
 
+        private void btnNew_Click(object sender, EventArgs e)
+        {
+            string _root = AppPaths.EditedData;
+            if (!Directory.Exists(_root))
+            {
+                Directory.CreateDirectory(_root);
+            }
+
+            // 새 폴더명을 입력받기 위한 커스텀 입력창 생성
+            using (Form _inputForm = new Form())
+            {
+                _inputForm.Width = 400;
+                _inputForm.Height = 150;
+                _inputForm.FormBorderStyle = FormBorderStyle.FixedDialog;
+                _inputForm.Text = "새 폴더 생성";
+                _inputForm.StartPosition = FormStartPosition.CenterParent;
+                _inputForm.MaximizeBox = false;
+                _inputForm.MinimizeBox = false;
+
+                Label _lblText = new Label() { Left = 20, Top = 20, Width = 350, Text = "생성할 새 폴더 이름을 입력하세요:" };
+                TextBox _txtInput = new TextBox() { Left = 20, Top = 45, Width = 340, Text = "" };
+                Button _btnOk = new Button() { Text = "확인", Left = 180, Width = 80, Top = 80, DialogResult = DialogResult.OK };
+                Button _btnCancel = new Button() { Text = "취소", Left = 280, Width = 80, Top = 80, DialogResult = DialogResult.Cancel };
+
+                _inputForm.Controls.Add(_lblText);
+                _inputForm.Controls.Add(_txtInput);
+                _inputForm.Controls.Add(_btnOk);
+                _inputForm.Controls.Add(_btnCancel);
+                _inputForm.AcceptButton = _btnOk;
+                _inputForm.CancelButton = _btnCancel;
+
+                if (_inputForm.ShowDialog() == DialogResult.OK)
+                {
+                    string _folderName = _txtInput.Text.Trim();
+                    if (string.IsNullOrEmpty(_folderName))
+                    {
+                        MessageBox.Show("폴더 이름을 입력해야 합니다.", "알림");
+                        return;
+                    }
+
+                    // 폴더명에 사용할 수 없는 특수문자 금지 및 치환
+                    foreach (char _c in Path.GetInvalidFileNameChars())
+                    {
+                        _folderName = _folderName.Replace(_c, '_');
+                    }
+
+                    string _finalNewFolderPath = Path.Combine(_root, _folderName);
+                    try
+                    {
+                        if (!Directory.Exists(_finalNewFolderPath))
+                        {
+                            Directory.CreateDirectory(_finalNewFolderPath);
+
+                            // 폴더 생성 후, 해당 폴더를 현재 저장 경로(targetSavePath)로 자동 지정
+                            targetSavePath = _finalNewFolderPath;
+                            if (lblSaveRoute != null)
+                            {
+                                lblSaveRoute.Text = $"[저장 경로] {_folderName}";
+                            }
+
+                            ReportLog("알림", $"새 폴더 생성 완료: {_folderName}");
+                            MessageBox.Show($"[{_folderName}] 폴더가 성공적으로 생성되고 저장 경로로 지정되었습니다.", "성공");
+                        }
+                        else
+                        {
+                            ReportLog("경고", "이미 존재하는 폴더 이름입니다.");
+                            MessageBox.Show("이미 존재하는 폴더 이름입니다. 다른 이름을 사용해주세요.", "알림");
+                        }
+                    }
+                    catch (Exception _ex)
+                    {
+                        ReportLog("오류", $"폴더 생성 실패: {_ex.Message}");
+                        MessageBox.Show($"폴더 생성 중 오류가 발생했습니다.\n{_ex.Message}", "오류");
+                    }
+                }
+            }
+        }
+
     }
 }

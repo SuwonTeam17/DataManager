@@ -29,6 +29,7 @@
             btnDelFolder = new Button();
             lblSaveRoute = new Label();
             pnlFile = new Panel();
+            btnNew = new Button();
             btnEx = new Button();
             chkSaveContinue = new CheckBox();
             pnlSetting = new Panel();
@@ -161,7 +162,7 @@
             btnSaveRoute.FlatStyle = FlatStyle.Flat;
             btnSaveRoute.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnSaveRoute.ForeColor = Color.White;
-            btnSaveRoute.Location = new Point(250, 3);
+            btnSaveRoute.Location = new Point(374, 5);
             btnSaveRoute.Name = "btnSaveRoute";
             btnSaveRoute.Size = new Size(110, 30);
             btnSaveRoute.TabIndex = 3;
@@ -195,7 +196,7 @@
             btnDelFolder.FlatStyle = FlatStyle.Flat;
             btnDelFolder.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnDelFolder.ForeColor = Color.White;
-            btnDelFolder.Location = new Point(162, 4);
+            btnDelFolder.Location = new Point(287, 5);
             btnDelFolder.Name = "btnDelFolder";
             btnDelFolder.Size = new Size(80, 30);
             btnDelFolder.TabIndex = 2;
@@ -208,15 +209,16 @@
             lblSaveRoute.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             lblSaveRoute.Font = new Font("맑은 고딕", 9F);
             lblSaveRoute.ForeColor = Color.FromArgb(120, 130, 150);
-            lblSaveRoute.Location = new Point(564, 5);
+            lblSaveRoute.Location = new Point(652, 5);
             lblSaveRoute.Name = "lblSaveRoute";
-            lblSaveRoute.Size = new Size(220, 30);
+            lblSaveRoute.Size = new Size(162, 30);
             lblSaveRoute.TabIndex = 4;
             lblSaveRoute.Text = "(현재 경로)";
             // 
             // pnlFile
             // 
             pnlFile.BackColor = Color.FromArgb(250, 251, 253);
+            pnlFile.Controls.Add(btnNew);
             pnlFile.Controls.Add(btnEx);
             pnlFile.Controls.Add(btnSaveData);
             pnlFile.Controls.Add(chkSaveContinue);
@@ -230,10 +232,27 @@
             pnlFile.Size = new Size(950, 40);
             pnlFile.TabIndex = 1;
             // 
+            // btnNew
+            // 
+            btnNew.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+            btnNew.BackColor = Color.FromArgb(72, 175, 120);
+            btnNew.Cursor = Cursors.Hand;
+            btnNew.FlatAppearance.BorderSize = 0;
+            btnNew.FlatStyle = FlatStyle.Flat;
+            btnNew.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnNew.ForeColor = Color.White;
+            btnNew.Location = new Point(161, 5);
+            btnNew.Name = "btnNew";
+            btnNew.Size = new Size(119, 30);
+            btnNew.TabIndex = 8;
+            btnNew.Text = "새 폴더 생성";
+            btnNew.UseVisualStyleBackColor = false;
+            btnNew.Click += btnNew_Click;
+            // 
             // btnEx
             // 
             btnEx.Font = new Font("Microsoft Sans Serif", 9F, FontStyle.Bold, GraphicsUnit.Point, 129);
-            btnEx.Location = new Point(366, 5);
+            btnEx.Location = new Point(497, 6);
             btnEx.Name = "btnEx";
             btnEx.Size = new Size(29, 27);
             btnEx.TabIndex = 7;
@@ -246,7 +265,7 @@
             chkSaveContinue.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             chkSaveContinue.Font = new Font("맑은 고딕", 9.5F);
             chkSaveContinue.ForeColor = Color.FromArgb(60, 72, 92);
-            chkSaveContinue.Location = new Point(416, 9);
+            chkSaveContinue.Location = new Point(538, 10);
             chkSaveContinue.Margin = new Padding(0);
             chkSaveContinue.Name = "chkSaveContinue";
             chkSaveContinue.Size = new Size(100, 22);
@@ -967,5 +986,6 @@
         private NumericUpDown numLeftAngle;
         private Button btnEx;
         private Button btnRangeDel;
+        private Button btnNew;
     }
 }
