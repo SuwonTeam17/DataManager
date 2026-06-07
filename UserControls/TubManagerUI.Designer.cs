@@ -33,6 +33,7 @@
             chkSaveContinue = new CheckBox();
             pnlSetting = new Panel();
             pnlSet = new Panel();
+            btnRangeDel = new Button();
             btnInitFillterSet = new Button();
             btnCancelFillter = new Button();
             btnApplyFillter = new Button();
@@ -267,6 +268,7 @@
             // pnlSet
             // 
             pnlSet.BackColor = Color.FromArgb(250, 251, 253);
+            pnlSet.Controls.Add(btnRangeDel);
             pnlSet.Controls.Add(btnInitFillterSet);
             pnlSet.Controls.Add(btnCancelFillter);
             pnlSet.Controls.Add(btnApplyFillter);
@@ -280,6 +282,23 @@
             pnlSet.Size = new Size(950, 44);
             pnlSet.TabIndex = 6;
             // 
+            // btnRangeDel
+            // 
+            btnRangeDel.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+            btnRangeDel.BackColor = Color.FromArgb(80, 140, 190);
+            btnRangeDel.Cursor = Cursors.Hand;
+            btnRangeDel.FlatAppearance.BorderSize = 0;
+            btnRangeDel.FlatStyle = FlatStyle.Flat;
+            btnRangeDel.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
+            btnRangeDel.ForeColor = Color.White;
+            btnRangeDel.Location = new Point(336, 7);
+            btnRangeDel.Name = "btnRangeDel";
+            btnRangeDel.Size = new Size(32, 27);
+            btnRangeDel.TabIndex = 9;
+            btnRangeDel.Text = "X\r\n";
+            btnRangeDel.UseVisualStyleBackColor = false;
+            btnRangeDel.Click += btnRangeDel_Click;
+            // 
             // btnInitFillterSet
             // 
             btnInitFillterSet.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
@@ -289,7 +308,7 @@
             btnInitFillterSet.FlatStyle = FlatStyle.Flat;
             btnInitFillterSet.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnInitFillterSet.ForeColor = Color.White;
-            btnInitFillterSet.Location = new Point(754, 7);
+            btnInitFillterSet.Location = new Point(784, 7);
             btnInitFillterSet.Name = "btnInitFillterSet";
             btnInitFillterSet.Size = new Size(160, 27);
             btnInitFillterSet.TabIndex = 8;
@@ -306,7 +325,7 @@
             btnCancelFillter.FlatStyle = FlatStyle.Flat;
             btnCancelFillter.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnCancelFillter.ForeColor = Color.White;
-            btnCancelFillter.Location = new Point(638, 7);
+            btnCancelFillter.Location = new Point(668, 7);
             btnCancelFillter.Name = "btnCancelFillter";
             btnCancelFillter.Size = new Size(110, 27);
             btnCancelFillter.TabIndex = 7;
@@ -323,7 +342,7 @@
             btnApplyFillter.FlatStyle = FlatStyle.Flat;
             btnApplyFillter.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
             btnApplyFillter.ForeColor = Color.White;
-            btnApplyFillter.Location = new Point(522, 7);
+            btnApplyFillter.Location = new Point(552, 7);
             btnApplyFillter.Name = "btnApplyFillter";
             btnApplyFillter.Size = new Size(110, 27);
             btnApplyFillter.TabIndex = 6;
@@ -336,9 +355,9 @@
             lblSelectedRange.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
             lblSelectedRange.Font = new Font("맑은 고딕", 9.5F);
             lblSelectedRange.ForeColor = Color.FromArgb(60, 72, 92);
-            lblSelectedRange.Location = new Point(336, 7);
+            lblSelectedRange.Location = new Point(374, 7);
             lblSelectedRange.Name = "lblSelectedRange";
-            lblSelectedRange.Size = new Size(180, 27);
+            lblSelectedRange.Size = new Size(171, 27);
             lblSelectedRange.TabIndex = 2;
             lblSelectedRange.Text = "선택된 범위 (0, 0)";
             lblSelectedRange.TextAlign = ContentAlignment.MiddleLeft;
@@ -947,5 +966,6 @@
         private NumericUpDown numRightAngle;
         private NumericUpDown numLeftAngle;
         private Button btnEx;
+        private Button btnRangeDel;
     }
 }

@@ -115,7 +115,7 @@ namespace DataManager.UserControls
             // 배속과 상관없이 타이머 주기는 60ms로 고정! (디스크 부하 방지)
             playTimer.Interval = 60;
 
-            
+
 
             comboBox1.SelectedIndexChanged += ComboBox1_SelectedIndexChanged;
             trkProgress.Scroll += TrkProgress_Scroll;
@@ -1050,7 +1050,7 @@ namespace DataManager.UserControls
             // 만약 등록된 구간이 하나도 없거나 포커스가 유효하지 않은 경우
             if (selectedRanges == null || selectedRanges.Count == 0 || activeRangeIndex == -1)
             {
-                lblSelectedRange.Text = "선택된 범위 없음 (단축키 N 또는 [ 키로 생성)";
+                lblSelectedRange.Text = "선택된 범위 없음";
                 pnlTimeStamp?.Invalidate();
                 return;
             }
@@ -1254,10 +1254,10 @@ namespace DataManager.UserControls
         {
             chtData.Series.Clear();
 
-            
+
             Series _angleSeries = new Series("각도") { ChartType = SeriesChartType.Line, BorderWidth = 2 };
-           
-            
+
+
             Series _throttleSeries = new Series("속도") { ChartType = SeriesChartType.Line, BorderWidth = 2 };
             _throttleSeries.Color = Color.FromArgb(72, 175, 120); // 노란색에서 초록색으로 변경
 
@@ -1687,6 +1687,13 @@ namespace DataManager.UserControls
                 }
             }
 
+            if (keyData == Keys.Delete)
+            {
+                // 이미 만들어둔 버튼 클릭 메서드를 수동으로 호출
+                btnRangeDel_Click(this, EventArgs.Empty);
+                return true;
+            }
+
             if (modifiers == Keys.Shift)
             {
                 switch (keyCode)
@@ -1966,6 +1973,41 @@ namespace DataManager.UserControls
             }
         }
 
+        private void btnRangeDel_Click(object sender, EventArgs e)
+        {
+            // 데이터가 없으면 무시
+            if (drivingData == null || drivingData.Count == 0) return;
+
+            // 현재 활성화(선택)된 구간이 유효한지 체크
+            if (activeRangeIndex >= 0 && activeRangeIndex < selectedRanges.Count)
+            {
+                int lastActiveIndex = activeRangeIndex;
+
+                // 활성 구간 삭제
+                selectedRanges.RemoveAt(activeRangeIndex);
+
+                // 삭제 후 포커스(선택 인덱스) 재조정
+                if (selectedRanges.Count == 0)
+                {
+                    activeRangeIndex = -1; // 구간이 하나도 없으면 포커스 해제
+                }
+                else
+                {
+                    // 마지막 구간으로 포커스 이동 (인덱스 초과 방지)
+                    activeRangeIndex = selectedRanges.Count - 1;
+                }
+
+                // 라벨 및 타임라인 그래픽 실시간 갱신
+                UpdateRangeLabel();
+                pnlTimeStamp?.Invalidate();
+
+                ReportLog("알림", $"구간 [{lastActiveIndex + 1}]을 삭제했습니다.");
+            }
+            else
+            {
+                ReportLog("경고", "삭제할 활성 구간이 선택되어 있지 않습니다. 타임라인을 클릭하여 구간을 선택해 주세요.");
+            }
+        }
 
     }
 }
