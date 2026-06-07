@@ -1728,39 +1728,7 @@ namespace DataManager.UserControls
             {
                 switch (keyCode)
                 {
-                    // ── [신규 추가] M 키: 현재 재생 바(currentFrameIndex)가 위치한 구간 제거 ──
-                    case Keys.M:
-                        if (drivingData == null || drivingData.Count == 0) return true;
-
-                        int removeIndex = -1;
-                        // 현재 재생 위치가 포함된 구간의 인덱스 찾기
-                        for (int i = 0; i < selectedRanges.Count; i++)
-                        {
-                            if (currentFrameIndex >= selectedRanges[i].Start && currentFrameIndex <= selectedRanges[i].End)
-                            {
-                                removeIndex = i;
-                                break;
-                            }
-                        }
-
-                        if (removeIndex != -1)
-                        {
-                            selectedRanges.RemoveAt(removeIndex);
-
-                            // 포커스 인덱스 재조정
-                            if (selectedRanges.Count == 0) activeRangeIndex = -1;
-                            else activeRangeIndex = Math.Max(0, removeIndex - 1);
-
-                            UpdateRangeLabel();
-                            pnlTimeStamp?.Invalidate();
-                            ReportLog("알림", $"구간 [{removeIndex + 1}]을 삭제했습니다.");
-                        }
-                        else
-                        {
-                            ReportLog("알림", "현재 재생 위치에 삭제할 구간이 없습니다.");
-                        }
-                        return true;
-
+                    
                     // 데이터 편집 제어 (U: 적용, I: 취소, O: 초기화)
                     case Keys.U:
                         btnApplyFillter_Click(this, EventArgs.Empty);
@@ -1901,7 +1869,6 @@ namespace DataManager.UserControls
             sb.AppendLine("• [\t\t: 활성 구간의 시작점(왼쪽) 설정");
             sb.AppendLine("• ]\t\t: 활성 구간의 끝점(오른쪽) 설정");
             sb.AppendLine("• N\t\t: 새로운 구간 추가 준비 (인덱스 초기화)"); // ★ 추가됨
-            sb.AppendLine("• M\t\t: 현재 재생 바 위치의 구간 삭제");        // ★ 추가됨
             sb.AppendLine("• Delete\t\t: 마지막으로 조작한 활성 구간 삭제");
             sb.AppendLine("• P\t\t: 전체 구간을 하나의 영역으로 선택");
             sb.AppendLine("• Tab\t\t: 현재 선택된(활성) 구간만 반복 재생");
