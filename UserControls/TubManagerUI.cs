@@ -107,15 +107,13 @@ namespace DataManager.UserControls
             playTimer.Tick += PlayTimer_Tick;
 
             // 배속을 직관적인 정수 형태로 선택할 수 있게 콤보박스 아이템 설정
-            // 0.50 배속 항목 추가
             comboBox1.Items.Clear();
-            comboBox1.Items.AddRange(new object[] { "0.50", "1.00", "2.00", "3.00", "4.00" });
+            // 5.00, 10.00, 20.00 배속 항목 추가
+            comboBox1.Items.AddRange(new object[] { "0.50", "1.00", "2.00", "3.00", "4.00", "5.00", "10.00", "20.00" });
             comboBox1.SelectedIndex = 1; // 기본값 1.00배속 위치
 
             // 배속과 상관없이 타이머 주기는 60ms로 고정! (디스크 부하 방지)
             playTimer.Interval = 60;
-
-
 
             comboBox1.SelectedIndexChanged += ComboBox1_SelectedIndexChanged;
             trkProgress.Scroll += TrkProgress_Scroll;
@@ -139,8 +137,6 @@ namespace DataManager.UserControls
                 // ⭐ [추가] 화면 확장/축소 시 타임라인을 다시 그리도록 이벤트 연결
                 pnlTimeStamp.Resize += PnlTimeStamp_Resize;
             }
-
-
         }
 
         private void btnFileLoad_Click(object sender, EventArgs e)
