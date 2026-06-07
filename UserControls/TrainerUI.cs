@@ -336,23 +336,51 @@ namespace DataManager.UserControls
             {
                 List<string> lines = File.ReadAllLines(filePath).ToList();
 
-                int markerIndex = lines.FindIndex(line => line.Contains("# --- GUI User Settings ---"));
-                if (markerIndex != -1)
+                // ==============================================================
+                // ⭐ 스마트 펜스(Fence) 방식 도입
+                // ==============================================================
+                int insertIndex = lines.Count; // 기본값은 파일 맨 밑
+
+                int startIndex = lines.FindIndex(line => line.Contains("# --- GUI User Settings START ---"));
+                int endIndex = lines.FindIndex(line => line.Contains("# --- GUI User Settings END ---"));
+
+                // 예전 불도저 마커가 남아있는지 확인 (START/END 단어가 없는 순수 마커)
+                int oldMarkerIndex = lines.FindIndex(line => line.Contains("# --- GUI User Settings ---") && !line.Contains("START") && !line.Contains("END"));
+
+                if (startIndex != -1 && endIndex != -1 && endIndex >= startIndex)
                 {
-                    lines.RemoveRange(markerIndex, lines.Count - markerIndex);
+                    // 1. 펜스가 이미 쳐져 있으면, 그 사이(GUI 설정)만 정확히 쏙 빼냅니다.
+                    lines.RemoveRange(startIndex, endIndex - startIndex + 1);
+                    insertIndex = startIndex; // 지운 자리를 기억해둡니다.
+                }
+                else if (oldMarkerIndex != -1)
+                {
+                    // 2. 예전 방식의 마커만 있다면, 마지막으로 하단을 지우고 업그레이드 준비를 합니다.
+                    lines.RemoveRange(oldMarkerIndex, lines.Count - oldMarkerIndex);
+                    insertIndex = oldMarkerIndex;
                 }
 
-                lines.Add("# --- GUI User Settings ---");
+                // 3. 지운 자리에 들어갈 '안전한 펜스가 쳐진 새 설정 블록'을 만듭니다.
+                List<string> newBlock = new List<string>
+                {
+                    "# --- GUI User Settings START ---"
+                };
                 foreach (var setting in userSettings)
                 {
-                    lines.Add($"{setting.Key} = {setting.Value}");
+                    newBlock.Add($"{setting.Key} = {setting.Value}");
                 }
+                newBlock.Add("# --- GUI User Settings END ---");
+
+                // 4. 기억해둔 원래 자리에 아래쪽 코드(조기 종료 스위치 등) 상처 없이 쏙 끼워넣습니다.
+                lines.InsertRange(insertIndex, newBlock);
+                // ==============================================================
 
                 File.WriteAllLines(filePath, lines);
 
                 // 2. 저장 성공 시 메인 폼의 로그박스 원격 호출
                 ReportLog("알림", "myconfig.py 파일에 새로운 설정값을 성공적으로 저장했습니다.");
             }
+            // ... (catch 블록은 기존과 완벽히 동일하게 두시면 됩니다!) ...
             catch (Exception ex)
             {
                 // 1. 개발자용: 나중에 디버깅을 위해 상세한 예외 전체 경로를 기록합니다.
@@ -669,6 +697,37 @@ namespace DataManager.UserControls
                 transferCommand = $" --transfer \"{targetTransferPath}\"";
                 curTransfer = selectedBaseModel;
             }
+
+            // ==============================================================
+            // ⭐ [여기서부터 추가!] 6. 조기 종료(Early Stop) 컨트롤 스위치 작동
+            // ==============================================================
+            string configPath = Path.Combine(mycarPath, "myconfig.py");
+            if (File.Exists(configPath))
+            {
+                try
+                {
+                    string configText = File.ReadAllText(configPath);
+
+                    // UI에 만드신 체크박스 이름(chkEarlyStop)에 맞게 수정해주세요!
+                    if (chkEarlyStop.Checked)
+                    {
+                        configText = configText.Replace("DISABLE_EARLY_STOP = False", "DISABLE_EARLY_STOP = True");
+                    }
+                    else
+                    {
+                        configText = configText.Replace("DISABLE_EARLY_STOP = True", "DISABLE_EARLY_STOP = False");
+                    }
+
+                    File.WriteAllText(configPath, configText);
+                }
+                catch (Exception ex)
+                {
+                    ReportLog("경고", $"myconfig.py 파일 수정 실패: {ex.Message}");
+                }
+            }
+            // ==============================================================
+            // ⭐ [여기까지 추가!]
+            // ==============================================================
 
             string cudaCommand = rdoUseCPU.Checked
                 ? "set CUDA_VISIBLE_DEVICES=-1 && set DML_VISIBLE_DEVICES=-1 && "
