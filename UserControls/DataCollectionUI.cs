@@ -27,6 +27,9 @@ namespace DataManager.UserControls
 
         private string _activeDataDir = "";
 
+        private Panel _logPanel;
+        private RichTextBox _logBox;
+
         private string SimPath => System.IO.Path.Combine(DonkeyRoot, @"DonkeySimWin\donkey_sim.exe");
         private string PythonExe => System.IO.Path.Combine(DonkeyRoot, @"env\Scripts\python.exe");
         private string MycarDir => System.IO.Path.Combine(DonkeyRoot, @"mycar");
@@ -43,6 +46,7 @@ namespace DataManager.UserControls
             InitializeComponent();
             InitDirectionBars();
             InitJoystick();
+            BuildLogPanel();
 
             // 서비스 이벤트 연결
             _connectionService.OnRawMessage += _cameraService.ProcessMessage;
@@ -160,6 +164,67 @@ namespace DataManager.UserControls
             OnLogReported?.Invoke(currentTime, type, message);
         }
 
+        // ── 로그 패널 동적 생성 ───────────────────────────────────────────────
+        private void BuildLogPanel()
+        {
+            // 1. 이미 컨트롤이 존재한다면 삭제 (중복 생성 방지)
+            if (_logPanel != null) return;
+
+            // 2. 로그 패널 생성 (하단 고정)
+            _logPanel = new Panel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 120, // 높이 조정
+                Visible = false
+            };
+
+            _logBox = new RichTextBox
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.FromArgb(30, 30, 30),
+                ForeColor = Color.LimeGreen,
+                Font = new Font("Consolas", 8.5f),
+                ReadOnly = true,
+                BorderStyle = BorderStyle.None
+            };
+            _logPanel.Controls.Add(_logBox);
+
+            // 4. pnlCamera에 로그 패널 추가
+            pnlCamera.Controls.Add(_logPanel);
+        }
+
+        // 로그 한 줄을 RichTextBox에 추가 (색상 구분)
+        private void AppendPythonLog(string line)
+        {
+            if (_logBox == null || _logBox.IsDisposed) return;
+
+            if (_logBox.InvokeRequired)
+            {
+                _logBox.BeginInvoke(new Action(() => AppendPythonLog(line)));
+                return;
+            }
+
+            // 키워드에 따라 글자 색 구분
+            Color color;
+            if (line.Contains("ERROR") || line.Contains("Error") || line.Contains("Traceback"))
+                color = Color.FromArgb(255, 100, 100);  // 빨강
+            else if (line.Contains("WARNING") || line.Contains("Warning"))
+                color = Color.FromArgb(255, 200, 80);   // 노랑
+            else if (line.Contains("You can now") || line.Contains("Starting vehicle"))
+                color = Color.FromArgb(100, 230, 130);  // 밝은 초록 (준비 완료)
+            else
+                color = Color.FromArgb(180, 220, 180);  // 기본 연두
+
+            _logBox.SelectionStart = _logBox.TextLength;
+            _logBox.SelectionLength = 0;
+            _logBox.SelectionColor = color;
+            _logBox.AppendText(line + "\n");
+
+            // 항상 최신 줄로 스크롤
+            _logBox.ScrollToCaret();
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
         // ── DirectionBar 초기화 ──────────────────
         private void InitDirectionBars()
         {
@@ -227,29 +292,29 @@ namespace DataManager.UserControls
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
-        // ── 버튼 이벤트 ──────────────────────────
         private async void btnStartSim_Click(object sender, EventArgs e)
         {
-            // 1. 콤보박스에서 선택된 맵 이름 가져오기
             string envName = cboMapList.Text.Trim();
-
-            // 맵 목록 예시: donkey-generated-track-v0 등이 combo에 들어있어야 합니다.
-            if (string.IsNullOrEmpty(envName))
-            {
-                envName = "generated_track"; // 방어 코드용 기본값
-            }
+            _logBox.Clear();
+            _logPanel.Visible = true;
 
             // 2. 시뮬레이터 실행
             _processService.StartSimulator(SimPath);
 
-            // 3. 파이썬 서버 실행시 맵 이름 전달
-            _processService.StartPython(PythonExe, MycarDir, envName);
-            ReportLog("알림", $"시뮬레이터 및 서버 시작됨 (선택된 맵: {envName})");
+            // 서비스에서 변경된 StartPython 호출 (아래 2번 참조)
+            _processService.StartPython(PythonExe, MycarDir, envName, (line) => {
+                this.Invoke(new Action(() => {
+                    AppendPythonLog(line);
+                    // "You can now..." 등의 로그 감지 시 btnConnect.Enabled = true;
+                    if (line.Contains("http://localhost:8887") || line.Contains("Starting vehicle"))
+                    {
+                        btnConnect.Enabled = true;
+                        ReportLog("성공", "서버 준비 완료! 연결 버튼이 활성화되었습니다.");
+                    }
+                }));
+            });
 
             btnStartSim.Enabled = false;
-
-            await Task.Delay(7000);
-            btnConnect.Enabled = true;
         }
 
         private async void btnConnect_Click(object sender, EventArgs e)
@@ -292,9 +357,6 @@ namespace DataManager.UserControls
                 // 4. 기록(Recording) 체크박스도 안전하게 해제 및 비활성화
                 chkRecording.Checked = false;
 
-                MessageBox.Show("시뮬레이터와 파이썬 서버를 종료하고 통신 연결 설정을 초기화했습니다.",
-                    "초기화 완료", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
                 // 로그 출력
                 ReportLog("알림", "사용자 요청에 의해 시뮬레이터 및 파이썬 엔진 프로세스 초기화 완료");
             }
@@ -303,6 +365,12 @@ namespace DataManager.UserControls
                 MessageBox.Show($"초기화 진행 중 오류가 발생했습니다:\n{ex.Message}", "에러",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 ReportLog("오류", $"초기화 실패: {ex.Message}");
+            }
+
+            if (_logPanel != null)
+            {
+                _logPanel.Visible = false;
+                _logBox.Clear();
             }
         }
 

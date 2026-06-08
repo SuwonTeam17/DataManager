@@ -18,6 +18,12 @@ namespace DataManager.Services.ModelDriving.Service
 
         public event Action<Bitmap> OnFrameReceived;
 
+        // Python 프로세스 로그를 UI로 전달하는 이벤트
+        public event Action<string> OnPythonLog;
+
+        // Python 서버가 준비 완료되었음을 알리는 이벤트
+        public event Action OnServerReady;
+
         private static string DonkeyRoot =>
             Path.GetFullPath(Path.Combine(Application.StartupPath, @"..\..\..\.."));
 
@@ -29,48 +35,97 @@ namespace DataManager.Services.ModelDriving.Service
         public string LoadedModelPath => _loadedModelPath;
         public bool IsAiDriving => _isAiDriving;
 
-        private System.Diagnostics.Process _debugPythonProcess;
+        private System.Diagnostics.Process _pythonProcess;
 
         public string DetectedModelType { get; private set; } = "지정되지 않음";
         private string _donkeyTypeArgument = "tflite_linear";
         private bool _isStereoCamera = false;
 
+        // 서버 준비 완료 판단 키워드 목록
+        // 아래 문자열 중 하나라도 로그에 등장하면 서버가 준비된 것으로 간주합니다.
+        private static readonly string[] _serverReadyKeywords = new[]
+        {
+            "You can now go to http://localhost:8887",
+            "You can now move your controller",
+            "Starting vehicle at",
+            "Recording Change = False",
+        };
+
+        private bool _serverReadyFired = false;
+
         public ModelDrivingService()
         {
             _connectionService.OnRawMessage += _cameraService.ProcessMessage;
-            _cameraService.OnFrameReceived += frame =>
-            {
-                OnFrameReceived?.Invoke(frame);
-            };
+            _cameraService.OnFrameReceived += frame => OnFrameReceived?.Invoke(frame);
         }
 
         public void StartSimulatorAndServer(string envName)
         {
+            _serverReadyFired = false;
+
             _processService.StartSimulator(SimPath);
 
             string envArg = string.IsNullOrEmpty(envName) ? "generated_track" : envName.Trim();
-            string cmdArguments = $"/k \"\"{PythonExe}\" manage.py drive --env_name={envArg}";
+
+            // Python 실행 인자 구성
+            string pythonArgs = $"manage.py drive --env_name={envArg}";
 
             if (!string.IsNullOrEmpty(_loadedModelPath))
             {
-                cmdArguments += $" --model=\"{_loadedModelPath}\"";
-                cmdArguments += $" --type={_donkeyTypeArgument}";
+                pythonArgs += $" --model=\"{_loadedModelPath}\"";
+                pythonArgs += $" --type={_donkeyTypeArgument}";
 
                 if (_isStereoCamera)
+                    pythonArgs += " --camera=stereo";
+            }
+
+            // cmd 창 없이 Python 직접 실행 — stdout/stderr 모두 리다이렉트
+            var psi = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = PythonExe,
+                Arguments = pythonArgs,
+                WorkingDirectory = MycarDir,
+                UseShellExecute = false,
+                CreateNoWindow = true,          // cmd 창 숨김
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+            };
+
+            _pythonProcess = new System.Diagnostics.Process { StartInfo = psi, EnableRaisingEvents = true };
+
+            // stdout 비동기 수신
+            _pythonProcess.OutputDataReceived += (s, e) =>
+            {
+                if (e.Data != null) HandlePythonLog(e.Data);
+            };
+
+            // stderr 비동기 수신 (donkeycar는 INFO 로그를 stderr로 출력하기도 함)
+            _pythonProcess.ErrorDataReceived += (s, e) =>
+            {
+                if (e.Data != null) HandlePythonLog(e.Data);
+            };
+
+            _pythonProcess.Start();
+            _pythonProcess.BeginOutputReadLine();
+            _pythonProcess.BeginErrorReadLine();
+        }
+
+        // 로그 한 줄을 처리: UI 이벤트 발행 + 서버 준비 완료 감지
+        private void HandlePythonLog(string line)
+        {
+            OnPythonLog?.Invoke(line);
+
+            if (_serverReadyFired) return;
+
+            foreach (var keyword in _serverReadyKeywords)
+            {
+                if (line.Contains(keyword))
                 {
-                    cmdArguments += " --camera=stereo";
+                    _serverReadyFired = true;
+                    OnServerReady?.Invoke();
+                    break;
                 }
             }
-            cmdArguments += "\"";
-
-            _debugPythonProcess = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = "cmd.exe",
-                Arguments = cmdArguments,
-                WorkingDirectory = MycarDir,
-                UseShellExecute = true,
-                CreateNoWindow = false
-            });
         }
 
         public async Task ConnectNetworkAsync()
@@ -129,9 +184,7 @@ namespace DataManager.Services.ModelDriving.Service
         public void ToggleAiDriving()
         {
             if (!IsConnected)
-            {
                 throw new InvalidOperationException("서버가 연결되어 있지 않습니다.");
-            }
 
             _isAiDriving = !_isAiDriving;
             SendDriveCommandToWebsocket();
@@ -157,9 +210,7 @@ namespace DataManager.Services.ModelDriving.Service
                 {
                     var clientInstance = clientField.GetValue(_connectionService) as Websocket.Client.WebsocketClient;
                     if (clientInstance != null && clientInstance.IsStarted)
-                    {
                         clientInstance.Send(jsonPayload);
-                    }
                 }
             }
             catch
@@ -174,24 +225,25 @@ namespace DataManager.Services.ModelDriving.Service
             _connectionService.Disconnect();
             _processService.StopAll();
 
-            // [핵심 해결책] cmd.exe /k 로 버티고 있는 프로세스를 하위 트리(/t)까지 강제(/f)로 날려 창을 무조건 닫습니다.
+            // Python 프로세스 강제 종료 (하위 트리 포함)
             try
             {
-                if (_debugPythonProcess != null && !_debugPythonProcess.HasExited)
+                if (_pythonProcess != null && !_pythonProcess.HasExited)
                 {
-                    string killArgs = $"/f /t /pid {_debugPythonProcess.Id}";
                     System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                     {
                         FileName = "taskkill",
-                        Arguments = killArgs,
+                        Arguments = $"/f /t /pid {_pythonProcess.Id}",
                         CreateNoWindow = true,
                         UseShellExecute = false
-                    }).WaitForExit();
+                    })?.WaitForExit();
                 }
             }
             catch { }
 
+            _pythonProcess = null;
             _isAiDriving = false;
+            _serverReadyFired = false;
         }
 
         public void ResetService()
