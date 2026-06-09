@@ -399,11 +399,21 @@ namespace DataManager.UserControls
                         .ToList();
                     if (batch.Count == 0) continue;
 
-                    await _pythonStdin.WriteLineAsync(imgPath);
-                    await _pythonStdin.FlushAsync();
+                    var stdin  = _pythonStdin;
+                    var stdout = _pythonStdout;
+                    if (stdin == null || stdout == null) break;
 
-                    string? response = await _pythonStdout.ReadLineAsync();
-                    if (string.IsNullOrEmpty(response)) { _pythonReady = false; break; }
+                    // BATCH 프로토콜: "BATCH <count>\n<path1>\n<path2>\n..."
+                    await stdin.WriteLineAsync($"BATCH {batch.Count}");
+                    foreach (int idx in batch)
+                        await stdin.WriteLineAsync(frameImagePaths[idx]);
+                    await stdin.FlushAsync();
+
+                    // 배치 응답 수신
+                    for (int i = 0; i < batch.Count && _pythonReady; i++)
+                    {
+                        string? response = await stdout.ReadLineAsync();
+                        if (string.IsNullOrEmpty(response)) { _pythonReady = false; break; }
 
                         using var doc = JsonDocument.Parse(response);
                         var root = doc.RootElement;
@@ -422,15 +432,15 @@ namespace DataManager.UserControls
 
                             if (capturedIdx == currentFrameIndex)
                             {
-                                lblAngle.Text    = $"조향각\n{FormatAngle(pa)}";
-                                lblThrottle.Text = $"가속값\n{FormatThrottle(pt)}";
+                                lblAngle.Text    = $"조향각\n사용자:{FormatAngle(currentActualAngle)} 자율:{FormatAngle(pa)}";
+                                lblThrottle.Text = $"가속값\n사용자:{FormatThrottle(currentActualThrottle)} 자율:{FormatThrottle(pt)}";
                                 gaugeBar1.Value  = Math.Clamp(pa, -1.0, 1.0);
                                 gaugeBar2.Value  = pt * 100.0;
                                 picImage.Invalidate();
                                 UpdateErrorLabels();
                             }
 
-                            // 32프레임 배치마다 한 번 혹은 마지막에만 차트 갱신
+                            // 배치 완료 또는 마지막에만 차트·FullGraph 갱신
                             if (i == batch.Count - 1 || isLast)
                             {
                                 RedrawCharts();
