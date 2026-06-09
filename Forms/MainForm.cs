@@ -8,9 +8,11 @@ namespace DataManager
     public partial class MainForm : Form
     {
         // ⭐ 1. 화면들을 클래스 전역 변수로 딱 한 번만 미리 선언해 둡니다.
+        private DataCollectionUI dataCollectionUI;
         private TubManagerUI tubUI;
         private TrainerUI trainerUI;
         private PilotArenaUI pilotArenaUI;
+        private ModelDrivingUI modelDrivingUI;
 
         public MainForm()
         {
@@ -26,19 +28,25 @@ namespace DataManager
         // 화면들을 최초 1회 생성하고 설정하는 함수
         private void InitializeScreens()
         {
+            dataCollectionUI = new DataCollectionUI();
             tubUI = new TubManagerUI();
             trainerUI = new TrainerUI();
             pilotArenaUI = new PilotArenaUI();
+            modelDrivingUI = new ModelDrivingUI();
 
             // 로그 이벤트 연결 (한 번만 하면 됨)
+            dataCollectionUI.OnLogReported += AppendLogToListView;
             tubUI.OnLogReported += AppendLogToListView;
             trainerUI.OnLogReported += AppendLogToListView;
             pilotArenaUI.OnLogReported += AppendLogToListView;
+            modelDrivingUI.OnLogReported += AppendLogToListView;
 
             // 모든 화면을 메인 패널에 꽉 채워서 넣고 일단 다 숨깁니다.
+            AddScreenToPanel(dataCollectionUI);
             AddScreenToPanel(tubUI);
             AddScreenToPanel(trainerUI);
             AddScreenToPanel(pilotArenaUI);
+            AddScreenToPanel(modelDrivingUI);
         }
 
         // 패널에 컨트롤을 추가하고 숨기는 보조 함수
@@ -85,15 +93,23 @@ namespace DataManager
         private void SetActiveTab(Button activeBtn)
         {
             // 모든 탭 버튼을 비활성 색상으로 초기화
+            btnChgDataCollectionForm.BackColor = Color.FromArgb(100, 110, 130);
             btnChgTubForm.BackColor = Color.FromArgb(100, 110, 130);
             btnChgTrainerForm.BackColor = Color.FromArgb(100, 110, 130);
             btnChgPilotForm.BackColor = Color.FromArgb(100, 110, 130);
+            btnChgModelDrivingForm.BackColor = Color.FromArgb(100, 110, 130);
 
             // 클릭한 버튼만 활성 색상으로 변경
             activeBtn.BackColor = Color.FromArgb(67, 130, 220);
         }
 
         // ⭐ 4. 이제 버튼을 누를 때 new 객체를 만들지 않고, 아까 만든 변수를 넘깁니다.
+        private void btnChgDataCollectionForm_Click(object sender, EventArgs e)
+        {
+            SetActiveTab(btnChgDataCollectionForm);
+            SwitchScreen(dataCollectionUI);
+        }
+
         private void btnChgTubForm_Click(object sender, EventArgs e)
         {
             SetActiveTab(btnChgTubForm);
@@ -110,6 +126,11 @@ namespace DataManager
         {
             SetActiveTab(btnChgPilotForm);
             SwitchScreen(pilotArenaUI);
+        }
+        private void btnChgModelDrivingForm_Click(object sender, EventArgs e)
+        {
+            SetActiveTab(btnChgModelDrivingForm);
+            SwitchScreen(modelDrivingUI);
         }
     }
 }

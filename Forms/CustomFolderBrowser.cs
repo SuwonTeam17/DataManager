@@ -14,7 +14,7 @@ namespace DataManager
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         [Browsable(false)]
-        public bool AllowFileSelection { get; set; } = false;
+        public bool AllowFileSelection { get; set; } = true;
 
         private readonly string _rootPath;
         private string _currentPath;
@@ -33,6 +33,73 @@ namespace DataManager
             _currentPath = rootPath;
             Text = title;
             InitUI();
+        }
+
+        /// <summary>
+        /// 지정된 허용 루트 폴더 내부의 하위 항목만 안전하게 '즉시 영구 삭제'하고, 부모 UI에 로그를 넘겨줍니다.
+        /// </summary>
+        /// <param name="targetPath">삭제할 대상 폴더 경로</param>
+        /// <param name="allowedRootPath">삭제가 허용된 상위 루트 경로</param>
+        /// <param name="folderPurposeName">에러 메시지에 표시할 폴더의 목적 이름</param>
+        /// <param name="logCallback">부모 UI의 ReportLog 메서드 주소 (전달 생략 가능)</param>
+        public static bool SafeDeleteDirectoryImmediate(
+            string targetPath,
+            string allowedRootPath,
+            string folderPurposeName,
+            Action<string, string> logCallback = null)
+        {
+            if (string.IsNullOrWhiteSpace(targetPath) || string.IsNullOrWhiteSpace(allowedRootPath))
+                return false;
+
+            string folderName = Path.GetFileName(targetPath);
+
+            try
+            {
+                // 경로 표준화 (대소문자, 슬래시 및 끝 문자 정렬)
+                string normalizedTarget = Path.GetFullPath(targetPath).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                string normalizedAllowedRoot = Path.GetFullPath(allowedRootPath).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+                // 1. 지정된 허용 폴더 내부 경로인지 체크
+                if (!normalizedTarget.StartsWith(normalizedAllowedRoot, StringComparison.OrdinalIgnoreCase))
+                {
+                    MessageBox.Show($"보안 및 시스템 안정성을 위해 [{folderPurposeName}] 외부의 경로는 삭제할 수 없습니다.",
+                        "삭제 거부", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                    return false;
+                }
+
+                // 2. 허용된 루트 폴더 '자체'를 삭제하려고 하는 경우 차단
+                if (string.Equals(normalizedTarget, normalizedAllowedRoot, StringComparison.OrdinalIgnoreCase))
+                {
+                    MessageBox.Show($"[{folderPurposeName}] 최상위 루트 폴더 자체는 삭제할 수 없습니다.\n내부의 하위 데이터 폴더를 선택해 주세요.",
+                        "삭제 거부", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                    return false;
+                }
+
+                // 3. 사용자 최종 확인 의사 묻기
+                var result = MessageBox.Show($"정말 이 폴더를 컴퓨터에서 즉시 '영구 삭제'하시겠습니까?\n이 작업은 되돌릴 수 없습니다.\n\n대상 경로: {targetPath}", "폴더 영구 삭제 확인",
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
+                if (result != DialogResult.Yes) return false;
+
+                // 4. 즉시 영구 삭제 진행
+                Directory.Delete(targetPath, true);
+
+                // 알림창을 띄우면서 동시에 부모의 ReportLog 대행 호출
+                MessageBox.Show("폴더가 즉시 영구 삭제되었습니다.", "완료", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                // 각 UI 화면에 맞게 맞춤형 문구로 부모창의 ReportLog를 실행시킵니다.
+                logCallback?.Invoke("알림", $"폴더 삭제 완료: {folderName} ({folderPurposeName} 내부)");
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // 에러 알림창을 띄우면서 부모의 ReportLog 대행 호출
+                MessageBox.Show($"폴더 삭제 중 오류가 발생했습니다:\n{ex.Message}", "에러", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                logCallback?.Invoke("오류", $"폴더 삭제 실패: {ex.Message}");
+                return false;
+            }
         }
 
         private void InitUI()
@@ -366,7 +433,7 @@ namespace DataManager
             }
         }
 
-        public static string EditedData => Path.Combine(ProjectRoot, "EditedData");
+        public static string EditedData => Path.Combine(SolutionRoot, "mycar", "data", "EditedData");
         public static string MycarData => Path.Combine(SolutionRoot, "mycar", "data");
         public static string MycarModels => Path.Combine(SolutionRoot, "mycar", "models");
     }

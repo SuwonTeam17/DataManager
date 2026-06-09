@@ -42,7 +42,7 @@
             // lblPilotTest
             // 
             lblPilotTest.Font = new Font("맑은 고딕", 20F, FontStyle.Bold);
-            lblPilotTest.Location = new Point(4, 4);
+            lblPilotTest.Location = new Point(0, 0);
             lblPilotTest.Name = "lblPilotTest";
             lblPilotTest.Size = new Size(200, 38);
             lblPilotTest.TabIndex = 0;

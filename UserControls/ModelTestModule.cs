@@ -809,10 +809,14 @@ namespace DataManager.UserControls
                     if (!frameImagePaths.TryGetValue(idx, out string? imgPath)) continue;
                     if (!File.Exists(imgPath)) continue;
 
-                    await _pythonStdin.WriteLineAsync(imgPath);
-                    await _pythonStdin.FlushAsync();
+                    var stdin = _pythonStdin;
+                    var stdout = _pythonStdout;
+                    if (stdin == null || stdout == null) break;
 
-                    string? response = await _pythonStdout.ReadLineAsync();
+                    await stdin.WriteLineAsync(imgPath);
+                    await stdin.FlushAsync();
+
+                    string? response = await stdout.ReadLineAsync();
                     if (string.IsNullOrEmpty(response))
                     {
                         _pythonReady = false;
