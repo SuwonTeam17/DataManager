@@ -9,7 +9,9 @@ namespace DataManager.UserControls
     {
         private double _value = 0.0;
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public double Minimum { get; set; } = -1.0;
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public double Maximum { get; set; } = 1.0;
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]

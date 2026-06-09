@@ -41,8 +41,15 @@ namespace DataManager.UserControls
         private Dictionary<int, double> frameThrottleUser = new();
         private Dictionary<int, double> frameThrottlePilot = new();
         private Dictionary<int, string> frameImagePaths = new();
-        // [추가] 실시간 메모리 필터 이미지 보관소 (키: 프레임 인덱스, 값: 가공된 Bitmap)
         private Dictionary<int, Bitmap> frameMemoryBitmaps = new();
+
+        // 재생 중 여부 — true이면 창 예측·차트 동기 리페인트 억제
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public bool IsPlaybackActive { get; set; }
+
+        // 이미지 파일 바이트 캐시 (디스크 I/O 제거)
+        private static readonly Dictionary<string, byte[]> _rawImageCache = new(256);
+        private static readonly object _rawCacheLock = new();
 
         // 가장 최근에 요청된 중심 프레임 — 사용자가 다른 프레임으로 이동하면 창 예측을 중단하는 데 사용
         private volatile int _latestWindowCenter = -1;
@@ -373,57 +380,74 @@ namespace DataManager.UserControls
             if (isPredicting) return;
             isPredicting = true;
 
-            var indices = frameImagePaths.Keys
+            // 현재 프레임에 가까운 순으로 처리 (빠른 피드백)
+            var todo = frameImagePaths.Keys
+                .Where(idx => !frameAnglePilot.ContainsKey(idx) &&
+                              frameImagePaths.TryGetValue(idx, out string? p) &&
+                              File.Exists(p))
                 .OrderBy(idx => Math.Abs(idx - currentFrameIndex))
                 .ToList();
 
+            const int batchSize = 32;
+
             try
             {
-                foreach (var idx in indices)
+                for (int b = 0; b < todo.Count && _pythonReady; b += batchSize)
                 {
-                    if (!_pythonReady) break;
-                    if (frameAnglePilot.ContainsKey(idx)) continue;
-                    if (!frameImagePaths.TryGetValue(idx, out string? imgPath)) continue;
-                    if (!File.Exists(imgPath)) continue;
+                    var batch = todo.Skip(b).Take(batchSize)
+                        .Where(idx => frameImagePaths.TryGetValue(idx, out string? p) && File.Exists(p))
+                        .ToList();
+                    if (batch.Count == 0) continue;
 
-                    // [핵심 보완] 루프 도중 '삭제/종료'로 인해 null이 되는 것을 방지하기 위해 지역 변수에 복사
-                    var stdin = _pythonStdin;
+                    var stdin  = _pythonStdin;
                     var stdout = _pythonStdout;
                     if (stdin == null || stdout == null) break;
 
-                    // 이제 전역 필드가 아닌, 안전하게 확보된 지역 변수(stdin)를 사용합니다.
-                    await stdin.WriteLineAsync(imgPath);
+                    // BATCH 프로토콜: "BATCH <count>\n<path1>\n<path2>\n..."
+                    await stdin.WriteLineAsync($"BATCH {batch.Count}");
+                    foreach (int idx in batch)
+                        await stdin.WriteLineAsync(frameImagePaths[idx]);
                     await stdin.FlushAsync();
 
-                    string? response = await stdout.ReadLineAsync();
-                    if (string.IsNullOrEmpty(response)) { _pythonReady = false; break; }
-
-                    using var doc = JsonDocument.Parse(response);
-                    var root = doc.RootElement;
-                    if (!root.TryGetProperty("angle", out var aElem) ||
-                        !root.TryGetProperty("throttle", out var tElem)) continue;
-
-                    double pa = aElem.GetDouble();
-                    double pt = tElem.GetDouble();
-                    int capturedIdx = idx;
-
-                    this.Invoke((MethodInvoker)delegate
+                    // 배치 응답 수신
+                    for (int i = 0; i < batch.Count && _pythonReady; i++)
                     {
-                        frameAnglePilot[capturedIdx] = pa;
-                        frameThrottlePilot[capturedIdx] = pt;
+                        string? response = await stdout.ReadLineAsync();
+                        if (string.IsNullOrEmpty(response)) { _pythonReady = false; break; }
 
-                        if (capturedIdx == currentFrameIndex)
+                        using var doc = JsonDocument.Parse(response);
+                        var root = doc.RootElement;
+                        if (!root.TryGetProperty("angle", out var aElem) ||
+                            !root.TryGetProperty("throttle", out var tElem)) continue;
+
+                        double pa = aElem.GetDouble();
+                        double pt = tElem.GetDouble();
+                        int capturedIdx = batch[i];
+                        bool isLast = (b + batchSize >= todo.Count) && (i == batch.Count - 1);
+
+                        this.Invoke((MethodInvoker)delegate
                         {
-                            lblAngle.Text = $"조향각\n사용자:{FormatAngle(currentActualAngle)} 자율:{FormatAngle(pa)}";
-                            lblThrottle.Text = $"가속값\n사용자:{FormatThrottle(currentActualThrottle)} 자율:{FormatThrottle(pt)}";
-                            gaugeBar1.Value = Math.Clamp(pa, -1.0, 1.0);
-                            gaugeBar2.Value = pt * 100.0;
-                            picImage.Invalidate();
-                            UpdateErrorLabels();
-                        }
-                        RedrawCharts();
-                        PredictionUpdated?.Invoke(this, EventArgs.Empty);
-                    });
+                            frameAnglePilot[capturedIdx]    = pa;
+                            frameThrottlePilot[capturedIdx] = pt;
+
+                            if (capturedIdx == currentFrameIndex)
+                            {
+                                lblAngle.Text    = $"조향각\n사용자:{FormatAngle(currentActualAngle)} 자율:{FormatAngle(pa)}";
+                                lblThrottle.Text = $"가속값\n사용자:{FormatThrottle(currentActualThrottle)} 자율:{FormatThrottle(pt)}";
+                                gaugeBar1.Value  = Math.Clamp(pa, -1.0, 1.0);
+                                gaugeBar2.Value  = pt * 100.0;
+                                picImage.Invalidate();
+                                UpdateErrorLabels();
+                            }
+
+                            // 배치 완료 또는 마지막에만 차트·FullGraph 갱신
+                            if (i == batch.Count - 1 || isLast)
+                            {
+                                RedrawCharts();
+                                PredictionUpdated?.Invoke(this, EventArgs.Empty);
+                            }
+                        });
+                    }
                 }
             }
             catch (Exception ex)
@@ -434,6 +458,11 @@ namespace DataManager.UserControls
             finally
             {
                 isPredicting = false;
+                this.BeginInvoke(new Action(() =>
+                {
+                    RedrawCharts();
+                    PredictionUpdated?.Invoke(this, EventArgs.Empty);
+                }));
             }
         }
 
@@ -525,7 +554,8 @@ namespace DataManager.UserControls
                 }
                 else if (imagePath != lastLoadedImagePath)
                 {
-                    var newStream = new MemoryStream(File.ReadAllBytes(imagePath));
+                    byte[] raw = GetCachedRaw(imagePath);
+                    var newStream = new MemoryStream(raw);
                     picImage.Image = new Bitmap(newStream);
                     currentImageStream = newStream;
                     lastLoadedImagePath = imagePath;
@@ -535,8 +565,15 @@ namespace DataManager.UserControls
             }
             catch { }
 
-            lblAngle.Text = $"조향각\n{FormatAngle(actualAngle)}";
-            lblThrottle.Text = $"가속값\n{FormatThrottle(actualThrottle)}";
+            if (frameAnglePilot.TryGetValue(frameIndex, out double paLabel))
+                lblAngle.Text = $"조향각\n{FormatAngle(paLabel)}";
+            else
+                lblAngle.Text = "조향각\n-";
+
+            if (frameThrottlePilot.TryGetValue(frameIndex, out double ptLabel))
+                lblThrottle.Text = $"가속값\n{FormatThrottle(ptLabel)}";
+            else
+                lblThrottle.Text = "가속값\n-";
 
             if (frameAnglePilot.TryGetValue(frameIndex, out double gaugeA))
                 gaugeBar1.Value = Math.Clamp(gaugeA, -1.0, 1.0);
@@ -552,12 +589,12 @@ namespace DataManager.UserControls
             RedrawCharts();
             UpdateErrorLabels();
 
-            // AI 예측 실행 및 그래프 반영
+            // AI 예측 실행 및 그래프 반영 (재생 중에는 캐시된 예측만 표시하고 새 추론 생략)
             if (predictedAngle.HasValue && predictedThrottle.HasValue)
             {
                 UpdatePrediction(predictedAngle.Value, predictedThrottle.Value);
             }
-            else if (isModelLoaded && !isPredicting)
+            else if (isModelLoaded && !isPredicting && !IsPlaybackActive)
             {
                 _ = RunPredictionWindowAsync(frameIndex);
             }
@@ -569,8 +606,8 @@ namespace DataManager.UserControls
             Debug.WriteLine($"[UpdatePrediction] currentActualAngle={currentActualAngle:F4} | currentActualThrottle={currentActualThrottle:F4}");
             Debug.WriteLine($"[UpdatePrediction] diff angle={predictedAngle - currentActualAngle:F4} | diff throttle={predictedThrottle - currentActualThrottle:F4}");
 
-            lblAngle.Text = $"조향각\n사용자:{FormatAngle(currentActualAngle)} 자율:{FormatAngle(predictedAngle)}";
-            lblThrottle.Text = $"가속값\n사용자:{FormatThrottle(currentActualThrottle)} 자율:{FormatThrottle(predictedThrottle)}";
+            lblAngle.Text = $"조향각\n{FormatAngle(predictedAngle)}";
+            lblThrottle.Text = $"가속값\n{FormatThrottle(predictedThrottle)}";
 
             frameAnglePilot[currentFrameIndex] = predictedAngle;
             frameThrottlePilot[currentFrameIndex] = predictedThrottle;
@@ -585,9 +622,6 @@ namespace DataManager.UserControls
 
         private void RedrawCharts()
         {
-            chart1.SuspendLayout();
-            chart2.SuspendLayout();
-
             seriesAngleUser!.Points.Clear();
             seriesAnglePilot!.Points.Clear();
             seriesThrottleUser!.Points.Clear();
@@ -606,10 +640,25 @@ namespace DataManager.UserControls
                     seriesThrottlePilot.Points.AddXY(offset, pt * 100.0);
             }
 
-            chart1.ResumeLayout();
-            chart2.ResumeLayout();
-            chart1.Refresh();
-            chart2.Refresh();
+            if (IsPlaybackActive)
+            {
+                // 재생 중: OS WM_PAINT 코알레싱에 맡겨 UI 스레드 부담 감소
+                chart1.Invalidate();
+                chart2.Invalidate();
+            }
+            else
+            {
+                // 수동 탐색: 즉시 동기 리페인트로 클릭 반응성 유지
+                chart1.Refresh();
+                chart2.Refresh();
+            }
+        }
+
+        public void OnPlaybackStopped()
+        {
+            IsPlaybackActive = false;
+            // 재생 종료 후 최신 데이터를 즉시 반영
+            RedrawCharts();
         }
 
         private async Task StartPythonProcessAsync()
@@ -687,6 +736,24 @@ namespace DataManager.UserControls
                 this.Invoke((MethodInvoker)(() =>
                     ReportLog("오류", $"Python 프로세스 시작 오류: {ex.Message}")));
                 StopPythonProcess();
+            }
+        }
+
+        private static byte[] GetCachedRaw(string path)
+        {
+            lock (_rawCacheLock)
+            {
+                if (_rawImageCache.TryGetValue(path, out byte[]? raw)) return raw;
+                raw = File.ReadAllBytes(path);
+                // 캐시가 너무 커지면 절반 비우기
+                if (_rawImageCache.Count >= 200)
+                {
+                    int remove = _rawImageCache.Count / 2;
+                    foreach (var key in _rawImageCache.Keys.Take(remove).ToList())
+                        _rawImageCache.Remove(key);
+                }
+                _rawImageCache[path] = raw;
+                return raw;
             }
         }
 
@@ -773,8 +840,8 @@ namespace DataManager.UserControls
                         // 현재 보여주는 프레임이 center인 경우에만 레이블/오버레이 갱신
                         if (capturedIdx == centerFrame && _latestWindowCenter == centerFrame)
                         {
-                            lblAngle.Text = $"조향각\n사용자:{FormatAngle(currentActualAngle)} 자율:{FormatAngle(pa)}";
-                            lblThrottle.Text = $"가속값\n사용자:{FormatThrottle(currentActualThrottle)} 자율:{FormatThrottle(pt)}";
+                            lblAngle.Text = $"조향각\n{FormatAngle(pa)}";
+                            lblThrottle.Text = $"가속값\n{FormatThrottle(pt)}";
                             gaugeBar1.Value = Math.Clamp(pa, -1.0, 1.0);
                             gaugeBar2.Value = pt * 100.0;
                             picImage.Invalidate();
@@ -881,8 +948,10 @@ namespace DataManager.UserControls
             float length = h * (0.225f + 0.45f * (float)Math.Abs(throttle));
 
             double radians = angle * 45.0 * Math.PI / 180.0;
-            float endX = startX + (float)(Math.Sin(radians) * length);
-            float endY = startY - (float)(Math.Cos(radians) * length);
+            // 가속값이 음수(후진)이면 화살표 방향을 아래쪽으로 반전
+            float dir = throttle < 0 ? -1f : 1f;
+            float endX = startX + (float)(Math.Sin(radians) * length * dir);
+            float endY = startY - (float)(Math.Cos(radians) * length * dir);
 
             double lineAngle = Math.Atan2(endY - startY, endX - startX);
             float arrowLen = 27f;
