@@ -103,6 +103,12 @@ namespace DataManager.UserControls
             trkSetBlur.Maximum = 10;
             trkSetBlur.Value = 0;
 
+            UpdateFilterCheckboxTexts();
+
+            trkSetBright.ValueChanged += (s, e) => UpdateFilterCheckboxTexts();
+            trkSetBlur.ValueChanged += (s, e) => UpdateFilterCheckboxTexts();
+
+
             playTimer = new System.Windows.Forms.Timer();
             playTimer.Tick += PlayTimer_Tick;
 
@@ -2047,6 +2053,25 @@ namespace DataManager.UserControls
                         MessageBox.Show($"폴더 생성 중 오류가 발생했습니다.\n{_ex.Message}", "오류");
                     }
                 }
+            }
+        }
+
+
+        /// <summary>
+        /// 밝기 및 흐림 체크박스의 텍스트에 현재 트랙바 수치를 실시간 반영합니다.
+        /// </summary>
+        private void UpdateFilterCheckboxTexts()
+        {
+            if (chkSetBright != null && trkSetBright != null)
+            {
+                
+                chkSetBright.Text = $"밝기 : {trkSetBright.Value}";
+            }
+
+            if (chkSetBlur != null && trkSetBlur != null)
+            {
+                
+                chkSetBlur.Text = $"흐림 : {trkSetBlur.Value}";
             }
         }
 

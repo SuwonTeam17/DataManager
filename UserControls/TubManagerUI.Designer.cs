@@ -512,9 +512,9 @@
             chkSetBlur.ForeColor = Color.FromArgb(60, 72, 92);
             chkSetBlur.Location = new Point(410, 28);
             chkSetBlur.Name = "chkSetBlur";
-            chkSetBlur.Size = new Size(90, 22);
+            chkSetBlur.Size = new Size(95, 22);
             chkSetBlur.TabIndex = 11;
-            chkSetBlur.Text = "흐림 설정";
+            chkSetBlur.Text = "흐림";
             chkSetBlur.UseVisualStyleBackColor = false;
             // 
             // trkSetBlur
@@ -522,9 +522,9 @@
             trkSetBlur.AutoSize = false;
             trkSetBlur.BackColor = Color.White;
             trkSetBlur.LargeChange = 1;
-            trkSetBlur.Location = new Point(497, 28);
+            trkSetBlur.Location = new Point(511, 28);
             trkSetBlur.Name = "trkSetBlur";
-            trkSetBlur.Size = new Size(200, 22);
+            trkSetBlur.Size = new Size(190, 22);
             trkSetBlur.TabIndex = 10;
             trkSetBlur.TickStyle = TickStyle.None;
             // 
@@ -535,9 +535,9 @@
             chkSetBright.ForeColor = Color.FromArgb(60, 72, 92);
             chkSetBright.Location = new Point(108, 28);
             chkSetBright.Name = "chkSetBright";
-            chkSetBright.Size = new Size(90, 22);
+            chkSetBright.Size = new Size(95, 22);
             chkSetBright.TabIndex = 9;
-            chkSetBright.Text = "밝기 설정";
+            chkSetBright.Text = "밝기";
             chkSetBright.UseVisualStyleBackColor = false;
             // 
             // trkSetBright
@@ -545,11 +545,11 @@
             trkSetBright.AutoSize = false;
             trkSetBright.BackColor = Color.White;
             trkSetBright.LargeChange = 1;
-            trkSetBright.Location = new Point(195, 28);
+            trkSetBright.Location = new Point(209, 28);
             trkSetBright.Maximum = 100;
             trkSetBright.Minimum = -100;
             trkSetBright.Name = "trkSetBright";
-            trkSetBright.Size = new Size(200, 22);
+            trkSetBright.Size = new Size(190, 22);
             trkSetBright.TabIndex = 8;
             trkSetBright.TickStyle = TickStyle.None;
             // 
