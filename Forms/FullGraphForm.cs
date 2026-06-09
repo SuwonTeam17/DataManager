@@ -13,6 +13,12 @@ namespace DataManager.Forms
         private Chart chartError;
         private double _currentFrameX = 0;
 
+        // 각 차트 위 투명 오버레이 패널 — 빨간 프레임 인디케이터 전용
+        // 차트 전체 리페인트 없이 선만 업데이트해서 재생 중 렉 제거
+        private FrameOverlay _overlayAngle    = null!;
+        private FrameOverlay _overlayThrottle = null!;
+        private FrameOverlay _overlayError    = null!;
+
         private static readonly Color[] PilotColors =
         {
             Color.DodgerBlue,
@@ -22,6 +28,62 @@ namespace DataManager.Forms
 
         private static readonly Color[] AngleErrorColors    = { Color.OrangeRed,  Color.Tomato,       Color.Coral };
         private static readonly Color[] ThrottleErrorColors = { Color.MediumPurple, Color.SlateBlue, Color.MediumOrchid };
+
+        // ─── 투명 오버레이 패널 ────────────────────────────────────────────
+        private sealed class FrameOverlay : Panel
+        {
+            private readonly Chart _chart;
+            private double _frameX;
+
+            public FrameOverlay(Chart chart)
+            {
+                _chart = chart;
+                SetStyle(ControlStyles.UserPaint |
+                         ControlStyles.AllPaintingInWmPaint |
+                         ControlStyles.OptimizedDoubleBuffer |
+                         ControlStyles.SupportsTransparentBackColor, true);
+                BackColor = Color.Transparent;
+                Dock      = DockStyle.Fill;
+                // 마우스 이벤트를 아래 차트로 통과시킴
+                SetStyle(ControlStyles.Selectable, false);
+            }
+
+            public void SetFrame(double frameX)
+            {
+                _frameX = frameX;
+                Invalidate();
+            }
+
+            protected override void OnPaint(PaintEventArgs e)
+            {
+                if (_chart.IsDisposed || _chart.Width <= 0 || _chart.ChartAreas.Count == 0) return;
+                try
+                {
+                    var area = _chart.ChartAreas[0];
+                    float xPx = (float)area.AxisX.ValueToPixelPosition(_frameX);
+                    if (float.IsNaN(xPx) || float.IsInfinity(xPx)) return;
+
+                    float h      = Height;
+                    float top    = h * (area.Position.Y + area.InnerPlotPosition.Y    * area.Position.Height / 100f) / 100f;
+                    float bottom = top + h * area.InnerPlotPosition.Height * area.Position.Height / 10000f;
+
+                    using var pen = new Pen(Color.FromArgb(210, Color.Crimson), 2f);
+                    e.Graphics.DrawLine(pen, xPx, top, xPx, bottom);
+                }
+                catch { }
+            }
+
+            // WS_EX_TRANSPARENT: 아래 차트가 먼저 그려진 뒤 이 패널이 위에 덮임
+            protected override CreateParams CreateParams
+            {
+                get
+                {
+                    var cp = base.CreateParams;
+                    cp.ExStyle |= 0x00000020; // WS_EX_TRANSPARENT
+                    return cp;
+                }
+            }
+        }
 
         public FullGraphForm(
             List<(int Index, double Angle, double Throttle)> userFrames,
@@ -43,9 +105,10 @@ namespace DataManager.Forms
             chartThrottle = CreateChart("가속값 (Throttle)");
             chartError    = CreateErrorChart();
 
-            AttachFrameIndicator(chartAngle);
-            AttachFrameIndicator(chartThrottle);
-            AttachFrameIndicator(chartError);
+            // 차트에 오버레이 추가 (데이터 리페인트 없이 선만 갱신)
+            _overlayAngle    = AddOverlay(chartAngle);
+            _overlayThrottle = AddOverlay(chartThrottle);
+            _overlayError    = AddOverlay(chartError);
 
             var layout = new TableLayoutPanel
             {
@@ -64,35 +127,22 @@ namespace DataManager.Forms
             Controls.Add(layout);
         }
 
-        // PostPaint로 직접 그려서 항상 2px 고정 너비 유지
-        private void AttachFrameIndicator(Chart chart)
+        private static FrameOverlay AddOverlay(Chart chart)
         {
-            chart.PostPaint += (s, e) =>
-            {
-                if (IsDisposed) return;
-                try
-                {
-                    var area = chart.ChartAreas[0];
-                    float xPx = (float)area.AxisX.ValueToPixelPosition(_currentFrameX);
-
-                    float h = chart.Height;
-                    float top    = h * (area.Position.Y + area.InnerPlotPosition.Y    * area.Position.Height / 100f) / 100f;
-                    float bottom = top + h * area.InnerPlotPosition.Height * area.Position.Height / 10000f;
-
-                    using var pen = new Pen(Color.FromArgb(210, Color.Crimson), 2f);
-                    e.ChartGraphics.Graphics.DrawLine(pen, xPx, top, xPx, bottom);
-                }
-                catch { }
-            };
+            var overlay = new FrameOverlay(chart);
+            chart.Controls.Add(overlay);
+            overlay.BringToFront();
+            return overlay;
         }
 
         public void UpdateCurrentFrame(int frameIndex)
         {
             if (IsDisposed) return;
             _currentFrameX = frameIndex;
-            chartAngle.Invalidate();
-            chartThrottle.Invalidate();
-            chartError.Invalidate();
+            // 오버레이만 갱신 — 차트 데이터 전체 리페인트 없음
+            _overlayAngle.SetFrame(_currentFrameX);
+            _overlayThrottle.SetFrame(_currentFrameX);
+            _overlayError.SetFrame(_currentFrameX);
         }
 
         private static Chart CreateErrorChart()
@@ -159,6 +209,8 @@ namespace DataManager.Forms
             chartThrottle.Series.Clear();
             chartError.Series.Clear();
             PopulateCharts(userFrames, pilotData);
+            // 데이터 변경 후 오버레이도 현재 프레임으로 갱신
+            UpdateCurrentFrame((int)_currentFrameX);
         }
 
         private void PopulateCharts(
@@ -187,11 +239,9 @@ namespace DataManager.Forms
             chartAngle.Series.Add(userAngleSeries);
             chartThrottle.Series.Add(userThrottleSeries);
 
-            // 사용자 데이터 조회용 딕셔너리 (오차 계산에 사용)
             var userAngleMap    = userFrames.ToDictionary(f => f.Index, f => f.Angle);
             var userThrottleMap = userFrames.ToDictionary(f => f.Index, f => f.Throttle);
 
-            // 파일럿(모델) 데이터 + 오차 차트
             for (int i = 0; i < pilotData.Count; i++)
             {
                 var (name, angles, throttles) = pilotData[i];

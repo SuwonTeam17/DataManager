@@ -27,6 +27,7 @@ namespace DataManager.UserControls
 
         private Label lblEmptyModels;
         private DateTime _lastGraphRefresh = DateTime.MinValue;
+        private DateTime _lastFullGraphUpdate = DateTime.MinValue;
 
         public PilotArenaUI()
         {
@@ -92,15 +93,26 @@ namespace DataManager.UserControls
             {
                 playbackTimer.Stop();
                 SetPlayButtonState(false);
+                SetModulesPlaybackActive(false);
             }
             else
             {
                 if (frames.Count > 0)
                 {
                     UpdateTimerInterval();
+                    SetModulesPlaybackActive(true);
                     playbackTimer.Start();
                     SetPlayButtonState(true);
                 }
+            }
+        }
+
+        private void SetModulesPlaybackActive(bool active)
+        {
+            foreach (var module in flpModule.Controls.OfType<ModelTestModule>())
+            {
+                module.IsPlaybackActive = active;
+                if (!active) module.OnPlaybackStopped();
             }
         }
 
@@ -121,7 +133,7 @@ namespace DataManager.UserControls
         private void PlaybackTimer_Tick(object? sender, EventArgs e)
         {
             if (frames.Count == 0) return;
-            
+
             if (currentFrameIndex < frames.Count - 1)
             {
                 currentFrameIndex++;
@@ -132,6 +144,7 @@ namespace DataManager.UserControls
             {
                 playbackTimer.Stop();
                 SetPlayButtonState(false);
+                SetModulesPlaybackActive(false);
             }
         }
 
@@ -384,11 +397,14 @@ namespace DataManager.UserControls
             // [수정] 중심 프레임의 실시간 메모리 필터 이미지 추출
             using (Bitmap? finalMemoryBitmap = GetTransformedBitmap(rawImagePath))
             {
+                bool isPlaying = playbackTimer.Enabled;
+
                 foreach (Control control in flpModule.Controls)
                 {
                     if (control is ModelTestModule module)
                     {
-                        // ±5 윈도우 데이터 컨텍스트 동기화
+                        // ±5 윈도우 동기화 — 항상 실행 (미래 프레임 차트 표시에 필요)
+                        // 재생 중에는 비트맵 생성(무거운 부분)만 생략하고 메타데이터는 갱신
                         for (int offset = -5; offset <= 5; offset++)
                         {
                             int idx = currentFrameIndex + offset;
@@ -397,10 +413,17 @@ namespace DataManager.UserControls
                             var f = frames[idx];
                             string wRaw = Path.Combine(tubFolderPath, "images", f.ImageFileName);
 
-                            // 각 서브 프레임도 하드디스크 저장 없이 메모리 비트맵으로 생성해서 주입
-                            using (Bitmap? windowMemoryBitmap = GetTransformedBitmap(wRaw))
+                            if (!isPlaying)
                             {
-                                module.SetFrameContext(idx, wRaw, windowMemoryBitmap, f.Angle, f.Throttle);
+                                using (Bitmap? windowMemoryBitmap = GetTransformedBitmap(wRaw))
+                                {
+                                    module.SetFrameContext(idx, wRaw, windowMemoryBitmap, f.Angle, f.Throttle);
+                                }
+                            }
+                            else
+                            {
+                                // 재생 중: 비트맵 없이 경로·각도·스로틀만 저장 (거의 비용 없음)
+                                module.SetFrameContext(idx, wRaw, f.Angle, f.Throttle);
                             }
                         }
 
@@ -410,8 +433,16 @@ namespace DataManager.UserControls
                 }
             }
 
+            // FullGraphForm 프레임 인디케이터 — 재생 중 20fps로 쓰로틀
+        var now = DateTime.Now;
+        bool shouldUpdateFullGraph = !playbackTimer.Enabled ||
+                                     (now - _lastFullGraphUpdate).TotalMilliseconds >= 50;
+        if (shouldUpdateFullGraph)
+        {
+            _lastFullGraphUpdate = now;
             foreach (var module in flpModule.Controls.OfType<ModelTestModule>())
                 module.UpdateOwnGraphFrame(currentFrameIndex);
+        }
         }
 
 
