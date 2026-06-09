@@ -5,11 +5,11 @@ using Windows.Gaming.Input; // Windows WinRT API
 
 namespace DataManager.Services.DataCollection.Services
 {
-    public class DriveInputService
+    public class DriveInputService : IMessageFilter
     {
         public enum InputMode { Keyboard, Joystick, Gamepad }
         private InputMode? _mode = null;
-        private Gamepad _gamepad; // Windows.Gaming.Input의 Gamepad 클래스
+        private Gamepad _gamepad;
         private System.Windows.Forms.Timer _timer;
         public float Angle { get; private set; }
         public float Throttle { get; private set; }
@@ -21,28 +21,51 @@ namespace DataManager.Services.DataCollection.Services
         private const float AngleMax = 1.0f;
         private const float AngleMin = -1.0f;
 
+        private const int WM_KEYDOWN = 0x0100;
+        private const int WM_SYSKEYDOWN = 0x0104;
+        private const int WM_KEYUP = 0x0101;
+        private const int WM_SYSKEYUP = 0x0105;
+
+        private bool _isUpPressed, _isDownPressed, _isLeftPressed, _isRightPressed;
+
         public DriveInputService()
         {
-            // 이벤트 구독: 패드가 새로 연결되거나 끊길 때 자동으로 갱신되도록 설정
+            // 앱 전역 메시지 필터 등록 — 포커스 위치와 무관하게 KeyDown/KeyUp 수신
+            Application.AddMessageFilter(this);
+
             Gamepad.GamepadAdded += (s, e) => { if (_mode == InputMode.Gamepad) _gamepad = e; };
             Gamepad.GamepadRemoved += (s, e) => { if (_gamepad == e) _gamepad = null; };
         }
+
+        // ── IMessageFilter ────────────────────────────────────────────────────
+        public bool PreFilterMessage(ref Message m)
+        {
+            if (_mode != InputMode.Keyboard) return false;
+
+            if (m.Msg == WM_KEYDOWN || m.Msg == WM_SYSKEYDOWN)
+            {
+                Keys key = (Keys)(int)m.WParam & Keys.KeyCode;
+                HandleKeyDown(key);
+                return false; // 소비하지 않고 전파 유지
+            }
+
+            if (m.Msg == WM_KEYUP || m.Msg == WM_SYSKEYUP)
+            {
+                Keys key = (Keys)(int)m.WParam & Keys.KeyCode;
+                KeyUp(key);
+                return false;
+            }
+
+            return false;
+        }
+        // ─────────────────────────────────────────────────────────────────────
 
         public void SetMode(InputMode mode)
         {
             _mode = mode;
             Angle = 0f;
             Throttle = 0f;
-
-            if (mode == InputMode.Gamepad)
-            {
-                // 현재 PC에 연결된 게임패드 중 첫 번째 장치를 가져옵니다 (엑박/플스 공통)
-                _gamepad = Gamepad.Gamepads.FirstOrDefault();
-            }
-            else
-            {
-                _gamepad = null;
-            }
+            _gamepad = (mode == InputMode.Gamepad) ? Gamepad.Gamepads.FirstOrDefault() : null;
         }
 
         public void Start()
@@ -52,77 +75,28 @@ namespace DataManager.Services.DataCollection.Services
             _timer.Start();
         }
 
-        public void Stop() => _timer?.Stop();
-
-        // 키보드 입력 판별
-        public bool HandleKeyboardKey(Keys key)
+        public void Stop()
         {
-            if (_mode != InputMode.Keyboard)
-                return false;
-
-            switch (key)
-            {
-                case Keys.Up:
-                case Keys.W:
-                case Keys.Down:
-                case Keys.S:
-                case Keys.Left:
-                case Keys.A:
-                case Keys.Right:
-                case Keys.D:
-                case Keys.Space:
-                    KeyDown(key);
-                    return true;
-
-                default:
-                    return false;
-            }
+            _timer?.Stop();
+            Application.RemoveMessageFilter(this);
         }
 
-        // 키보드 — 키를 누를 때마다 0.05씩 증감 (KeyDown 1회 = 1스텝)
-        public void KeyDown(Keys key)
+        // KeyDown — OS 키리피트를 그대로 이용해 누르는 동안 0.05씩 증감 (원래 방식)
+        private void HandleKeyDown(Keys key)
         {
-            if (_mode != InputMode.Keyboard) return;
-
-            switch (key)
-            {
-                case Keys.Up:
-                case Keys.W:
-                    Throttle = (float)Math.Round(
-                        Math.Min(Throttle + Step, ThrottleMax), 2);
-                    break;
-
-                case Keys.Down:
-                case Keys.S:
-                    Throttle = (float)Math.Round(
-                        Math.Max(Throttle - Step, ThrottleMin), 2);
-                    break;
-
-                case Keys.Left:
-                case Keys.A:
-                    Angle = (float)Math.Round(
-                        Math.Max(Angle - Step, AngleMin), 2);
-                    break;
-
-                case Keys.Right:
-                case Keys.D:
-                    Angle = (float)Math.Round(
-                        Math.Min(Angle + Step, AngleMax), 2);
-                    break;
-
-                case Keys.Space:
-                    Angle = 0f;
-                    Throttle = 0f;
-                    break;
-            }
-
-            OnInputChanged?.Invoke(Angle, Throttle);
+            if (key == Keys.Up || key == Keys.W) _isUpPressed = true;
+            if (key == Keys.Down || key == Keys.S) _isDownPressed = true;
+            if (key == Keys.Left || key == Keys.A) _isLeftPressed = true;
+            if (key == Keys.Right || key == Keys.D) _isRightPressed = true;
         }
 
-        // KeyUp은 아무 동작 없음 — 값이 유지되어야 하므로
+        // KeyUp — 키를 떼면 해당 축 즉시 0 복귀
         public void KeyUp(Keys key)
         {
-
+            if (key == Keys.Up || key == Keys.W) _isUpPressed = false;
+            if (key == Keys.Down || key == Keys.S) _isDownPressed = false;
+            if (key == Keys.Left || key == Keys.A) _isLeftPressed = false;
+            if (key == Keys.Right || key == Keys.D) _isRightPressed = false;
         }
 
         // 조이스틱 값 전달 (VirtualJoystick에서 호출)
@@ -135,39 +109,40 @@ namespace DataManager.Services.DataCollection.Services
 
         private void Update(object sender, EventArgs e)
         {
-            if (_mode == InputMode.Gamepad) UpdateGamepad();
+            if (_mode == InputMode.Keyboard) UpdateKeyboard();
+
+            else if (_mode == InputMode.Gamepad) UpdateGamepad();
 
             // 주기적으로 외부 이벤트 호출 (연결 keepalive 유지)
             OnInputChanged?.Invoke(Angle, Throttle);
         }
 
+        private void UpdateKeyboard()
+        {
+            // 서서히 증가/감소 (Smoothing)
+            if (_isUpPressed) Throttle = Math.Min(Throttle + 0.1f, 1.0f);
+            else if (_isDownPressed) Throttle = Math.Max(Throttle - 0.1f, 1.0f * -1);
+            else Throttle = 0f; // 키를 떼면 바로 0 (기존 방식 유지)
+
+            if (_isLeftPressed) Angle = Math.Max(Angle - 0.1f, -1.0f);
+            else if (_isRightPressed) Angle = Math.Min(Angle + 0.1f, 1.0f);
+            else Angle = 0f;
+        }
+
         private void UpdateGamepad()
         {
-            // 프로그램 실행 중에 패드가 나중에 연결되었을 때를 대비한 방어 코드
             if (_gamepad == null && Gamepad.Gamepads.Count > 0)
-            {
                 _gamepad = Gamepad.Gamepads[0];
-            }
 
             if (_gamepad == null) return;
 
-            // Windows.Gaming.Input 방식으로 현재 패드 상태 읽기
             GamepadReading reading = _gamepad.GetCurrentReading();
 
-            // 1. 조향각 (Angle): R 스틱(RightThumbstick)의 좌우(X축) 사용
             float a = (float)reading.LeftThumbstickX;
-
-            // 2. 스로틀 (Throttle): L 스틱(LeftThumbstick)의 위아래(Y축) 사용
-            // 위로 밀면(+), 아래로 당기면(-) 값이 나옵니다.
             float t = (float)reading.LeftThumbstickY;
 
-            // 3. 데드존 처리 및 최종 값 대입
-            // 스틱을 가만히 두어도 미세하게 값이 튀는 현상(쏠림)을 방지합니다.
             Angle = Math.Abs(a) < 0.1f ? 0f : a;
             Throttle = Math.Abs(t) < 0.1f ? 0f : t;
-
-            // 디버깅용 로그: 값이 잘 들어오는지 비주얼 스튜디오 출력 창에서 확인 가능합니다.
-            // System.Diagnostics.Debug.WriteLine($"[Gamepad] Angle(R_X): {Angle:F2}, Throttle(L_Y): {Throttle:F2}");
         }
     }
 }

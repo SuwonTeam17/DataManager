@@ -47,6 +47,7 @@ namespace DataManager.UserControls
             InitDirectionBars();
             InitJoystick();
             BuildLogPanel();
+            this.VisibleChanged += DataCollectionUI_VisibleChanged;
 
             // 서비스 이벤트 연결
             _connectionService.OnRawMessage += _cameraService.ProcessMessage;
@@ -69,42 +70,53 @@ namespace DataManager.UserControls
             _driveInputService.OnInputChanged += (angle, throttle) =>
             {
                 // 1. cboThrottleMax에 선택된 % 문자열을 숫자로 파싱 (기본값: 100% -> 1.0f)
-                float maxRatio = 1.0f;
+                float throttleMaxRatio = 1.0f;
                 if (cboThrottleMax != null && cboThrottleMax.SelectedItem != null)
                 {
                     string maxStr = cboThrottleMax.SelectedItem.ToString().Replace("%", "").Trim();
                     if (float.TryParse(maxStr, out float percent))
                     {
-                        maxRatio = percent / 100f; // 예: 90 -> 0.9f
+                        throttleMaxRatio = percent / 100f; // 예: 90 -> 0.9f
                     }
                 }
 
-                // 2. cboThrottleType 모드에 따른 스로틀(Throttle) 변형 계산
+                float angleMaxRatio = 1.0f;
+                if (cboAngleMax != null && cboAngleMax.SelectedItem != null)
+                {
+                    string maxStr = cboAngleMax.SelectedItem.ToString().Replace("%", "").Trim();
+                    if (float.TryParse(maxStr, out float percent))
+                    {
+                        angleMaxRatio = percent / 100f; // 예: 90 -> 0.9f
+                    }
+                }
+
+                // 2. cboeType 모드에 따른 변형 계산
                 float processedThrottle = throttle;
+                float processedAngle = angle;
 
                 if (cboThrottleType != null && cboThrottleType.SelectedItem != null)
                 {
-                    string typeMode = cboThrottleType.SelectedItem.ToString();
+                    string throttleTypeMode = cboThrottleType.SelectedItem.ToString();
 
-                    if (typeMode == "최댓값")
+                    if (throttleTypeMode == "최댓값")
                     {
-                        // 전진(+)일 때는 maxRatio를 넘지 못하게, 후진(-)일 때는 -maxRatio보다 낮아지지 않게 제한
+                        // 전진(+)일 때는 throttleMaxRatio를 넘지 못하게, 후진(-)일 때는 -throttleMaxRatio보다 낮아지지 않게 제한
                         if (processedThrottle > 0)
-                            processedThrottle = Math.Min(processedThrottle, maxRatio);
+                            processedThrottle = Math.Min(processedThrottle, throttleMaxRatio);
                         else if (processedThrottle < 0)
-                            processedThrottle = Math.Max(processedThrottle, -maxRatio);
+                            processedThrottle = Math.Max(processedThrottle, -throttleMaxRatio);
                     }
-                    else if (typeMode == "고정값")
+                    else if (throttleTypeMode == "고정값")
                     {
                         // 가만히 정지 상태(0)가 아닐 때만 강제로 값 고정 처리
                         // 입력 장치의 미세한 쏠림 노이즈(데드존)를 감안하여 0.01f 기준으로 판별합니다.
                         if (processedThrottle > 0.01f)
                         {
-                            processedThrottle = maxRatio;
+                            processedThrottle = throttleMaxRatio;
                         }
                         else if (processedThrottle < -0.01f)
                         {
-                            processedThrottle = -maxRatio; // 후진 고정
+                            processedThrottle = -throttleMaxRatio; // 후진 고정
                         }
                         else
                         {
@@ -113,11 +125,57 @@ namespace DataManager.UserControls
                     }
                 }
 
-                // 원본 throttle 대신 가공된 processedThrottle을 서버로 전송합니다!
-                _connectionService.SendControl(angle, processedThrottle, chkRecording.Checked);
+                if (cboAngleType != null && cboAngleType.SelectedItem != null)
+                {
+                    string throttleTypeMode = cboAngleType.SelectedItem.ToString();
+
+                    if (throttleTypeMode == "최댓값")
+                    {
+                        // 우회전(+)일 때는 angleMaxRatio를 넘지 못하게, 좌회전(-)일 때는 -angleMaxRatio보다 낮아지지 않게 제한
+                        if (processedAngle > 0)
+                            processedAngle = Math.Min(processedAngle, angleMaxRatio);
+                        else if (processedAngle < 0)
+                            processedAngle = Math.Max(processedAngle, -angleMaxRatio);
+                    }
+                    else if (throttleTypeMode == "고정값")
+                    {
+                        // 가만히 정지 상태(0)가 아닐 때만 강제로 값 고정 처리
+                        // 입력 장치의 미세한 쏠림 노이즈(데드존)를 감안하여 0.01f 기준으로 판별합니다.
+                        if (processedAngle > 0.01f)
+                        {
+                            processedAngle = angleMaxRatio;
+                        }
+                        else if (processedAngle < -0.01f)
+                        {
+                            processedAngle = -angleMaxRatio; // 후진 고정
+                        }
+                        else
+                        {
+                            processedAngle = 0f; // 완전 중립일 땐 0 유지
+                        }
+                    }
+                }
+
+                // 1. Visible 변경 시 메시지 필터 자동 등록/제거 (UI가 숨겨지면 필터 제거)
+                this.VisibleChanged += (s, e) =>
+                {
+                    if (this.Visible)
+                    {
+                        // 컨트롤이 보일 때만 필터 활성화
+                        Application.AddMessageFilter(_driveInputService);
+                    }
+                    else
+                    {
+                        // 컨트롤이 숨겨지면 필터 비활성화 (다른 탭에서 키 입력 간섭 방지)
+                        Application.RemoveMessageFilter(_driveInputService);
+                    }
+                };
+
+                // 원본 angle, throttle 대신 가공된 processedAngle, processedThrottle을 서버로 전송합니다!
+                _connectionService.SendControl(processedAngle, processedThrottle, chkRecording.Checked);
 
                 // UI 게이지 바에도 가공된 결과 값을 투영합니다.
-                if (_barAngle != null) _barAngle.Value = angle;
+                if (_barAngle != null) _barAngle.Value = processedAngle;
                 if (_barThrottle != null) _barThrottle.Value = processedThrottle;
             };
             _driveInputService.Start();
@@ -132,6 +190,10 @@ namespace DataManager.UserControls
                 if (cboThrottleType != null && cboThrottleType.Items.Count > 0)
                 {
                     cboThrottleType.SelectedIndex = 0;
+                }
+                if (cboAngleType != null && cboAngleType.Items.Count > 0)
+                {
+                    cboAngleType.SelectedIndex = 0;
                 }
 
                 // 2. 콤보박스에 포커스가 잡혀 파랗게 변하는 현상 방지 (파란색 강조 해결)
@@ -151,6 +213,7 @@ namespace DataManager.UserControls
 
             this.HandleDestroyed += (s, e) =>
             {
+                Application.RemoveMessageFilter(_driveInputService);
                 _cameraService.StopStream();
                 _driveInputService.Stop();
                 _connectionService.Disconnect();
@@ -273,21 +336,21 @@ namespace DataManager.UserControls
             pnlControlJoystick.Update();
         }
 
-        // 키 입력 전달만 확인
+        // 키보드 입력이 다른 컨트롤(버튼 등)로 빠지지 않게 처리
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
-            const int WM_KEYDOWN = 0x0100;
-            const int WM_SYSKEYDOWN = 0x0104;
+            // 포커스가 콤보박스에 있는 상태에서 방향키/WASD가 입력되면
+            if (this.ActiveControl is ComboBox &&
+               (keyData == Keys.Up || keyData == Keys.Down || keyData == Keys.Left || keyData == Keys.Right ||
+                keyData == Keys.W || keyData == Keys.A || keyData == Keys.S || keyData == Keys.D))
+            {
+                // 1. 여기서 포커스를 옮겨버립니다.
+                if (btnStartSim != null && btnStartSim.Enabled) btnStartSim.Focus();
+                else this.Focus();
 
-            bool isKeyDown =
-                msg.Msg == WM_KEYDOWN ||
-                msg.Msg == WM_SYSKEYDOWN;
-
-            if (!isKeyDown)
-                return base.ProcessCmdKey(ref msg, keyData);
-
-            if (_driveInputService.HandleKeyboardKey(keyData))
+                // 2. 키 입력을 콤보박스로 전달하지 않고 종료 (이게 핵심입니다!)
                 return true;
+            }
 
             return base.ProcessCmdKey(ref msg, keyData);
         }
@@ -297,6 +360,7 @@ namespace DataManager.UserControls
             string envName = cboMapList.Text.Trim();
             _logBox.Clear();
             _logPanel.Visible = true;
+            cboMapList.Enabled = false;
 
             // 시뮬레이터 실행
             _processService.StartSimulator(SimPath);
@@ -324,6 +388,7 @@ namespace DataManager.UserControls
 
         private void btnInit_Click(object sender, EventArgs e)
         {
+            cboMapList.Enabled = true;
             try
             {
                 // 1. 켜져 있는 시뮬레이터 및 파이썬 백그라운드 프로세스가 있다면 모두 종료
@@ -541,6 +606,12 @@ namespace DataManager.UserControls
                     "저장 경로 없음", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 chkRecording.Checked = false;
             }
+        }
+
+        private void DataCollectionUI_VisibleChanged(object sender, EventArgs e)
+        {
+            if (this.Visible) Application.AddMessageFilter(_driveInputService);
+            else Application.RemoveMessageFilter(_driveInputService);
         }
     }
 }
