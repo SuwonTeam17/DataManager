@@ -15,12 +15,12 @@ namespace DataManager.Services.DataCollection.Services
                 WorkingDirectory = System.IO.Path.GetDirectoryName(simPath)
             });
         }
-        public void StartPython(string pythonExe, string workingDir, string envName, Action<string> onLogReceived)
+        public void StartPython(string pythonExe, string workingDir, string envName, Func<string, Task> onLogReceived)
         {
             var psi = new ProcessStartInfo
             {
                 FileName = pythonExe,
-                Arguments = $"manage.py drive --env_name={envName.Trim()}",
+                Arguments = $"-u manage.py drive --env_name={envName.Trim()}",
                 WorkingDirectory = workingDir,
                 UseShellExecute = false,
                 CreateNoWindow = true, // CMD 창 숨김
@@ -29,8 +29,8 @@ namespace DataManager.Services.DataCollection.Services
             };
 
             _pythonProcess = new Process { StartInfo = psi, EnableRaisingEvents = true };
-            _pythonProcess.OutputDataReceived += (s, e) => { if (e.Data != null) onLogReceived?.Invoke(e.Data); };
-            _pythonProcess.ErrorDataReceived += (s, e) => { if (e.Data != null) onLogReceived?.Invoke(e.Data); };
+            _pythonProcess.OutputDataReceived += (s, e) => { if (e.Data != null) Task.Run(() => onLogReceived?.Invoke(e.Data)); };
+            _pythonProcess.ErrorDataReceived += (s, e) => { if (e.Data != null) Task.Run(() => onLogReceived?.Invoke(e.Data)); };
 
             _pythonProcess.Start();
             _pythonProcess.BeginOutputReadLine();

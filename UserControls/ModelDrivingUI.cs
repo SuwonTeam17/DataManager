@@ -125,22 +125,38 @@ namespace DataManager.UserControls
                 AppendPythonLog(line);
             };
 
-            // 서버 준비 완료 → btnConnect 자동 활성화
-            _drivingService.OnServerReady += () =>
+            // 서버 준비 완료 → 소켓 연결 자동 수행 후 btnDrive 활성화
+            _drivingService.OnServerReady += async () =>
             {
                 if (!IsHandleCreated || IsDisposed) return;
-                this.BeginInvoke(new Action(() =>
-                {
-                    btnConnect.Enabled = true;
-                    ReportLog("성공", "✅ 서버 준비 완료! [서버 연결] 버튼이 활성화되었습니다.");
 
-                    // 로그 패널이 닫혀 있었다면 자동으로 열어줌
-                    if (!_logVisible)
+                try
+                {
+                    await _drivingService.ConnectNetworkAsync();
+
+                    this.BeginInvoke(new Action(() =>
                     {
-                        _logVisible = true;
-                        _logPanel.Visible = true;
-                    }
-                }));
+                        if (IsDisposed) return;
+                        btnDrive.Enabled = true;
+                        ReportLog("성공", "✅ 서버 준비 완료! 소켓 및 카메라 연결이 자동으로 완료되었습니다. [AI 주행 시작] 버튼을 누르세요.");
+
+                        // 로그 패널이 닫혀 있었다면 자동으로 열어줌
+                        if (!_logVisible)
+                        {
+                            _logVisible = true;
+                            _logPanel.Visible = true;
+                        }
+                    }));
+                }
+                catch (Exception ex)
+                {
+                    this.BeginInvoke(new Action(() =>
+                    {
+                        if (IsDisposed) return;
+                        ReportLog("에러", $"소켓 자동 연결 실패: {ex.Message}");
+                        btnLoadModel.Enabled = true;
+                    }));
+                }
             };
 
             this.Load += (s, e) =>
@@ -162,15 +178,12 @@ namespace DataManager.UserControls
             if (cboMapList != null && cboMapList.Items.Count > 0)
                 cboMapList.SelectedIndex = 0;
 
-            btnConnect.Text = "서버 연결";
             btnDrive.Text = "▶ 주행 시작";
             btnDrive.BackColor = Color.FromArgb(72, 175, 120);
             btnDrive.ForeColor = Color.White;
             lblLoadedModel.Text = "선택된 모델 가중치 파일 없음";
 
             btnLoadModel.Enabled = true;
-            btnStartSim.Enabled = false;
-            btnConnect.Enabled = false;
             btnDrive.Enabled = false;
 
             // 로그 박스 초기화
@@ -190,7 +203,7 @@ namespace DataManager.UserControls
         }
         // ─────────────────────────────────────────────────────────────────────
 
-        // 1단계: 모델 로드
+        // 통합 버튼: 모델 가져오기 → 시뮬레이터 시작 → 서버 준비 감지 → 소켓 연결 자동 수행
         private void btnLoadModel_Click(object sender, EventArgs e)
         {
             string defaultModelsPath = MycarModelsDir;
@@ -229,14 +242,12 @@ namespace DataManager.UserControls
                         {
                             ReportLog("경고", "3D 모델은 현재 시뮬레이터 환경에서 실행이 지원되지 않습니다. 다른 모델을 선택해주세요.");
                             lblLoadedModel.Text = $"⚠ 지원 불가: {fileName}";
-                            btnStartSim.Enabled = false;
                             btnLoadModel.Enabled = true;
                             return;
                         }
 
                         lblLoadedModel.Text = $"로드됨: {fileName}";
                         btnLoadModel.Enabled = false;
-                        btnStartSim.Enabled = true;
 
                         ReportLog("성공", $"모델 가중치 연동 완료: {fileName}");
                         ReportLog("메타분석", $"[meta.txt 자동 인식 결과] -> 현재 모델은 '{_drivingService.DetectedModelType}' 모드입니다.");
@@ -244,57 +255,32 @@ namespace DataManager.UserControls
                     catch (Exception ex)
                     {
                         ReportLog("에러", $"모델 파일 설정 또는 메타 파일 분석 실패: {ex.Message}");
+                        return;
+                    }
+
+                    // 모델 로드 성공 → 시뮬레이터 + Python 서버 자동 시작
+                    string envName = cboMapList.Text.Trim();
+                    if (string.IsNullOrEmpty(envName)) envName = "generated_track";
+
+                    try
+                    {
+                        _logBox?.Clear();
+
+                        _drivingService.StartSimulatorAndServer(envName);
+
+                        // 로그 패널 자동 오픈
+                        _logVisible = true;
+                        _logPanel.Visible = true;
+
+                        ReportLog("알림", $"시뮬레이터 및 Python 서버 실행 중... (맵: {envName})");
+                        ReportLog("알림", "서버 준비 완료가 감지되면 소켓 연결이 자동으로 수행되고 [AI 주행 시작] 버튼이 활성화됩니다.");
+                    }
+                    catch (Exception ex)
+                    {
+                        ReportLog("에러", $"시뮬레이터/서버 시작 실패: {ex.Message}");
+                        btnLoadModel.Enabled = true;
                     }
                 }
-            }
-        }
-
-        // 2단계: 시뮬레이터 및 서버 시작
-        //   - cmd 창 없이 실행됨
-        //   - 서버 준비 완료 키워드 감지 시 OnServerReady → btnConnect 자동 활성화
-        private void btnStartSim_Click(object sender, EventArgs e)
-        {
-            string envName = cboMapList.Text.Trim();
-            if (string.IsNullOrEmpty(envName)) envName = "generated_track";
-
-            try
-            {
-                _logBox?.Clear();
-
-                _drivingService.StartSimulatorAndServer(envName);
-                btnStartSim.Enabled = false;
-
-                // 로그 패널 자동 오픈
-                _logVisible = true;
-                _logPanel.Visible = true;
-
-                ReportLog("알림", $"시뮬레이터 및 Python 서버 실행 중... (맵: {envName})");
-                ReportLog("알림", "서버 로그를 확인해주세요. 준비 완료 메시지가 감지되면 [서버 연결] 버튼이 자동으로 활성화됩니다.");
-            }
-            catch (Exception ex)
-            {
-                ReportLog("에러", $"시뮬레이터/서버 시작 실패: {ex.Message}");
-                btnStartSim.Enabled = true;
-            }
-        }
-
-        // 3단계: 소켓 연결
-        private async void btnConnect_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                await _drivingService.ConnectNetworkAsync();
-
-                btnConnect.Text = "연결됨";
-                btnConnect.Enabled = false;
-                btnDrive.Enabled = true;
-
-                ReportLog("알림", "통신 채널이 활성화되었습니다. [AI 주행 시작] 버튼으로 자율주행 테스트가 가능합니다.");
-            }
-            catch (Exception ex)
-            {
-                ReportLog("에러", $"웹소켓 서버 연결 실패: {ex.Message}");
-                btnConnect.Enabled = true;
             }
         }
 

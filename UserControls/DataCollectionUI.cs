@@ -174,7 +174,7 @@ namespace DataManager.UserControls
             _logPanel = new Panel
             {
                 Dock = DockStyle.Bottom,
-                Height = 120, // 높이 조정
+                Height = 110, // 높이 조정
                 Visible = false
             };
 
@@ -292,37 +292,34 @@ namespace DataManager.UserControls
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
-        private async void btnStartSim_Click(object sender, EventArgs e)
+        private void btnStartSim_Click(object sender, EventArgs e)
         {
             string envName = cboMapList.Text.Trim();
             _logBox.Clear();
             _logPanel.Visible = true;
 
-            // 2. 시뮬레이터 실행
+            // 시뮬레이터 실행
             _processService.StartSimulator(SimPath);
 
-            // 서비스에서 변경된 StartPython 호출 (아래 2번 참조)
-            _processService.StartPython(PythonExe, MycarDir, envName, (line) => {
-                this.Invoke(new Action(() => {
-                    AppendPythonLog(line);
-                    // "You can now..." 등의 로그 감지 시 btnConnect.Enabled = true;
-                    if (line.Contains("http://localhost:8887") || line.Contains("Starting vehicle"))
+            // Python 서버 시작 — 준비 완료 감지 시 자동으로 소켓 연결까지 수행
+            _processService.StartPython(PythonExe, MycarDir, envName, async (line) =>
+            {
+                this.Invoke(new Action(() => AppendPythonLog(line)));
+
+                if (line.Contains("http://localhost:8887") || line.Contains("Starting vehicle"))
+                {
+                    // 서버 준비 완료 → 소켓 + 카메라 연결 자동 실행
+                    await _connectionService.ConnectAsync();
+                    _cameraService.StartStream("http://localhost:8887/video");
+
+                    this.BeginInvoke(new Action(() =>
                     {
-                        btnConnect.Enabled = true;
-                        ReportLog("성공", "서버 준비 완료! 연결 버튼이 활성화되었습니다.");
-                    }
-                }));
+                        ReportLog("성공", "서버 준비 완료! 소켓 및 카메라 연결이 자동으로 완료되었습니다.");
+                    }));
+                }
             });
 
             btnStartSim.Enabled = false;
-        }
-
-        private async void btnConnect_Click(object sender, EventArgs e)
-        {
-            await _connectionService.ConnectAsync();
-            btnConnect.Text = "연결됨";
-            btnConnect.Enabled = false;
-            _cameraService.StartStream("http://localhost:8887/video");
         }
 
         private void btnInit_Click(object sender, EventArgs e)
@@ -346,15 +343,7 @@ namespace DataManager.UserControls
 
                 // 3. 버튼 활성화 상태 및 UI 컨트롤 초기화
                 btnStartSim.Enabled = true;       // 시뮬레이터/파이썬 통합 실행 버튼 다시 활성화
-                btnConnect.Enabled = false;       // 연결 버튼은 서버가 꺼졌으므로 비활성화
 
-                // 💡 만약 연결 상태를 나타내는 UI 텍스트나 통신이 끊겼다면 텍스트도 초기화
-                if (btnConnect.Text == "연결됨")
-                {
-                    btnConnect.Text = "서버 연결";   // 토글 버튼 상태 원상복구
-                }
-
-                // 4. 기록(Recording) 체크박스도 안전하게 해제 및 비활성화
                 chkRecording.Checked = false;
 
                 // 로그 출력

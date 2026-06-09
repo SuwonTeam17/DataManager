@@ -26,7 +26,6 @@
             cboMapList = new ComboBox();
             chkRecording = new CheckBox();
             btnStartSim = new Button();
-            btnConnect = new Button();
             pnlData = new Panel();
             btnUnSelectFolder = new Button();
             btnDelFolder = new Button();
@@ -68,7 +67,6 @@
             pnlConnect.Controls.Add(cboMapList);
             pnlConnect.Controls.Add(chkRecording);
             pnlConnect.Controls.Add(btnStartSim);
-            pnlConnect.Controls.Add(btnConnect);
             pnlConnect.Dock = DockStyle.Top;
             pnlConnect.Location = new Point(0, 0);
             pnlConnect.Name = "pnlConnect";
@@ -139,29 +137,12 @@
             btnStartSim.ForeColor = Color.White;
             btnStartSim.Location = new Point(201, 10);
             btnStartSim.Name = "btnStartSim";
-            btnStartSim.Size = new Size(122, 30);
+            btnStartSim.Size = new Size(222, 30);
             btnStartSim.TabIndex = 1;
-            btnStartSim.Text = "시뮬레이터 시작";
+            btnStartSim.Text = "시뮬레이터 시작 및 서버 연결";
             btnStartSim.UseVisualStyleBackColor = false;
             btnStartSim.Click += btnStartSim_Click;
-            // 
-            // btnConnect
-            // 
-            btnConnect.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
-            btnConnect.BackColor = Color.FromArgb(72, 175, 120);
-            btnConnect.Cursor = Cursors.Hand;
-            btnConnect.Enabled = false;
-            btnConnect.FlatAppearance.BorderSize = 0;
-            btnConnect.FlatStyle = FlatStyle.Flat;
-            btnConnect.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
-            btnConnect.ForeColor = Color.White;
-            btnConnect.Location = new Point(329, 10);
-            btnConnect.Name = "btnConnect";
-            btnConnect.Size = new Size(94, 30);
-            btnConnect.TabIndex = 0;
-            btnConnect.Text = "서버 연결";
-            btnConnect.UseVisualStyleBackColor = false;
-            btnConnect.Click += btnConnect_Click;
+
             // 
             // pnlData
             // 
@@ -485,7 +466,6 @@
         private Panel pnlControl;
         private Panel pnlCamera;
         private PictureBox picCamera;
-        private Button btnConnect;
         private Button btnStartSim;
         private Panel pnlControlJoystick;
         private Panel pnlView;
