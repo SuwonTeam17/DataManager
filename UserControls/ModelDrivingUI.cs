@@ -185,6 +185,7 @@ namespace DataManager.UserControls
 
             btnLoadModel.Enabled = true;
             btnDrive.Enabled = false;
+            cboMapList.Enabled = true;
 
             // 로그 박스 초기화
             _logBox?.Clear();
@@ -248,6 +249,7 @@ namespace DataManager.UserControls
 
                         lblLoadedModel.Text = $"로드됨: {fileName}";
                         btnLoadModel.Enabled = false;
+                        cboMapList.Enabled = false;
 
                         ReportLog("성공", $"모델 가중치 연동 완료: {fileName}");
                         ReportLog("메타분석", $"[meta.txt 자동 인식 결과] -> 현재 모델은 '{_drivingService.DetectedModelType}' 모드입니다.");
