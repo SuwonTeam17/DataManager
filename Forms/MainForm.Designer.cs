@@ -32,6 +32,8 @@
             btnChgTrainerForm = new Button();
             btnChgPilotForm = new Button();
             pnlChgForm = new Panel();
+            btnChgModelDrivingForm = new Button();
+            btnChgDataCollectionForm = new Button();
             pnlLog = new Panel();
             lvwLogBox = new ListView();
             시간 = new ColumnHeader();
@@ -50,10 +52,10 @@
             btnChgTubForm.FlatStyle = FlatStyle.Flat;
             btnChgTubForm.Font = new Font("맑은 고딕", 10F, FontStyle.Bold);
             btnChgTubForm.ForeColor = Color.White;
-            btnChgTubForm.Location = new Point(0, 0);
+            btnChgTubForm.Location = new Point(160, 0);
             btnChgTubForm.Margin = new Padding(0);
             btnChgTubForm.Name = "btnChgTubForm";
-            btnChgTubForm.Size = new Size(206, 53);
+            btnChgTubForm.Size = new Size(160, 40);
             btnChgTubForm.TabIndex = 0;
             btnChgTubForm.Text = "이미지 편집";
             btnChgTubForm.UseVisualStyleBackColor = false;
@@ -67,10 +69,10 @@
             btnChgTrainerForm.FlatStyle = FlatStyle.Flat;
             btnChgTrainerForm.Font = new Font("맑은 고딕", 10F, FontStyle.Bold);
             btnChgTrainerForm.ForeColor = Color.White;
-            btnChgTrainerForm.Location = new Point(206, 0);
+            btnChgTrainerForm.Location = new Point(320, 0);
             btnChgTrainerForm.Margin = new Padding(0);
             btnChgTrainerForm.Name = "btnChgTrainerForm";
-            btnChgTrainerForm.Size = new Size(206, 53);
+            btnChgTrainerForm.Size = new Size(160, 40);
             btnChgTrainerForm.TabIndex = 1;
             btnChgTrainerForm.Text = "모델 훈련";
             btnChgTrainerForm.UseVisualStyleBackColor = false;
@@ -84,10 +86,10 @@
             btnChgPilotForm.FlatStyle = FlatStyle.Flat;
             btnChgPilotForm.Font = new Font("맑은 고딕", 10F, FontStyle.Bold);
             btnChgPilotForm.ForeColor = Color.White;
-            btnChgPilotForm.Location = new Point(411, 0);
+            btnChgPilotForm.Location = new Point(480, 0);
             btnChgPilotForm.Margin = new Padding(0);
             btnChgPilotForm.Name = "btnChgPilotForm";
-            btnChgPilotForm.Size = new Size(206, 53);
+            btnChgPilotForm.Size = new Size(160, 40);
             btnChgPilotForm.TabIndex = 2;
             btnChgPilotForm.Text = "모델 테스트";
             btnChgPilotForm.UseVisualStyleBackColor = false;
@@ -96,6 +98,8 @@
             // pnlChgForm
             // 
             pnlChgForm.BackColor = Color.FromArgb(40, 50, 70);
+            pnlChgForm.Controls.Add(btnChgModelDrivingForm);
+            pnlChgForm.Controls.Add(btnChgDataCollectionForm);
             pnlChgForm.Controls.Add(btnChgTrainerForm);
             pnlChgForm.Controls.Add(btnChgTubForm);
             pnlChgForm.Controls.Add(btnChgPilotForm);
@@ -103,18 +107,52 @@
             pnlChgForm.Location = new Point(0, 0);
             pnlChgForm.Margin = new Padding(0);
             pnlChgForm.Name = "pnlChgForm";
-            pnlChgForm.Size = new Size(1221, 53);
+            pnlChgForm.Size = new Size(950, 40);
             pnlChgForm.TabIndex = 4;
+            // 
+            // btnChgModelDrivingForm
+            // 
+            btnChgModelDrivingForm.BackColor = Color.FromArgb(100, 110, 130);
+            btnChgModelDrivingForm.Cursor = Cursors.Hand;
+            btnChgModelDrivingForm.FlatAppearance.BorderSize = 0;
+            btnChgModelDrivingForm.FlatStyle = FlatStyle.Flat;
+            btnChgModelDrivingForm.Font = new Font("맑은 고딕", 10F, FontStyle.Bold);
+            btnChgModelDrivingForm.ForeColor = Color.White;
+            btnChgModelDrivingForm.Location = new Point(640, 0);
+            btnChgModelDrivingForm.Margin = new Padding(0);
+            btnChgModelDrivingForm.Name = "btnChgModelDrivingForm";
+            btnChgModelDrivingForm.Size = new Size(160, 40);
+            btnChgModelDrivingForm.TabIndex = 4;
+            btnChgModelDrivingForm.Text = "모델 주행";
+            btnChgModelDrivingForm.UseVisualStyleBackColor = false;
+            btnChgModelDrivingForm.Click += btnChgModelDrivingForm_Click;
+            // 
+            // btnChgDataCollectionForm
+            // 
+            btnChgDataCollectionForm.BackColor = Color.FromArgb(100, 110, 130);
+            btnChgDataCollectionForm.Cursor = Cursors.Hand;
+            btnChgDataCollectionForm.FlatAppearance.BorderSize = 0;
+            btnChgDataCollectionForm.FlatStyle = FlatStyle.Flat;
+            btnChgDataCollectionForm.Font = new Font("맑은 고딕", 10F, FontStyle.Bold);
+            btnChgDataCollectionForm.ForeColor = Color.White;
+            btnChgDataCollectionForm.Location = new Point(0, 0);
+            btnChgDataCollectionForm.Margin = new Padding(0);
+            btnChgDataCollectionForm.Name = "btnChgDataCollectionForm";
+            btnChgDataCollectionForm.Size = new Size(160, 40);
+            btnChgDataCollectionForm.TabIndex = 3;
+            btnChgDataCollectionForm.Text = "데이터 수집";
+            btnChgDataCollectionForm.UseVisualStyleBackColor = false;
+            btnChgDataCollectionForm.Click += btnChgDataCollectionForm_Click;
             // 
             // pnlLog
             // 
             pnlLog.BackColor = Color.FromArgb(245, 247, 250);
             pnlLog.Controls.Add(lvwLogBox);
             pnlLog.Dock = DockStyle.Bottom;
-            pnlLog.Location = new Point(0, 882);
+            pnlLog.Location = new Point(0, 661);
             pnlLog.Margin = new Padding(0);
             pnlLog.Name = "pnlLog";
-            pnlLog.Size = new Size(1221, 173);
+            pnlLog.Size = new Size(950, 130);
             pnlLog.TabIndex = 6;
             // 
             // lvwLogBox
@@ -128,9 +166,8 @@
             lvwLogBox.FullRowSelect = true;
             lvwLogBox.GridLines = true;
             lvwLogBox.Location = new Point(0, 0);
-            lvwLogBox.Margin = new Padding(4, 4, 4, 4);
             lvwLogBox.Name = "lvwLogBox";
-            lvwLogBox.Size = new Size(1221, 173);
+            lvwLogBox.Size = new Size(950, 130);
             lvwLogBox.TabIndex = 0;
             lvwLogBox.UseCompatibleStateImageBehavior = false;
             lvwLogBox.View = View.Details;
@@ -154,22 +191,21 @@
             // 
             pnlMain.BackColor = Color.FromArgb(245, 247, 250);
             pnlMain.Dock = DockStyle.Fill;
-            pnlMain.Location = new Point(0, 53);
+            pnlMain.Location = new Point(0, 40);
             pnlMain.Margin = new Padding(0);
             pnlMain.Name = "pnlMain";
-            pnlMain.Size = new Size(1221, 829);
+            pnlMain.Size = new Size(950, 621);
             pnlMain.TabIndex = 7;
             // 
             // MainForm
             // 
-            AutoScaleDimensions = new SizeF(9F, 20F);
+            AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(245, 247, 250);
-            ClientSize = new Size(1221, 1055);
+            ClientSize = new Size(950, 791);
             Controls.Add(pnlMain);
             Controls.Add(pnlLog);
             Controls.Add(pnlChgForm);
-            Margin = new Padding(4, 4, 4, 4);
             Name = "MainForm";
             Text = "Data Manager";
             pnlChgForm.ResumeLayout(false);
@@ -188,5 +224,7 @@
         private ColumnHeader 시간;
         private ColumnHeader 타입;
         private ColumnHeader 메시지;
+        private Button btnChgDataCollectionForm;
+        private Button btnChgModelDrivingForm;
     }
 }
