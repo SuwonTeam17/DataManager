@@ -59,7 +59,7 @@ namespace DataManager.UserControls
         // 필터로 인해 "숨김 처리"할 프레임 인덱스 집합 (실제 삭제 X, 뷰에서만 스킵)
         private HashSet<int> filteredHideSet = new HashSet<int>();
 
-        // 기존 코드 근처에 아래 2줄을 추가합니다.
+        
         private HashSet<int> filteredInvertSet = new HashSet<int>();
         private HashSet<int> filteredGrayscaleSet = new HashSet<int>();
 
