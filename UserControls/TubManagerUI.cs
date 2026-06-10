@@ -1083,146 +1083,148 @@ namespace DataManager.UserControls
 
         private void btnApplyFillter_Click(object sender, EventArgs e)
         {
-            if (drivingData.Count == 0) return;
+            if (drivingData == null || drivingData.Count == 0) return;
 
-            // ── 다중 구간 예외 처리 ──
-            if (selectedRanges == null || selectedRanges.Count == 0)
+            // [수정] 활성화된 특정 구간이 없거나 인덱스가 올바르지 않으면 경고 후 리턴
+            if (activeRangeIndex == -1 || selectedRanges == null || activeRangeIndex >= selectedRanges.Count)
             {
-                ReportLog("경고", "선택된 구간이 없습니다. P 키를 눌러 전체 구간을 지정하거나 새로운 구간을 설정하세요.");
+                MessageBox.Show("필터를 적용할 구간을 먼저 선택하거나 생성하세요.", "알림");
                 return;
             }
 
-            // 1단계: 선택된 모든 구간들에 대해 '이전 임시 결과 초기화'를 먼저 수행
-            foreach (var range in selectedRanges)
+            // 1단계: 현재 '선택된 단 하나의 구간'에 대해서만 이전 임시 결과 초기화 수행
+            var activeRange = selectedRanges[activeRangeIndex];
+            int _start = activeRange.Start;
+            int _end = activeRange.End;
+
+            for (int _i = _start; _i <= _end; _i++)
             {
-                int _start = range.Start;
-                int _end = range.End;
-
-                for (int _i = _start; _i <= _end; _i++)
+                if (_i < 0 || _i >= drivingData.Count) continue; // 배열 인덱스 초과 방지
+                if (filteredFrameMap.TryGetValue(_i, out Bitmap _old))
                 {
-                    if (_i < 0 || _i >= drivingData.Count) continue; // 배열 인덱스 초과 방지
-
-                    if (filteredFrameMap.TryGetValue(_i, out Bitmap _old))
-                    {
-                        _old.Dispose();
-                        filteredFrameMap.Remove(_i);
-                    }
-                    filteredHideSet.Remove(_i);
-                    filteredInvertSet.Remove(_i);
-                    filteredGrayscaleSet.Remove(_i);
+                    _old.Dispose();
+                    filteredFrameMap.Remove(_i);
                 }
+                filteredHideSet.Remove(_i);
+                filteredInvertSet.Remove(_i);
+                filteredGrayscaleSet.Remove(_i);
             }
 
-            bool _anyImageFilter = chkInverseColor.Checked
-                                || chkApplyBlackWhite.Checked
-                                || chkSetBright.Checked
-                                || chkSetBlur.Checked;
-
-            // 총 카운트 집계용 변수
+            bool _anyImageFilter = chkInverseColor.Checked || chkApplyBlackWhite.Checked || chkSetBright.Checked || chkSetBlur.Checked;
             int totalHiddenCount = 0;
             int totalFilteredCount = 0;
 
-            // 2단계: 선택된 모든 구간들을 순회하며 필터 및 변환 작업 적용
-            foreach (var range in selectedRanges)
+            // 2단계: 현재 '선택된 단 하나의 구간'만 순회하며 필터 및 변환 작업 적용
+            for (int _i = _start; _i <= _end; _i++)
             {
-                int _start = range.Start;
-                int _end = range.End;
+                if (_i < 0 || _i >= drivingData.Count) continue; // 배열 인덱스 초과 방지
+                var _frame = drivingData[_i];
 
-                for (int _i = _start; _i <= _end; _i++)
+                // ── 이미지 변환 필터 상태(선) 먼저 기록 ──
+                if (chkApplyBlackWhite.Checked)
                 {
-                    if (_i < 0 || _i >= drivingData.Count) continue; // 배열 인덱스 초과 방지
+                    filteredGrayscaleSet.Add(_i);
+                }
+                if (chkInverseColor.Checked)
+                {
+                    filteredInvertSet.Add(_i);
+                }
 
-                    var _frame = drivingData[_i];
+                // ── 삭제(숨김) 필터 ──
+                bool _shouldHide = false;
+                if (chkDelThrottle.Checked && _frame.Throttle >= -(double)numLeftThrottle.Value && _frame.Throttle <= (double)numRightThrottle.Value)
+                {
+                    filteredHideSet.Add(_i);
+                    _shouldHide = true;
+                }
+                if (chkDelAngle.Checked && _frame.Angle >= -(double)numLeftAngle.Value && _frame.Angle <= (double)numRightAngle.Value)
+                {
+                    filteredHideSet.Add(_i);
+                    _shouldHide = true;
+                }
+                if (chkRemoveImage.Checked)
+                {
+                    filteredHideSet.Add(_i);
+                    _shouldHide = true;
+                }
 
-                    // ── 이미지 변환 필터 상태(선) 먼저 기록 ──
-                    if (chkApplyBlackWhite.Checked)
-                    {
-                        filteredGrayscaleSet.Add(_i);
-                    }
-                    if (chkInverseColor.Checked)
-                    {
-                        filteredInvertSet.Add(_i);
-                    }
-
-                    // ── 삭제(숨김) 필터 ──
-                    bool _shouldHide = false;
-
-                    if (chkDelThrottle.Checked && _frame.Throttle >= -(double)numLeftThrottle.Value && _frame.Throttle <= (double)numRightThrottle.Value)
-                    {
-                        filteredHideSet.Add(_i);
-                        _shouldHide = true;
-                    }
-                    if (chkDelAngle.Checked && _frame.Throttle >= -(double)numLeftAngle.Value && _frame.Throttle <= (double)numRightAngle.Value)
-                    {
-                        filteredHideSet.Add(_i);
-                        _shouldHide = true;
-                    }
-                    if (chkRemoveImage.Checked)
-                    {
-                        filteredHideSet.Add(_i);
-                        _shouldHide = true;
-                    }
-
-                    // 숨김 처리된 프레임이라면 건너뜀
-                    if (_shouldHide)
-                    {
-                        totalHiddenCount++;
-                        continue;
-                    }
-
-                    // ── 실제 이미지 변환 및 저장 ──
-                    if (!_anyImageFilter) continue;
-                    if (string.IsNullOrEmpty(_frame.ImagePath) || !File.Exists(_frame.ImagePath)) continue;
-
+                if (_shouldHide)
+                {
+                    totalHiddenCount++;
+                }
+                else if (_anyImageFilter)
+                {
+                    // 실제 비트맵 변환 로직 (기존 원본 로직 유지)
                     try
                     {
-                        Bitmap _bmp;
-                        using (var _src = new Bitmap(_frame.ImagePath))
-                            _bmp = new Bitmap(_src); // 원본 복사본
+                        if (File.Exists(_frame.ImagePath))
+                        {
+                            Bitmap _currentBmp;
+                            using (var _tempImg = Image.FromFile(_frame.ImagePath))
+                            {
+                                _currentBmp = new Bitmap(_tempImg);
+                            }
 
-                        if (chkApplyBlackWhite.Checked) _bmp = ApplyGrayscale(_bmp);
-                        if (chkInverseColor.Checked) _bmp = ApplyInvert(_bmp);
-                        if (chkSetBright.Checked) _bmp = ApplyBrightness(_bmp, trkSetBright.Value);
-                        if (chkSetBlur.Checked) _bmp = ApplyBlur(_bmp, trkSetBlur.Value);
+                            if (chkApplyBlackWhite.Checked) _currentBmp = ApplyGrayscale(_currentBmp);
+                            if (chkInverseColor.Checked) _currentBmp = ApplyInvert(_currentBmp);
+                            if (chkSetBright.Checked && trkSetBright.Value != 0) _currentBmp = ApplyBrightness(_currentBmp, trkSetBright.Value);
+                            if (chkSetBlur.Checked && trkSetBlur.Value > 0) _currentBmp = ApplyBlur(_currentBmp, trkSetBlur.Value);
 
-                        filteredFrameMap[_i] = _bmp;
-                        totalFilteredCount++;
+                            filteredFrameMap[_i] = _currentBmp;
+                            totalFilteredCount++;
+                        }
                     }
-                    catch
+                    catch (Exception _ex)
                     {
-                        /* 이미지 변환 오류 시 예외 처리 */
+                        ReportLog("오류", $"프레임 [{_i}] 필터 변환 실패: {_ex.Message}");
                     }
                 }
             }
 
+            // UI 및 차트 업데이트
             UpdateChart();
             DisplayFrame(currentFrameIndex);
-
-            // ── 타임라인 갱신 ──
             pnlTimeStamp?.Invalidate();
 
-            // 알림 로그 출력 (모든 선택 영역에 적용된 누적 개수 출력)
-            ReportLog("알림", $"필터 적용 완료 (총 {selectedRanges.Count}개 구간) — 숨김: {totalHiddenCount}개, 이미지 변환: {totalFilteredCount}개 완료");
+            ReportLog("정보", $"선택 구간 필터 적용 완료: {totalFilteredCount}개 프레임 변환, {totalHiddenCount}개 프레임 숨김");
         }
 
         private void btnCancelFillter_Click(object sender, EventArgs e)
         {
-            // Bitmap 메모리 해제 후 딕셔너리 전체 삭제
-            foreach (var _bmp in filteredFrameMap.Values)
-                _bmp.Dispose();
+            if (drivingData == null || drivingData.Count == 0) return;
 
-            filteredFrameMap.Clear();
-            filteredHideSet.Clear();
-            filteredInvertSet.Clear();
-            filteredGrayscaleSet.Clear();
+            // [수정] 활성화된 특정 구간이 없으면 리턴
+            if (activeRangeIndex == -1 || selectedRanges == null || activeRangeIndex >= selectedRanges.Count)
+            {
+                return;
+            }
 
+            // 현재 활성화된 단 하나의 구간만 가져옴
+            var activeRange = selectedRanges[activeRangeIndex];
+            int _start = activeRange.Start;
+            int _end = activeRange.End;
+
+            // 현재 구간 범위 내의 데이터만 필터 해제
+            for (int _i = _start; _i <= _end; _i++)
+            {
+                if (_i < 0 || _i >= drivingData.Count) continue;
+
+                if (filteredFrameMap.TryGetValue(_i, out Bitmap _old))
+                {
+                    _old.Dispose();
+                    filteredFrameMap.Remove(_i);
+                }
+                filteredHideSet.Remove(_i);
+                filteredInvertSet.Remove(_i);
+                filteredGrayscaleSet.Remove(_i);
+            }
+
+            // UI 및 차트 업데이트
             UpdateChart();
             DisplayFrame(currentFrameIndex);
-
-            // ── 타임라인 갱신 추가 ──
             pnlTimeStamp?.Invalidate();
 
-            ReportLog("알림", "임시 필터 결과가 모두 취소되었습니다.");
+            ReportLog("알림", $"선택된 구간 [{activeRangeIndex + 1}]의 임시 필터 결과가 취소되었습니다.");
         }
         private void btnInitFillterSet_Click(object sender, EventArgs e)
         {
