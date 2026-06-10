@@ -181,7 +181,7 @@ namespace DataManager.UserControls
             btnDrive.Text = "▶ 주행 시작";
             btnDrive.BackColor = Color.FromArgb(72, 175, 120);
             btnDrive.ForeColor = Color.White;
-            lblLoadedModel.Text = "선택된 모델 가중치 파일 없음";
+            lblLoadedModel.Text = "tflite 파일을 선택해주세요";
 
             btnLoadModel.Enabled = true;
             btnDrive.Enabled = false;
