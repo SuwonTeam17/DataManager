@@ -98,6 +98,7 @@ namespace DataManager.UserControls
             cboSelectTransferModel.Enabled = enableControls;
             txtComment.Enabled = enableControls;
             grpSetTrainSetting.Enabled = enableControls;
+            chkEarlyStop.Enabled = enableControls;
 
             // 2. ⭐ 방금 만든 동적 구성 설정 패널 전체를 한 방에 잠금!
             // 패널(flpConfCon) 자체를 꺼버리면 그 안의 모든 콤보박스와 텍스트박스도 같이 잠깁니다.
@@ -266,6 +267,7 @@ namespace DataManager.UserControls
             this.flpConfCon.SizeChanged += (s, args) => SyncAllPanelSizes();
             // ==========================================================
 
+            //btnConfigEditorTab.PerformClick();
             btnChartTab.PerformClick();
 
         }
@@ -828,6 +830,8 @@ namespace DataManager.UserControls
                 mainTrainChart.Series["Loss"].Points.Clear();
                 mainTrainChart.Series["ValLoss"].Points.Clear();
             }
+
+            //btnChartTab.PerformClick(); // 새 훈련 시작할 때 자동으로 차트 탭으로 이동!
 
             // 7. 백그라운드 프로세스 세팅
             ProcessStartInfo psi = new ProcessStartInfo();
@@ -2447,7 +2451,7 @@ namespace DataManager.UserControls
         }
 
         // ==============================================================
-        // 🔄 커스텀 탭 화면 전환 매니저 (하리님 맞춤형)
+        // 🔄 커스텀 탭 화면 전환 매니저
         // ==============================================================
         private void SwitchPanel(Panel activePanel, Button activeButton)
         {
@@ -2464,12 +2468,12 @@ namespace DataManager.UserControls
             // 🎨 버튼 색상 전환 로직 (버튼 이름은 하리님의 실제 이름으로 맞춰주세요!)
             // ==============================================================
             // 일단 3개 버튼 모두 기본 색상(예: 파란색 바 바탕색)으로 되돌립니다.
-            btnChartTab.BackColor = Color.CornflowerBlue;
-            btnConfigEditorTab.BackColor = Color.CornflowerBlue;
-            btnViewerAndEditorTab.BackColor = Color.CornflowerBlue;
+            btnChartTab.BackColor = Color.FromArgb(100, 110, 130);
+            btnConfigEditorTab.BackColor = Color.FromArgb(100, 110, 130);
+            btnViewerAndEditorTab.BackColor = Color.FromArgb(100, 110, 130);
 
             // 방금 누른 버튼만 눌린 느낌을 주는 어두운 색상이나 튀는 색상으로 변경!
-            activeButton.BackColor = Color.RoyalBlue;
+            activeButton.BackColor = Color.FromArgb(67, 130, 220);
         }
 
         private void btnChartTab_Click(object sender, EventArgs e)

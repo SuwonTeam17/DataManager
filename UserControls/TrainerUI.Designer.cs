@@ -778,7 +778,7 @@
             btnViewerAndEditorTab.FlatStyle = FlatStyle.Flat;
             btnViewerAndEditorTab.Font = new Font("맑은 고딕", 10F, FontStyle.Bold);
             btnViewerAndEditorTab.ForeColor = Color.White;
-            btnViewerAndEditorTab.Location = new Point(320, 0);
+            btnViewerAndEditorTab.Location = new Point(548, 0);
             btnViewerAndEditorTab.Margin = new Padding(0);
             btnViewerAndEditorTab.Name = "btnViewerAndEditorTab";
             btnViewerAndEditorTab.Size = new Size(160, 40);
