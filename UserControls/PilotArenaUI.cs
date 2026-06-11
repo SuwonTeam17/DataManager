@@ -28,6 +28,7 @@ namespace DataManager.UserControls
         private Label lblEmptyModels;
         private DateTime _lastGraphRefresh = DateTime.MinValue;
         private DateTime _lastFullGraphUpdate = DateTime.MinValue;
+        private System.Windows.Forms.Timer _transformDebounceTimer;
 
         public PilotArenaUI()
         {
@@ -65,6 +66,25 @@ namespace DataManager.UserControls
             trkBlur.Value = 0;
             trkBright.ValueChanged += TrkTransform_ValueChanged;
             trkBlur.ValueChanged += TrkTransform_ValueChanged;
+
+            _transformDebounceTimer = new System.Windows.Forms.Timer { Interval = 150 };
+            _transformDebounceTimer.Tick += (s, e) =>
+            {
+                _transformDebounceTimer.Stop();
+                foreach (Control control in flpModule.Controls)
+                {
+                    if (control is ModelTestModule module)
+                        module.ClearPredictions();
+                }
+                // ±5 윈도우 즉시 갱신 (임시 파일 저장 + 화면 표시)
+                ShowCurrentFrame();
+                // 전체 프레임 재예측 시작 — 재생 중에도 예측 데이터 확보
+                foreach (Control control in flpModule.Controls)
+                {
+                    if (control is ModelTestModule module && module.IsModelReady)
+                        TriggerFullScanForModule(module);
+                }
+            };
 
             playbackTimer = new System.Windows.Forms.Timer();
             playbackTimer.Tick += PlaybackTimer_Tick;
@@ -277,17 +297,13 @@ namespace DataManager.UserControls
 
         private void TrkTransform_ValueChanged(object? sender, EventArgs e)
         {
+            // 레이블은 즉시 업데이트 (반응성)
             lblBright.Text = $"밝기 : {trkBright.Value}";
             lblBlur.Text = $"흐림 : {trkBlur.Value}";
 
-            // 변환 파라미터가 바뀌면 기존 예측 캐시를 무효화해 모델이 새 이미지를 다시 추론하게 함
-            foreach (Control control in flpModule.Controls)
-            {
-                if (control is ModelTestModule module)
-                    module.ClearPredictions();
-            }
-
-            ShowCurrentFrame();
+            // 실제 이미지 처리는 150ms 디바운스 후 실행 (트랙바 드래그 중 과부하 방지)
+            _transformDebounceTimer.Stop();
+            _transformDebounceTimer.Start();
         }
 
         // 파일 저장 대신 가공된 Bitmap 자체를 메모리에서 반환하는 메서드
@@ -330,39 +346,45 @@ namespace DataManager.UserControls
                         }
                     }
 
-                    // Box Blur
+                    // Box Blur — Summed Area Table로 O(w*h) 처리 (blur 크기에 무관)
                     if (blur > 0)
                     {
-                        byte[] blurredValues = new byte[bytes];
-                        Array.Copy(rgbValues, blurredValues, bytes);
                         int d = blur;
+                        int sw = width + 1;
+
+                        long[] satR = new long[sw * (height + 1)];
+                        long[] satG = new long[sw * (height + 1)];
+                        long[] satB = new long[sw * (height + 1)];
 
                         for (int y = 0; y < height; y++)
                         {
                             for (int x = 0; x < width; x++)
                             {
-                                int rSum = 0, gSum = 0, bSum = 0, count = 0;
-                                for (int dy = -d; dy <= d; dy++)
-                                {
-                                    int ny = y + dy;
-                                    if (ny < 0 || ny >= height) continue;
-                                    int nyOffset = ny * stride;
+                                int px = y * stride + x * 4;
+                                int si = (y + 1) * sw + (x + 1);
+                                satB[si] = rgbValues[px]     + satB[si - 1] + satB[si - sw] - satB[si - 1 - sw];
+                                satG[si] = rgbValues[px + 1] + satG[si - 1] + satG[si - sw] - satG[si - 1 - sw];
+                                satR[si] = rgbValues[px + 2] + satR[si - 1] + satR[si - sw] - satR[si - 1 - sw];
+                            }
+                        }
 
-                                    for (int dx = -d; dx <= d; dx++)
-                                    {
-                                        int nx = x + dx;
-                                        if (nx < 0 || nx >= width) continue;
+                        byte[] blurredValues = new byte[bytes];
+                        for (int y = 0; y < height; y++)
+                        {
+                            for (int x = 0; x < width; x++)
+                            {
+                                int x1 = Math.Max(0, x - d);
+                                int y1 = Math.Max(0, y - d);
+                                int x2 = Math.Min(width - 1, x + d);
+                                int y2 = Math.Min(height - 1, y + d);
+                                int count = (x2 - x1 + 1) * (y2 - y1 + 1);
 
-                                        int pixelOffset = nyOffset + (nx * 4);
-                                        bSum += rgbValues[pixelOffset];
-                                        gSum += rgbValues[pixelOffset + 1];
-                                        rSum += rgbValues[pixelOffset + 2];
-                                        count++;
-                                    }
-                                }
+                                long bSum = satB[(y2 + 1) * sw + (x2 + 1)] - satB[y1 * sw + (x2 + 1)] - satB[(y2 + 1) * sw + x1] + satB[y1 * sw + x1];
+                                long gSum = satG[(y2 + 1) * sw + (x2 + 1)] - satG[y1 * sw + (x2 + 1)] - satG[(y2 + 1) * sw + x1] + satG[y1 * sw + x1];
+                                long rSum = satR[(y2 + 1) * sw + (x2 + 1)] - satR[y1 * sw + (x2 + 1)] - satR[(y2 + 1) * sw + x1] + satR[y1 * sw + x1];
 
-                                int outOffset = y * stride + (x * 4);
-                                blurredValues[outOffset] = (byte)(bSum / count);
+                                int outOffset = y * stride + x * 4;
+                                blurredValues[outOffset]     = (byte)(bSum / count);
                                 blurredValues[outOffset + 1] = (byte)(gSum / count);
                                 blurredValues[outOffset + 2] = (byte)(rSum / count);
                                 blurredValues[outOffset + 3] = rgbValues[outOffset + 3];
