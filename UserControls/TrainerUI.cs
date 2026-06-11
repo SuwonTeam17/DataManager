@@ -98,6 +98,7 @@ namespace DataManager.UserControls
             cboSelectTransferModel.Enabled = enableControls;
             txtComment.Enabled = enableControls;
             grpSetTrainSetting.Enabled = enableControls;
+            chkEarlyStop.Enabled = enableControls;
 
             // 2. ⭐ 방금 만든 동적 구성 설정 패널 전체를 한 방에 잠금!
             // 패널(flpConfCon) 자체를 꺼버리면 그 안의 모든 콤보박스와 텍스트박스도 같이 잠깁니다.
@@ -266,6 +267,7 @@ namespace DataManager.UserControls
             this.flpConfCon.SizeChanged += (s, args) => SyncAllPanelSizes();
             // ==========================================================
 
+            //btnConfigEditorTab.PerformClick();
             btnChartTab.PerformClick();
 
         }
@@ -828,6 +830,8 @@ namespace DataManager.UserControls
                 mainTrainChart.Series["Loss"].Points.Clear();
                 mainTrainChart.Series["ValLoss"].Points.Clear();
             }
+
+            //btnChartTab.PerformClick(); // 새 훈련 시작할 때 자동으로 차트 탭으로 이동!
 
             // 7. 백그라운드 프로세스 세팅
             ProcessStartInfo psi = new ProcessStartInfo();
@@ -2102,14 +2106,50 @@ namespace DataManager.UserControls
                     RedirectStandardError = true,
                 };
 
-                using (var convertProcess = new Process { StartInfo = psi })
+                // GPU 초기화 hang 방지: CPU 전용으로 강제 (TFLite 변환은 CPU로도 충분)
+                psi.EnvironmentVariables["CUDA_VISIBLE_DEVICES"] = "-1";
+                psi.EnvironmentVariables["TF_CPP_MIN_LOG_LEVEL"] = "3"; // TF 경고 로그 억제
+                psi.EnvironmentVariables["DML_VISIBLE_DEVICES"] = "-1";
+
+                var stdoutBuilder = new System.Text.StringBuilder();
+                var stderrBuilder = new System.Text.StringBuilder();
+
+                using (var convertProcess = new Process { StartInfo = psi, EnableRaisingEvents = true })
                 {
+                    // stdout/stderr 비동기 수집 — 동기 ReadToEnd() 데드락 방지
+                    convertProcess.OutputDataReceived += (s, ev) =>
+                    {
+                        if (ev.Data != null) stdoutBuilder.AppendLine(ev.Data);
+                    };
+                    convertProcess.ErrorDataReceived += (s, ev) =>
+                    {
+                        if (ev.Data != null) stderrBuilder.AppendLine(ev.Data);
+                    };
+
                     convertProcess.Start();
-                    string stdout = convertProcess.StandardOutput.ReadToEnd();
-                    string stderr = convertProcess.StandardError.ReadToEnd();
+                    convertProcess.BeginOutputReadLine();
+                    convertProcess.BeginErrorReadLine();
+
+                    // 최대 3분 대기 (TF 초기화 + 변환 시간 고려)
+                    bool finished = convertProcess.WaitForExit(180_000);
+
+                    if (!finished)
+                    {
+                        try { convertProcess.Kill(); } catch { }
+                        this.BeginInvoke((MethodInvoker)delegate
+                        {
+                            ReportLog("경고", "tflite 변환이 3분 초과로 타임아웃되었습니다. Python 환경을 확인하세요.");
+                            btnTrain.Text = "▶ 훈련 시작";
+                            btnTrain.ForeColor = Color.White;
+                        });
+                        return;
+                    }
+
+                    // WaitForExit(ms) 후 비동기 스트림이 완전히 flush 될 때까지 추가 대기
                     convertProcess.WaitForExit();
 
                     bool success = File.Exists(tfliteOutputPath);
+                    string stderr = stderrBuilder.ToString();
 
                     this.BeginInvoke((MethodInvoker)delegate
                     {
@@ -2126,7 +2166,7 @@ namespace DataManager.UserControls
                                 : "(출력 없음)";
                             ReportLog("경고", $"tflite 변환 실패. 원인: {errorSummary}");
                             if (!string.IsNullOrWhiteSpace(stderr))
-                                ReportLog("경고", $"전체 오류:\n{stderr.Trim()}");
+                                ReportLog("경고", $"전체 오류: {stderr.Trim()}");
                         }
 
                         btnTrain.Text = "▶ 훈련 시작";
@@ -2411,7 +2451,7 @@ namespace DataManager.UserControls
         }
 
         // ==============================================================
-        // 🔄 커스텀 탭 화면 전환 매니저 (하리님 맞춤형)
+        // 🔄 커스텀 탭 화면 전환 매니저
         // ==============================================================
         private void SwitchPanel(Panel activePanel, Button activeButton)
         {
@@ -2428,12 +2468,12 @@ namespace DataManager.UserControls
             // 🎨 버튼 색상 전환 로직 (버튼 이름은 하리님의 실제 이름으로 맞춰주세요!)
             // ==============================================================
             // 일단 3개 버튼 모두 기본 색상(예: 파란색 바 바탕색)으로 되돌립니다.
-            btnChartTab.BackColor = Color.CornflowerBlue;
-            btnConfigEditorTab.BackColor = Color.CornflowerBlue;
-            btnViewerAndEditorTab.BackColor = Color.CornflowerBlue;
+            btnChartTab.BackColor = Color.FromArgb(100, 110, 130);
+            btnConfigEditorTab.BackColor = Color.FromArgb(100, 110, 130);
+            btnViewerAndEditorTab.BackColor = Color.FromArgb(100, 110, 130);
 
             // 방금 누른 버튼만 눌린 느낌을 주는 어두운 색상이나 튀는 색상으로 변경!
-            activeButton.BackColor = Color.RoyalBlue;
+            activeButton.BackColor = Color.FromArgb(67, 130, 220);
         }
 
         private void btnChartTab_Click(object sender, EventArgs e)
