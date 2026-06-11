@@ -2,9 +2,10 @@
 
 ## 파이썬 3.9.13 설치 (필수)
 
-아래 주소의 압축 폴더를
-이 깃허브 프로젝트 폴더와 같은 위치에 압축 해제할 것
+아래 주소의 압축 폴더를 이 깃허브 프로젝트 폴더와 같은 위치에 압축 해제할 것
+
 https://drive.google.com/file/d/16qpKh-_sUc6CDQYojs5knKZnnXxF48xt/view?usp=sharing
+
 그 후 new_setup.bat 파일 실행 (가상 환경 설치 프로그램)
 
 생성된 env 가상환경 폴더에 있던 dgym.py를 압축 폴더에 포함되어 있던 dgym.py로 덮어씌울 것
