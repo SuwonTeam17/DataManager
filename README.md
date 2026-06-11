@@ -2,6 +2,10 @@
 
 ## 파이썬 3.9.13 설치 (필수)
 
+파이썬 3.9.13 설치 링크 (공식) : https://www.python.org/downloads/release/python-3913/
+
+파이썬 설치 시 반드시 'Add Python 3.9 to PATH' 항목에 체크하고 설치할 것
+
 아래 주소의 압축 폴더를 이 깃허브 프로젝트 폴더와 같은 위치에 압축 해제할 것
 
 https://drive.google.com/file/d/1juqHnLXbFMfADhNHINkhH2o1qJEwNL__/view?usp=sharing
