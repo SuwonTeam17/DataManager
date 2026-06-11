@@ -4,7 +4,7 @@
 
 아래 주소의 압축 폴더를
 이 깃허브 프로젝트 폴더와 같은 위치에 압축 해제할 것
-[https://drive.google.com/file/d/1eJ5wKggCqlwGUhvli-M--MMZmo6pUaqq/view?usp=sharing](https://drive.google.com/file/d/1gL1XCmX4MZe_egrWG63CQJCYs7MsYtH_/view?usp=drive_link)
+[[https://drive.google.com/file/d/1eJ5wKggCqlwGUhvli-M--MMZmo6pUaqq/view?usp=sharing](https://drive.google.com/file/d/1gL1XCmX4MZe_egrWG63CQJCYs7MsYtH_/view?usp=drive_link)](https://drive.google.com/file/d/16qpKh-_sUc6CDQYojs5knKZnnXxF48xt/view?usp=sharing)
  
 그 후 new_setup.bat 파일 실행 (가상 환경 설치 프로그램)
 
