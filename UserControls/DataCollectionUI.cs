@@ -27,6 +27,9 @@ namespace DataManager.UserControls
 
         private string _activeDataDir = "";
 
+        private Panel _logPanel;
+        private RichTextBox _logBox;
+
         private string SimPath => System.IO.Path.Combine(DonkeyRoot, @"DonkeySimWin\donkey_sim.exe");
         private string PythonExe => System.IO.Path.Combine(DonkeyRoot, @"env\Scripts\python.exe");
         private string MycarDir => System.IO.Path.Combine(DonkeyRoot, @"mycar");
@@ -43,6 +46,8 @@ namespace DataManager.UserControls
             InitializeComponent();
             InitDirectionBars();
             InitJoystick();
+            BuildLogPanel();
+            this.VisibleChanged += DataCollectionUI_VisibleChanged;
 
             // 서비스 이벤트 연결
             _connectionService.OnRawMessage += _cameraService.ProcessMessage;
@@ -65,42 +70,53 @@ namespace DataManager.UserControls
             _driveInputService.OnInputChanged += (angle, throttle) =>
             {
                 // 1. cboThrottleMax에 선택된 % 문자열을 숫자로 파싱 (기본값: 100% -> 1.0f)
-                float maxRatio = 1.0f;
+                float throttleMaxRatio = 1.0f;
                 if (cboThrottleMax != null && cboThrottleMax.SelectedItem != null)
                 {
                     string maxStr = cboThrottleMax.SelectedItem.ToString().Replace("%", "").Trim();
                     if (float.TryParse(maxStr, out float percent))
                     {
-                        maxRatio = percent / 100f; // 예: 90 -> 0.9f
+                        throttleMaxRatio = percent / 100f; // 예: 90 -> 0.9f
                     }
                 }
 
-                // 2. cboThrottleType 모드에 따른 스로틀(Throttle) 변형 계산
+                float angleMaxRatio = 1.0f;
+                if (cboAngleMax != null && cboAngleMax.SelectedItem != null)
+                {
+                    string maxStr = cboAngleMax.SelectedItem.ToString().Replace("%", "").Trim();
+                    if (float.TryParse(maxStr, out float percent))
+                    {
+                        angleMaxRatio = percent / 100f; // 예: 90 -> 0.9f
+                    }
+                }
+
+                // 2. cboeType 모드에 따른 변형 계산
                 float processedThrottle = throttle;
+                float processedAngle = angle;
 
                 if (cboThrottleType != null && cboThrottleType.SelectedItem != null)
                 {
-                    string typeMode = cboThrottleType.SelectedItem.ToString();
+                    string throttleTypeMode = cboThrottleType.SelectedItem.ToString();
 
-                    if (typeMode == "최댓값")
+                    if (throttleTypeMode == "최댓값")
                     {
-                        // 전진(+)일 때는 maxRatio를 넘지 못하게, 후진(-)일 때는 -maxRatio보다 낮아지지 않게 제한
+                        // 전진(+)일 때는 throttleMaxRatio를 넘지 못하게, 후진(-)일 때는 -throttleMaxRatio보다 낮아지지 않게 제한
                         if (processedThrottle > 0)
-                            processedThrottle = Math.Min(processedThrottle, maxRatio);
+                            processedThrottle = Math.Min(processedThrottle, throttleMaxRatio);
                         else if (processedThrottle < 0)
-                            processedThrottle = Math.Max(processedThrottle, -maxRatio);
+                            processedThrottle = Math.Max(processedThrottle, -throttleMaxRatio);
                     }
-                    else if (typeMode == "고정값")
+                    else if (throttleTypeMode == "고정값")
                     {
                         // 가만히 정지 상태(0)가 아닐 때만 강제로 값 고정 처리
                         // 입력 장치의 미세한 쏠림 노이즈(데드존)를 감안하여 0.01f 기준으로 판별합니다.
                         if (processedThrottle > 0.01f)
                         {
-                            processedThrottle = maxRatio;
+                            processedThrottle = throttleMaxRatio;
                         }
                         else if (processedThrottle < -0.01f)
                         {
-                            processedThrottle = -maxRatio; // 후진 고정
+                            processedThrottle = -throttleMaxRatio; // 후진 고정
                         }
                         else
                         {
@@ -109,11 +125,57 @@ namespace DataManager.UserControls
                     }
                 }
 
-                // 원본 throttle 대신 가공된 processedThrottle을 서버로 전송합니다!
-                _connectionService.SendControl(angle, processedThrottle, chkRecording.Checked);
+                if (cboAngleType != null && cboAngleType.SelectedItem != null)
+                {
+                    string throttleTypeMode = cboAngleType.SelectedItem.ToString();
+
+                    if (throttleTypeMode == "최댓값")
+                    {
+                        // 우회전(+)일 때는 angleMaxRatio를 넘지 못하게, 좌회전(-)일 때는 -angleMaxRatio보다 낮아지지 않게 제한
+                        if (processedAngle > 0)
+                            processedAngle = Math.Min(processedAngle, angleMaxRatio);
+                        else if (processedAngle < 0)
+                            processedAngle = Math.Max(processedAngle, -angleMaxRatio);
+                    }
+                    else if (throttleTypeMode == "고정값")
+                    {
+                        // 가만히 정지 상태(0)가 아닐 때만 강제로 값 고정 처리
+                        // 입력 장치의 미세한 쏠림 노이즈(데드존)를 감안하여 0.01f 기준으로 판별합니다.
+                        if (processedAngle > 0.01f)
+                        {
+                            processedAngle = angleMaxRatio;
+                        }
+                        else if (processedAngle < -0.01f)
+                        {
+                            processedAngle = -angleMaxRatio; // 후진 고정
+                        }
+                        else
+                        {
+                            processedAngle = 0f; // 완전 중립일 땐 0 유지
+                        }
+                    }
+                }
+
+                // 1. Visible 변경 시 메시지 필터 자동 등록/제거 (UI가 숨겨지면 필터 제거)
+                this.VisibleChanged += (s, e) =>
+                {
+                    if (this.Visible)
+                    {
+                        // 컨트롤이 보일 때만 필터 활성화
+                        Application.AddMessageFilter(_driveInputService);
+                    }
+                    else
+                    {
+                        // 컨트롤이 숨겨지면 필터 비활성화 (다른 탭에서 키 입력 간섭 방지)
+                        Application.RemoveMessageFilter(_driveInputService);
+                    }
+                };
+
+                // 원본 angle, throttle 대신 가공된 processedAngle, processedThrottle을 서버로 전송합니다!
+                _connectionService.SendControl(processedAngle, processedThrottle, chkRecording.Checked);
 
                 // UI 게이지 바에도 가공된 결과 값을 투영합니다.
-                if (_barAngle != null) _barAngle.Value = angle;
+                if (_barAngle != null) _barAngle.Value = processedAngle;
                 if (_barThrottle != null) _barThrottle.Value = processedThrottle;
             };
             _driveInputService.Start();
@@ -128,6 +190,10 @@ namespace DataManager.UserControls
                 if (cboThrottleType != null && cboThrottleType.Items.Count > 0)
                 {
                     cboThrottleType.SelectedIndex = 0;
+                }
+                if (cboAngleType != null && cboAngleType.Items.Count > 0)
+                {
+                    cboAngleType.SelectedIndex = 0;
                 }
 
                 // 2. 콤보박스에 포커스가 잡혀 파랗게 변하는 현상 방지 (파란색 강조 해결)
@@ -147,6 +213,7 @@ namespace DataManager.UserControls
 
             this.HandleDestroyed += (s, e) =>
             {
+                Application.RemoveMessageFilter(_driveInputService);
                 _cameraService.StopStream();
                 _driveInputService.Stop();
                 _connectionService.Disconnect();
@@ -159,6 +226,67 @@ namespace DataManager.UserControls
             string currentTime = DateTime.Now.ToString("HH:mm:ss");
             OnLogReported?.Invoke(currentTime, type, message);
         }
+
+        // ── 로그 패널 동적 생성 ───────────────────────────────────────────────
+        private void BuildLogPanel()
+        {
+            // 1. 이미 컨트롤이 존재한다면 삭제 (중복 생성 방지)
+            if (_logPanel != null) return;
+
+            // 2. 로그 패널 생성 (하단 고정)
+            _logPanel = new Panel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 110, // 높이 조정
+                Visible = false
+            };
+
+            _logBox = new RichTextBox
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.FromArgb(30, 30, 30),
+                ForeColor = Color.LimeGreen,
+                Font = new Font("Consolas", 8.5f),
+                ReadOnly = true,
+                BorderStyle = BorderStyle.None
+            };
+            _logPanel.Controls.Add(_logBox);
+
+            // 4. pnlCamera에 로그 패널 추가
+            pnlCamera.Controls.Add(_logPanel);
+        }
+
+        // 로그 한 줄을 RichTextBox에 추가 (색상 구분)
+        private void AppendPythonLog(string line)
+        {
+            if (_logBox == null || _logBox.IsDisposed) return;
+
+            if (_logBox.InvokeRequired)
+            {
+                _logBox.BeginInvoke(new Action(() => AppendPythonLog(line)));
+                return;
+            }
+
+            // 키워드에 따라 글자 색 구분
+            Color color;
+            if (line.Contains("ERROR") || line.Contains("Error") || line.Contains("Traceback"))
+                color = Color.FromArgb(255, 100, 100);  // 빨강
+            else if (line.Contains("WARNING") || line.Contains("Warning"))
+                color = Color.FromArgb(255, 200, 80);   // 노랑
+            else if (line.Contains("You can now") || line.Contains("Starting vehicle"))
+                color = Color.FromArgb(100, 230, 130);  // 밝은 초록 (준비 완료)
+            else
+                color = Color.FromArgb(180, 220, 180);  // 기본 연두
+
+            _logBox.SelectionStart = _logBox.TextLength;
+            _logBox.SelectionLength = 0;
+            _logBox.SelectionColor = color;
+            _logBox.AppendText(line + "\n");
+
+            // 항상 최신 줄로 스크롤
+            _logBox.ScrollToCaret();
+        }
+        // ─────────────────────────────────────────────────────────────────────
 
         // ── DirectionBar 초기화 ──────────────────
         private void InitDirectionBars()
@@ -208,60 +336,59 @@ namespace DataManager.UserControls
             pnlControlJoystick.Update();
         }
 
-        // 키 입력 전달만 확인
+        // 키보드 입력이 다른 컨트롤(버튼 등)로 빠지지 않게 처리
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
-            const int WM_KEYDOWN = 0x0100;
-            const int WM_SYSKEYDOWN = 0x0104;
+            // 포커스가 콤보박스에 있는 상태에서 방향키/WASD가 입력되면
+            if (this.ActiveControl is ComboBox &&
+               (keyData == Keys.Up || keyData == Keys.Down || keyData == Keys.Left || keyData == Keys.Right ||
+                keyData == Keys.W || keyData == Keys.A || keyData == Keys.S || keyData == Keys.D))
+            {
+                // 1. 여기서 포커스를 옮겨버립니다.
+                if (btnStartSim != null && btnStartSim.Enabled) btnStartSim.Focus();
+                else this.Focus();
 
-            bool isKeyDown =
-                msg.Msg == WM_KEYDOWN ||
-                msg.Msg == WM_SYSKEYDOWN;
-
-            if (!isKeyDown)
-                return base.ProcessCmdKey(ref msg, keyData);
-
-            if (_driveInputService.HandleKeyboardKey(keyData))
+                // 2. 키 입력을 콤보박스로 전달하지 않고 종료 (이게 핵심입니다!)
                 return true;
+            }
 
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
-        // ── 버튼 이벤트 ──────────────────────────
-        private async void btnStartSim_Click(object sender, EventArgs e)
+        private void btnStartSim_Click(object sender, EventArgs e)
         {
-            // 1. 콤보박스에서 선택된 맵 이름 가져오기
             string envName = cboMapList.Text.Trim();
+            _logBox.Clear();
+            _logPanel.Visible = true;
+            cboMapList.Enabled = false;
 
-            // 맵 목록 예시: donkey-generated-track-v0 등이 combo에 들어있어야 합니다.
-            if (string.IsNullOrEmpty(envName))
-            {
-                envName = "generated_track"; // 방어 코드용 기본값
-            }
-
-            // 2. 시뮬레이터 실행
+            // 시뮬레이터 실행
             _processService.StartSimulator(SimPath);
 
-            // 3. 파이썬 서버 실행시 맵 이름 전달
-            _processService.StartPython(PythonExe, MycarDir, envName);
-            ReportLog("알림", $"시뮬레이터 및 서버 시작됨 (선택된 맵: {envName})");
+            // Python 서버 시작 — 준비 완료 감지 시 자동으로 소켓 연결까지 수행
+            _processService.StartPython(PythonExe, MycarDir, envName, async (line) =>
+            {
+                this.Invoke(new Action(() => AppendPythonLog(line)));
+
+                if (line.Contains("http://localhost:8887") || line.Contains("Starting vehicle"))
+                {
+                    // 서버 준비 완료 → 소켓 + 카메라 연결 자동 실행
+                    await _connectionService.ConnectAsync();
+                    _cameraService.StartStream("http://localhost:8887/video");
+
+                    this.BeginInvoke(new Action(() =>
+                    {
+                        ReportLog("성공", "서버 준비 완료! 소켓 및 카메라 연결이 자동으로 완료되었습니다.");
+                    }));
+                }
+            });
 
             btnStartSim.Enabled = false;
-
-            await Task.Delay(7000);
-            btnConnect.Enabled = true;
-        }
-
-        private async void btnConnect_Click(object sender, EventArgs e)
-        {
-            await _connectionService.ConnectAsync();
-            btnConnect.Text = "연결됨";
-            btnConnect.Enabled = false;
-            _cameraService.StartStream("http://localhost:8887/video");
         }
 
         private void btnInit_Click(object sender, EventArgs e)
         {
+            cboMapList.Enabled = true;
             try
             {
                 // 1. 켜져 있는 시뮬레이터 및 파이썬 백그라운드 프로세스가 있다면 모두 종료
@@ -281,19 +408,8 @@ namespace DataManager.UserControls
 
                 // 3. 버튼 활성화 상태 및 UI 컨트롤 초기화
                 btnStartSim.Enabled = true;       // 시뮬레이터/파이썬 통합 실행 버튼 다시 활성화
-                btnConnect.Enabled = false;       // 연결 버튼은 서버가 꺼졌으므로 비활성화
 
-                // 💡 만약 연결 상태를 나타내는 UI 텍스트나 통신이 끊겼다면 텍스트도 초기화
-                if (btnConnect.Text == "연결됨")
-                {
-                    btnConnect.Text = "서버 연결";   // 토글 버튼 상태 원상복구
-                }
-
-                // 4. 기록(Recording) 체크박스도 안전하게 해제 및 비활성화
                 chkRecording.Checked = false;
-
-                MessageBox.Show("시뮬레이터와 파이썬 서버를 종료하고 통신 연결 설정을 초기화했습니다.",
-                    "초기화 완료", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 // 로그 출력
                 ReportLog("알림", "사용자 요청에 의해 시뮬레이터 및 파이썬 엔진 프로세스 초기화 완료");
@@ -303,6 +419,12 @@ namespace DataManager.UserControls
                 MessageBox.Show($"초기화 진행 중 오류가 발생했습니다:\n{ex.Message}", "에러",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 ReportLog("오류", $"초기화 실패: {ex.Message}");
+            }
+
+            if (_logPanel != null)
+            {
+                _logPanel.Visible = false;
+                _logBox.Clear();
             }
         }
 
@@ -484,6 +606,12 @@ namespace DataManager.UserControls
                     "저장 경로 없음", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 chkRecording.Checked = false;
             }
+        }
+
+        private void DataCollectionUI_VisibleChanged(object sender, EventArgs e)
+        {
+            if (this.Visible) Application.AddMessageFilter(_driveInputService);
+            else Application.RemoveMessageFilter(_driveInputService);
         }
     }
 }

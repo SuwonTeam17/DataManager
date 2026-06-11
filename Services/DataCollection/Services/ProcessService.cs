@@ -15,24 +15,26 @@ namespace DataManager.Services.DataCollection.Services
                 WorkingDirectory = System.IO.Path.GetDirectoryName(simPath)
             });
         }
-        public void StartPython(string pythonExe, string workingDir, string envName)
+        public void StartPython(string pythonExe, string workingDir, string envName, Func<string, Task> onLogReceived)
         {
-            string arguments = "manage.py drive";
-
-            // 맵 이름이 정상적으로 선택되어 있다면 인자를 붙여줍니다.
-            if (!string.IsNullOrEmpty(envName))
-            {
-                arguments += $" --env_name={envName.Trim()}";
-            }
-
-            _pythonProcess = Process.Start(new ProcessStartInfo
+            var psi = new ProcessStartInfo
             {
                 FileName = pythonExe,
-                Arguments = arguments,
+                Arguments = $"-u manage.py drive --env_name={envName.Trim()}",
                 WorkingDirectory = workingDir,
                 UseShellExecute = false,
-                CreateNoWindow = false // 파이썬 창이 눈에 보이도록 설정하여 에러 추적을 돕습니다.
-            });
+                CreateNoWindow = true, // CMD 창 숨김
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+
+            _pythonProcess = new Process { StartInfo = psi, EnableRaisingEvents = true };
+            _pythonProcess.OutputDataReceived += (s, e) => { if (e.Data != null) Task.Run(() => onLogReceived?.Invoke(e.Data)); };
+            _pythonProcess.ErrorDataReceived += (s, e) => { if (e.Data != null) Task.Run(() => onLogReceived?.Invoke(e.Data)); };
+
+            _pythonProcess.Start();
+            _pythonProcess.BeginOutputReadLine();
+            _pythonProcess.BeginErrorReadLine();
         }
         public void StopAll()
         {

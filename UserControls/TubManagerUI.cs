@@ -103,19 +103,23 @@ namespace DataManager.UserControls
             trkSetBlur.Maximum = 10;
             trkSetBlur.Value = 0;
 
+            UpdateFilterCheckboxTexts();
+
+            trkSetBright.ValueChanged += (s, e) => UpdateFilterCheckboxTexts();
+            trkSetBlur.ValueChanged += (s, e) => UpdateFilterCheckboxTexts();
+
+
             playTimer = new System.Windows.Forms.Timer();
             playTimer.Tick += PlayTimer_Tick;
 
             // 배속을 직관적인 정수 형태로 선택할 수 있게 콤보박스 아이템 설정
-            // 0.50 배속 항목 추가
             comboBox1.Items.Clear();
-            comboBox1.Items.AddRange(new object[] { "0.50", "1.00", "2.00", "3.00", "4.00" });
+            // 5.00, 10.00, 20.00 배속 항목 추가
+            comboBox1.Items.AddRange(new object[] { "0.50", "1.00", "2.00", "3.00", "4.00", "5.00", "10.00", "20.00" });
             comboBox1.SelectedIndex = 1; // 기본값 1.00배속 위치
 
             // 배속과 상관없이 타이머 주기는 60ms로 고정! (디스크 부하 방지)
             playTimer.Interval = 60;
-
-            
 
             comboBox1.SelectedIndexChanged += ComboBox1_SelectedIndexChanged;
             trkProgress.Scroll += TrkProgress_Scroll;
@@ -139,8 +143,6 @@ namespace DataManager.UserControls
                 // ⭐ [추가] 화면 확장/축소 시 타임라인을 다시 그리도록 이벤트 연결
                 pnlTimeStamp.Resize += PnlTimeStamp_Resize;
             }
-
-
         }
 
         private void btnFileLoad_Click(object sender, EventArgs e)
@@ -1050,7 +1052,7 @@ namespace DataManager.UserControls
             // 만약 등록된 구간이 하나도 없거나 포커스가 유효하지 않은 경우
             if (selectedRanges == null || selectedRanges.Count == 0 || activeRangeIndex == -1)
             {
-                lblSelectedRange.Text = "선택된 범위 없음 (단축키 N 또는 [ 키로 생성)";
+                lblSelectedRange.Text = "선택된 범위 없음";
                 pnlTimeStamp?.Invalidate();
                 return;
             }
@@ -1081,146 +1083,148 @@ namespace DataManager.UserControls
 
         private void btnApplyFillter_Click(object sender, EventArgs e)
         {
-            if (drivingData.Count == 0) return;
+            if (drivingData == null || drivingData.Count == 0) return;
 
-            // ── 다중 구간 예외 처리 ──
-            if (selectedRanges == null || selectedRanges.Count == 0)
+            // [수정] 활성화된 특정 구간이 없거나 인덱스가 올바르지 않으면 경고 후 리턴
+            if (activeRangeIndex == -1 || selectedRanges == null || activeRangeIndex >= selectedRanges.Count)
             {
-                ReportLog("경고", "선택된 구간이 없습니다. P 키를 눌러 전체 구간을 지정하거나 새로운 구간을 설정하세요.");
+                MessageBox.Show("필터를 적용할 구간을 먼저 선택하거나 생성하세요.", "알림");
                 return;
             }
 
-            // 1단계: 선택된 모든 구간들에 대해 '이전 임시 결과 초기화'를 먼저 수행
-            foreach (var range in selectedRanges)
+            // 1단계: 현재 '선택된 단 하나의 구간'에 대해서만 이전 임시 결과 초기화 수행
+            var activeRange = selectedRanges[activeRangeIndex];
+            int _start = activeRange.Start;
+            int _end = activeRange.End;
+
+            for (int _i = _start; _i <= _end; _i++)
             {
-                int _start = range.Start;
-                int _end = range.End;
-
-                for (int _i = _start; _i <= _end; _i++)
+                if (_i < 0 || _i >= drivingData.Count) continue; // 배열 인덱스 초과 방지
+                if (filteredFrameMap.TryGetValue(_i, out Bitmap _old))
                 {
-                    if (_i < 0 || _i >= drivingData.Count) continue; // 배열 인덱스 초과 방지
-
-                    if (filteredFrameMap.TryGetValue(_i, out Bitmap _old))
-                    {
-                        _old.Dispose();
-                        filteredFrameMap.Remove(_i);
-                    }
-                    filteredHideSet.Remove(_i);
-                    filteredInvertSet.Remove(_i);
-                    filteredGrayscaleSet.Remove(_i);
+                    _old.Dispose();
+                    filteredFrameMap.Remove(_i);
                 }
+                filteredHideSet.Remove(_i);
+                filteredInvertSet.Remove(_i);
+                filteredGrayscaleSet.Remove(_i);
             }
 
-            bool _anyImageFilter = chkInverseColor.Checked
-                                || chkApplyBlackWhite.Checked
-                                || chkSetBright.Checked
-                                || chkSetBlur.Checked;
-
-            // 총 카운트 집계용 변수
+            bool _anyImageFilter = chkInverseColor.Checked || chkApplyBlackWhite.Checked || chkSetBright.Checked || chkSetBlur.Checked;
             int totalHiddenCount = 0;
             int totalFilteredCount = 0;
 
-            // 2단계: 선택된 모든 구간들을 순회하며 필터 및 변환 작업 적용
-            foreach (var range in selectedRanges)
+            // 2단계: 현재 '선택된 단 하나의 구간'만 순회하며 필터 및 변환 작업 적용
+            for (int _i = _start; _i <= _end; _i++)
             {
-                int _start = range.Start;
-                int _end = range.End;
+                if (_i < 0 || _i >= drivingData.Count) continue; // 배열 인덱스 초과 방지
+                var _frame = drivingData[_i];
 
-                for (int _i = _start; _i <= _end; _i++)
+                // ── 이미지 변환 필터 상태(선) 먼저 기록 ──
+                if (chkApplyBlackWhite.Checked)
                 {
-                    if (_i < 0 || _i >= drivingData.Count) continue; // 배열 인덱스 초과 방지
+                    filteredGrayscaleSet.Add(_i);
+                }
+                if (chkInverseColor.Checked)
+                {
+                    filteredInvertSet.Add(_i);
+                }
 
-                    var _frame = drivingData[_i];
+                // ── 삭제(숨김) 필터 ──
+                bool _shouldHide = false;
+                if (chkDelThrottle.Checked && _frame.Throttle >= -(double)numLeftThrottle.Value && _frame.Throttle <= (double)numRightThrottle.Value)
+                {
+                    filteredHideSet.Add(_i);
+                    _shouldHide = true;
+                }
+                if (chkDelAngle.Checked && _frame.Angle >= -(double)numLeftAngle.Value && _frame.Angle <= (double)numRightAngle.Value)
+                {
+                    filteredHideSet.Add(_i);
+                    _shouldHide = true;
+                }
+                if (chkRemoveImage.Checked)
+                {
+                    filteredHideSet.Add(_i);
+                    _shouldHide = true;
+                }
 
-                    // ── 이미지 변환 필터 상태(선) 먼저 기록 ──
-                    if (chkApplyBlackWhite.Checked)
-                    {
-                        filteredGrayscaleSet.Add(_i);
-                    }
-                    if (chkInverseColor.Checked)
-                    {
-                        filteredInvertSet.Add(_i);
-                    }
-
-                    // ── 삭제(숨김) 필터 ──
-                    bool _shouldHide = false;
-
-                    if (chkDelThrottle.Checked && _frame.Throttle >= -(double)numLeftThrottle.Value && _frame.Throttle <= (double)numRightThrottle.Value)
-                    {
-                        filteredHideSet.Add(_i);
-                        _shouldHide = true;
-                    }
-                    if (chkDelAngle.Checked && _frame.Throttle >= -(double)numLeftAngle.Value && _frame.Throttle <= (double)numRightAngle.Value)
-                    {
-                        filteredHideSet.Add(_i);
-                        _shouldHide = true;
-                    }
-                    if (chkRemoveImage.Checked)
-                    {
-                        filteredHideSet.Add(_i);
-                        _shouldHide = true;
-                    }
-
-                    // 숨김 처리된 프레임이라면 건너뜀
-                    if (_shouldHide)
-                    {
-                        totalHiddenCount++;
-                        continue;
-                    }
-
-                    // ── 실제 이미지 변환 및 저장 ──
-                    if (!_anyImageFilter) continue;
-                    if (string.IsNullOrEmpty(_frame.ImagePath) || !File.Exists(_frame.ImagePath)) continue;
-
+                if (_shouldHide)
+                {
+                    totalHiddenCount++;
+                }
+                else if (_anyImageFilter)
+                {
+                    // 실제 비트맵 변환 로직 (기존 원본 로직 유지)
                     try
                     {
-                        Bitmap _bmp;
-                        using (var _src = new Bitmap(_frame.ImagePath))
-                            _bmp = new Bitmap(_src); // 원본 복사본
+                        if (File.Exists(_frame.ImagePath))
+                        {
+                            Bitmap _currentBmp;
+                            using (var _tempImg = Image.FromFile(_frame.ImagePath))
+                            {
+                                _currentBmp = new Bitmap(_tempImg);
+                            }
 
-                        if (chkApplyBlackWhite.Checked) _bmp = ApplyGrayscale(_bmp);
-                        if (chkInverseColor.Checked) _bmp = ApplyInvert(_bmp);
-                        if (chkSetBright.Checked) _bmp = ApplyBrightness(_bmp, trkSetBright.Value);
-                        if (chkSetBlur.Checked) _bmp = ApplyBlur(_bmp, trkSetBlur.Value);
+                            if (chkApplyBlackWhite.Checked) _currentBmp = ApplyGrayscale(_currentBmp);
+                            if (chkInverseColor.Checked) _currentBmp = ApplyInvert(_currentBmp);
+                            if (chkSetBright.Checked && trkSetBright.Value != 0) _currentBmp = ApplyBrightness(_currentBmp, trkSetBright.Value);
+                            if (chkSetBlur.Checked && trkSetBlur.Value > 0) _currentBmp = ApplyBlur(_currentBmp, trkSetBlur.Value);
 
-                        filteredFrameMap[_i] = _bmp;
-                        totalFilteredCount++;
+                            filteredFrameMap[_i] = _currentBmp;
+                            totalFilteredCount++;
+                        }
                     }
-                    catch
+                    catch (Exception _ex)
                     {
-                        /* 이미지 변환 오류 시 예외 처리 */
+                        ReportLog("오류", $"프레임 [{_i}] 필터 변환 실패: {_ex.Message}");
                     }
                 }
             }
 
+            // UI 및 차트 업데이트
             UpdateChart();
             DisplayFrame(currentFrameIndex);
-
-            // ── 타임라인 갱신 ──
             pnlTimeStamp?.Invalidate();
 
-            // 알림 로그 출력 (모든 선택 영역에 적용된 누적 개수 출력)
-            ReportLog("알림", $"필터 적용 완료 (총 {selectedRanges.Count}개 구간) — 숨김: {totalHiddenCount}개, 이미지 변환: {totalFilteredCount}개 완료");
+            ReportLog("정보", $"선택 구간 필터 적용 완료: {totalFilteredCount}개 프레임 변환, {totalHiddenCount}개 프레임 숨김");
         }
 
         private void btnCancelFillter_Click(object sender, EventArgs e)
         {
-            // Bitmap 메모리 해제 후 딕셔너리 전체 삭제
-            foreach (var _bmp in filteredFrameMap.Values)
-                _bmp.Dispose();
+            if (drivingData == null || drivingData.Count == 0) return;
 
-            filteredFrameMap.Clear();
-            filteredHideSet.Clear();
-            filteredInvertSet.Clear();
-            filteredGrayscaleSet.Clear();
+            // [수정] 활성화된 특정 구간이 없으면 리턴
+            if (activeRangeIndex == -1 || selectedRanges == null || activeRangeIndex >= selectedRanges.Count)
+            {
+                return;
+            }
 
+            // 현재 활성화된 단 하나의 구간만 가져옴
+            var activeRange = selectedRanges[activeRangeIndex];
+            int _start = activeRange.Start;
+            int _end = activeRange.End;
+
+            // 현재 구간 범위 내의 데이터만 필터 해제
+            for (int _i = _start; _i <= _end; _i++)
+            {
+                if (_i < 0 || _i >= drivingData.Count) continue;
+
+                if (filteredFrameMap.TryGetValue(_i, out Bitmap _old))
+                {
+                    _old.Dispose();
+                    filteredFrameMap.Remove(_i);
+                }
+                filteredHideSet.Remove(_i);
+                filteredInvertSet.Remove(_i);
+                filteredGrayscaleSet.Remove(_i);
+            }
+
+            // UI 및 차트 업데이트
             UpdateChart();
             DisplayFrame(currentFrameIndex);
-
-            // ── 타임라인 갱신 추가 ──
             pnlTimeStamp?.Invalidate();
 
-            ReportLog("알림", "임시 필터 결과가 모두 취소되었습니다.");
+            ReportLog("알림", $"선택된 구간 [{activeRangeIndex + 1}]의 임시 필터 결과가 취소되었습니다.");
         }
         private void btnInitFillterSet_Click(object sender, EventArgs e)
         {
@@ -1254,10 +1258,10 @@ namespace DataManager.UserControls
         {
             chtData.Series.Clear();
 
-            
+
             Series _angleSeries = new Series("각도") { ChartType = SeriesChartType.Line, BorderWidth = 2 };
-           
-            
+
+
             Series _throttleSeries = new Series("속도") { ChartType = SeriesChartType.Line, BorderWidth = 2 };
             _throttleSeries.Color = Color.FromArgb(72, 175, 120); // 노란색에서 초록색으로 변경
 
@@ -1687,6 +1691,13 @@ namespace DataManager.UserControls
                 }
             }
 
+            if (keyData == Keys.Delete)
+            {
+                // 이미 만들어둔 버튼 클릭 메서드를 수동으로 호출
+                btnRangeDel_Click(this, EventArgs.Empty);
+                return true;
+            }
+
             if (modifiers == Keys.Shift)
             {
                 switch (keyCode)
@@ -1725,39 +1736,7 @@ namespace DataManager.UserControls
             {
                 switch (keyCode)
                 {
-                    // ── [신규 추가] M 키: 현재 재생 바(currentFrameIndex)가 위치한 구간 제거 ──
-                    case Keys.M:
-                        if (drivingData == null || drivingData.Count == 0) return true;
-
-                        int removeIndex = -1;
-                        // 현재 재생 위치가 포함된 구간의 인덱스 찾기
-                        for (int i = 0; i < selectedRanges.Count; i++)
-                        {
-                            if (currentFrameIndex >= selectedRanges[i].Start && currentFrameIndex <= selectedRanges[i].End)
-                            {
-                                removeIndex = i;
-                                break;
-                            }
-                        }
-
-                        if (removeIndex != -1)
-                        {
-                            selectedRanges.RemoveAt(removeIndex);
-
-                            // 포커스 인덱스 재조정
-                            if (selectedRanges.Count == 0) activeRangeIndex = -1;
-                            else activeRangeIndex = Math.Max(0, removeIndex - 1);
-
-                            UpdateRangeLabel();
-                            pnlTimeStamp?.Invalidate();
-                            ReportLog("알림", $"구간 [{removeIndex + 1}]을 삭제했습니다.");
-                        }
-                        else
-                        {
-                            ReportLog("알림", "현재 재생 위치에 삭제할 구간이 없습니다.");
-                        }
-                        return true;
-
+                    
                     // 데이터 편집 제어 (U: 적용, I: 취소, O: 초기화)
                     case Keys.U:
                         btnApplyFillter_Click(this, EventArgs.Empty);
@@ -1898,7 +1877,6 @@ namespace DataManager.UserControls
             sb.AppendLine("• [\t\t: 활성 구간의 시작점(왼쪽) 설정");
             sb.AppendLine("• ]\t\t: 활성 구간의 끝점(오른쪽) 설정");
             sb.AppendLine("• N\t\t: 새로운 구간 추가 준비 (인덱스 초기화)"); // ★ 추가됨
-            sb.AppendLine("• M\t\t: 현재 재생 바 위치의 구간 삭제");        // ★ 추가됨
             sb.AppendLine("• Delete\t\t: 마지막으로 조작한 활성 구간 삭제");
             sb.AppendLine("• P\t\t: 전체 구간을 하나의 영역으로 선택");
             sb.AppendLine("• Tab\t\t: 현재 선택된(활성) 구간만 반복 재생");
@@ -1966,6 +1944,138 @@ namespace DataManager.UserControls
             }
         }
 
+        private void btnRangeDel_Click(object sender, EventArgs e)
+        {
+            // 데이터가 없으면 무시
+            if (drivingData == null || drivingData.Count == 0) return;
+
+            // 현재 활성화(선택)된 구간이 유효한지 체크
+            if (activeRangeIndex >= 0 && activeRangeIndex < selectedRanges.Count)
+            {
+                int lastActiveIndex = activeRangeIndex;
+
+                // 활성 구간 삭제
+                selectedRanges.RemoveAt(activeRangeIndex);
+
+                // 삭제 후 포커스(선택 인덱스) 재조정
+                if (selectedRanges.Count == 0)
+                {
+                    activeRangeIndex = -1; // 구간이 하나도 없으면 포커스 해제
+                }
+                else
+                {
+                    // 마지막 구간으로 포커스 이동 (인덱스 초과 방지)
+                    activeRangeIndex = selectedRanges.Count - 1;
+                }
+
+                // 라벨 및 타임라인 그래픽 실시간 갱신
+                UpdateRangeLabel();
+                pnlTimeStamp?.Invalidate();
+
+                ReportLog("알림", $"구간 [{lastActiveIndex + 1}]을 삭제했습니다.");
+            }
+            else
+            {
+                ReportLog("경고", "삭제할 활성 구간이 선택되어 있지 않습니다. 타임라인을 클릭하여 구간을 선택해 주세요.");
+            }
+        }
+
+        private void btnNew_Click(object sender, EventArgs e)
+        {
+            string _root = AppPaths.EditedData;
+            if (!Directory.Exists(_root))
+            {
+                Directory.CreateDirectory(_root);
+            }
+
+            // 새 폴더명을 입력받기 위한 커스텀 입력창 생성
+            using (Form _inputForm = new Form())
+            {
+                _inputForm.Width = 400;
+                _inputForm.Height = 150;
+                _inputForm.FormBorderStyle = FormBorderStyle.FixedDialog;
+                _inputForm.Text = "새 폴더 생성";
+                _inputForm.StartPosition = FormStartPosition.CenterParent;
+                _inputForm.MaximizeBox = false;
+                _inputForm.MinimizeBox = false;
+
+                Label _lblText = new Label() { Left = 20, Top = 20, Width = 350, Text = "생성할 새 폴더 이름을 입력하세요:" };
+                TextBox _txtInput = new TextBox() { Left = 20, Top = 45, Width = 340, Text = "" };
+                Button _btnOk = new Button() { Text = "확인", Left = 180, Width = 80, Top = 80, DialogResult = DialogResult.OK };
+                Button _btnCancel = new Button() { Text = "취소", Left = 280, Width = 80, Top = 80, DialogResult = DialogResult.Cancel };
+
+                _inputForm.Controls.Add(_lblText);
+                _inputForm.Controls.Add(_txtInput);
+                _inputForm.Controls.Add(_btnOk);
+                _inputForm.Controls.Add(_btnCancel);
+                _inputForm.AcceptButton = _btnOk;
+                _inputForm.CancelButton = _btnCancel;
+
+                if (_inputForm.ShowDialog() == DialogResult.OK)
+                {
+                    string _folderName = _txtInput.Text.Trim();
+                    if (string.IsNullOrEmpty(_folderName))
+                    {
+                        MessageBox.Show("폴더 이름을 입력해야 합니다.", "알림");
+                        return;
+                    }
+
+                    // 폴더명에 사용할 수 없는 특수문자 금지 및 치환
+                    foreach (char _c in Path.GetInvalidFileNameChars())
+                    {
+                        _folderName = _folderName.Replace(_c, '_');
+                    }
+
+                    string _finalNewFolderPath = Path.Combine(_root, _folderName);
+                    try
+                    {
+                        if (!Directory.Exists(_finalNewFolderPath))
+                        {
+                            Directory.CreateDirectory(_finalNewFolderPath);
+
+                            // 폴더 생성 후, 해당 폴더를 현재 저장 경로(targetSavePath)로 자동 지정
+                            targetSavePath = _finalNewFolderPath;
+                            if (lblSaveRoute != null)
+                            {
+                                lblSaveRoute.Text = $"[저장 경로] {_folderName}";
+                            }
+
+                            ReportLog("알림", $"새 폴더 생성 완료: {_folderName}");
+                            MessageBox.Show($"[{_folderName}] 폴더가 성공적으로 생성되고 저장 경로로 지정되었습니다.", "성공");
+                        }
+                        else
+                        {
+                            ReportLog("경고", "이미 존재하는 폴더 이름입니다.");
+                            MessageBox.Show("이미 존재하는 폴더 이름입니다. 다른 이름을 사용해주세요.", "알림");
+                        }
+                    }
+                    catch (Exception _ex)
+                    {
+                        ReportLog("오류", $"폴더 생성 실패: {_ex.Message}");
+                        MessageBox.Show($"폴더 생성 중 오류가 발생했습니다.\n{_ex.Message}", "오류");
+                    }
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// 밝기 및 흐림 체크박스의 텍스트에 현재 트랙바 수치를 실시간 반영합니다.
+        /// </summary>
+        private void UpdateFilterCheckboxTexts()
+        {
+            if (chkSetBright != null && trkSetBright != null)
+            {
+                
+                chkSetBright.Text = $"밝기 : {trkSetBright.Value}";
+            }
+
+            if (chkSetBlur != null && trkSetBlur != null)
+            {
+                
+                chkSetBlur.Text = $"흐림 : {trkSetBlur.Value}";
+            }
+        }
 
     }
 }

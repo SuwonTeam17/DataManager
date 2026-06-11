@@ -26,7 +26,6 @@
             cboMapList = new ComboBox();
             chkRecording = new CheckBox();
             btnStartSim = new Button();
-            btnConnect = new Button();
             pnlData = new Panel();
             btnUnSelectFolder = new Button();
             btnDelFolder = new Button();
@@ -49,6 +48,10 @@
             cboThrottleType = new ComboBox();
             pnlCamera = new Panel();
             picCamera = new PictureBox();
+            pnlSetAngle = new Panel();
+            lblSetAngle = new Label();
+            cboAngleMax = new ComboBox();
+            cboAngleType = new ComboBox();
             pnlConnect.SuspendLayout();
             pnlData.SuspendLayout();
             pnlControl.SuspendLayout();
@@ -58,6 +61,7 @@
             pnlSetThrottle.SuspendLayout();
             pnlCamera.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)picCamera).BeginInit();
+            pnlSetAngle.SuspendLayout();
             SuspendLayout();
             // 
             // pnlConnect
@@ -68,7 +72,6 @@
             pnlConnect.Controls.Add(cboMapList);
             pnlConnect.Controls.Add(chkRecording);
             pnlConnect.Controls.Add(btnStartSim);
-            pnlConnect.Controls.Add(btnConnect);
             pnlConnect.Dock = DockStyle.Top;
             pnlConnect.Location = new Point(0, 0);
             pnlConnect.Name = "pnlConnect";
@@ -139,29 +142,11 @@
             btnStartSim.ForeColor = Color.White;
             btnStartSim.Location = new Point(201, 10);
             btnStartSim.Name = "btnStartSim";
-            btnStartSim.Size = new Size(122, 30);
+            btnStartSim.Size = new Size(222, 30);
             btnStartSim.TabIndex = 1;
-            btnStartSim.Text = "시뮬레이터 시작";
+            btnStartSim.Text = "시뮬레이터 시작 및 서버 연결";
             btnStartSim.UseVisualStyleBackColor = false;
             btnStartSim.Click += btnStartSim_Click;
-            // 
-            // btnConnect
-            // 
-            btnConnect.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
-            btnConnect.BackColor = Color.FromArgb(72, 175, 120);
-            btnConnect.Cursor = Cursors.Hand;
-            btnConnect.Enabled = false;
-            btnConnect.FlatAppearance.BorderSize = 0;
-            btnConnect.FlatStyle = FlatStyle.Flat;
-            btnConnect.Font = new Font("맑은 고딕", 9.5F, FontStyle.Bold);
-            btnConnect.ForeColor = Color.White;
-            btnConnect.Location = new Point(329, 10);
-            btnConnect.Name = "btnConnect";
-            btnConnect.Size = new Size(94, 30);
-            btnConnect.TabIndex = 0;
-            btnConnect.Text = "서버 연결";
-            btnConnect.UseVisualStyleBackColor = false;
-            btnConnect.Click += btnConnect_Click;
             // 
             // pnlData
             // 
@@ -272,21 +257,22 @@
             // 
             pnlControlJoystick.BackColor = Color.FromArgb(30, 30, 30);
             pnlControlJoystick.Dock = DockStyle.Fill;
-            pnlControlJoystick.Location = new Point(0, 123);
+            pnlControlJoystick.Location = new Point(0, 155);
             pnlControlJoystick.Name = "pnlControlJoystick";
-            pnlControlJoystick.Size = new Size(260, 543);
+            pnlControlJoystick.Size = new Size(260, 511);
             pnlControlJoystick.TabIndex = 1;
             // 
             // pnlView
             // 
             pnlView.BackColor = Color.FromArgb(250, 251, 253);
             pnlView.Controls.Add(pnlDirection);
-            pnlView.Controls.Add(pnlControlType);
             pnlView.Controls.Add(pnlSetThrottle);
+            pnlView.Controls.Add(pnlSetAngle);
+            pnlView.Controls.Add(pnlControlType);
             pnlView.Dock = DockStyle.Top;
             pnlView.Location = new Point(0, 0);
             pnlView.Name = "pnlView";
-            pnlView.Size = new Size(260, 123);
+            pnlView.Size = new Size(260, 155);
             pnlView.TabIndex = 0;
             // 
             // pnlDirection
@@ -454,6 +440,56 @@
             picCamera.TabIndex = 0;
             picCamera.TabStop = false;
             // 
+            // pnlSetAngle
+            // 
+            pnlSetAngle.BackColor = Color.FromArgb(250, 251, 253);
+            pnlSetAngle.Controls.Add(lblSetAngle);
+            pnlSetAngle.Controls.Add(cboAngleMax);
+            pnlSetAngle.Controls.Add(cboAngleType);
+            pnlSetAngle.Dock = DockStyle.Bottom;
+            pnlSetAngle.Location = new Point(0, 123);
+            pnlSetAngle.Name = "pnlSetAngle";
+            pnlSetAngle.Size = new Size(260, 32);
+            pnlSetAngle.TabIndex = 4;
+            // 
+            // lblSetAngle
+            // 
+            lblSetAngle.AutoSize = true;
+            lblSetAngle.Font = new Font("맑은 고딕", 9.5F);
+            lblSetAngle.ForeColor = Color.FromArgb(60, 72, 92);
+            lblSetAngle.Location = new Point(19, 8);
+            lblSetAngle.Name = "lblSetAngle";
+            lblSetAngle.Size = new Size(65, 17);
+            lblSetAngle.TabIndex = 2;
+            lblSetAngle.Text = "각도 설정";
+            lblSetAngle.TextAlign = ContentAlignment.MiddleLeft;
+            // 
+            // cboAngleMax
+            // 
+            cboAngleMax.BackColor = Color.White;
+            cboAngleMax.FlatStyle = FlatStyle.Flat;
+            cboAngleMax.Font = new Font("맑은 고딕", 9F);
+            cboAngleMax.FormattingEnabled = true;
+            cboAngleMax.Items.AddRange(new object[] { "100%", "95%", "90%", "85%", "80%", "75%", "70%", "60%", "50%", "40%", "30%", "20%", "10%" });
+            cboAngleMax.Location = new Point(188, 6);
+            cboAngleMax.Name = "cboAngleMax";
+            cboAngleMax.Size = new Size(66, 23);
+            cboAngleMax.TabIndex = 1;
+            cboAngleMax.Text = "100%";
+            // 
+            // cboAngleType
+            // 
+            cboAngleType.BackColor = Color.White;
+            cboAngleType.DropDownStyle = ComboBoxStyle.DropDownList;
+            cboAngleType.FlatStyle = FlatStyle.Flat;
+            cboAngleType.Font = new Font("맑은 고딕", 9F);
+            cboAngleType.FormattingEnabled = true;
+            cboAngleType.Items.AddRange(new object[] { "최댓값", "고정값" });
+            cboAngleType.Location = new Point(90, 6);
+            cboAngleType.Name = "cboAngleType";
+            cboAngleType.Size = new Size(92, 23);
+            cboAngleType.TabIndex = 0;
+            // 
             // DataCollectionUI
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -476,6 +512,8 @@
             pnlSetThrottle.PerformLayout();
             pnlCamera.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)picCamera).EndInit();
+            pnlSetAngle.ResumeLayout(false);
+            pnlSetAngle.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -485,7 +523,6 @@
         private Panel pnlControl;
         private Panel pnlCamera;
         private PictureBox picCamera;
-        private Button btnConnect;
         private Button btnStartSim;
         private Panel pnlControlJoystick;
         private Panel pnlView;
@@ -509,5 +546,9 @@
         private Button btnDelFolder;
         private Button btnInit;
         private Label lblDataCollection;
+        private Panel pnlSetAngle;
+        private Label lblSetAngle;
+        private ComboBox cboAngleMax;
+        private ComboBox cboAngleType;
     }
 }
