@@ -278,6 +278,22 @@ Microsoft.Json 13.0.4
 
 모든 패키지는 new_setup.bat 실행 시 나오는 golden_recipt.txt 참고
 
+# 오류 발생시 해결 방법
+
+- 모델 주행에서 오류가 발생하며 실행이 안될 경우
+    - env폴더 안에 있는 interpreter.py 열기 (파일 위치 : env\Lib\site-packages\donkeycar\parts\interpreter.py)
+    - 그 후, interpreter.py의 266줄 주변에 있는 수정 전 코드를 수정 후 코드로 수정 (다른 코드들과 들여쓰기 맞출 것!)
+      - 수정 전
+        ```python
+          self.interpreter = tf.lite.Interpreter(model_path=model_path)
+        ```
+      - 수정 후
+        ```python
+            with open(model_path, 'rb') as f:
+                model_data = f.read()
+            self.interpreter = tf.lite.Interpreter(model_content=model_data)
+        ```      
+
 # License
 
 Private Project
