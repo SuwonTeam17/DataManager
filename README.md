@@ -259,6 +259,24 @@ Microsoft.Json 13.0.4
 
 ---
 
+# Main Dependencies
+
+| Package | Version | Purpose |
+|----------|----------|----------|
+| donkeycar | 5.0.0 | Autonomous driving framework |
+| tensorflow-cpu | 2.10.0 | Model training/inference |
+| tensorflow-directml-plugin | 0.4.0.dev230202 | GPU acceleration on DirectML |
+| keras | 2.10.0 | Deep learning API |
+| opencv-python | 4.9.0.80 | Image processing |
+| numpy | 1.24.4 | Numerical computation |
+| pandas | 2.0.3 | Data analysis |
+| matplotlib | 3.7.5 | Visualization |
+| scikit-learn | 1.6.1 | Machine learning utilities |
+| albumentations | 1.3.1 | Data augmentation |
+| Kivy | 2.1.0 | GUI framework |
+| paho-mqtt | 2.1.0 | MQTT communication |
+
+모든 패키지는 new_setup.bat 실행 시 나오는 golden_recipt.txt 참고
 
 # License
 
