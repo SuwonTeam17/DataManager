@@ -2102,14 +2102,50 @@ namespace DataManager.UserControls
                     RedirectStandardError = true,
                 };
 
-                using (var convertProcess = new Process { StartInfo = psi })
+                // GPU 초기화 hang 방지: CPU 전용으로 강제 (TFLite 변환은 CPU로도 충분)
+                psi.EnvironmentVariables["CUDA_VISIBLE_DEVICES"] = "-1";
+                psi.EnvironmentVariables["TF_CPP_MIN_LOG_LEVEL"] = "3"; // TF 경고 로그 억제
+                psi.EnvironmentVariables["DML_VISIBLE_DEVICES"] = "-1";
+
+                var stdoutBuilder = new System.Text.StringBuilder();
+                var stderrBuilder = new System.Text.StringBuilder();
+
+                using (var convertProcess = new Process { StartInfo = psi, EnableRaisingEvents = true })
                 {
+                    // stdout/stderr 비동기 수집 — 동기 ReadToEnd() 데드락 방지
+                    convertProcess.OutputDataReceived += (s, ev) =>
+                    {
+                        if (ev.Data != null) stdoutBuilder.AppendLine(ev.Data);
+                    };
+                    convertProcess.ErrorDataReceived += (s, ev) =>
+                    {
+                        if (ev.Data != null) stderrBuilder.AppendLine(ev.Data);
+                    };
+
                     convertProcess.Start();
-                    string stdout = convertProcess.StandardOutput.ReadToEnd();
-                    string stderr = convertProcess.StandardError.ReadToEnd();
+                    convertProcess.BeginOutputReadLine();
+                    convertProcess.BeginErrorReadLine();
+
+                    // 최대 3분 대기 (TF 초기화 + 변환 시간 고려)
+                    bool finished = convertProcess.WaitForExit(180_000);
+
+                    if (!finished)
+                    {
+                        try { convertProcess.Kill(); } catch { }
+                        this.BeginInvoke((MethodInvoker)delegate
+                        {
+                            ReportLog("경고", "tflite 변환이 3분 초과로 타임아웃되었습니다. Python 환경을 확인하세요.");
+                            btnTrain.Text = "▶ 훈련 시작";
+                            btnTrain.ForeColor = Color.White;
+                        });
+                        return;
+                    }
+
+                    // WaitForExit(ms) 후 비동기 스트림이 완전히 flush 될 때까지 추가 대기
                     convertProcess.WaitForExit();
 
                     bool success = File.Exists(tfliteOutputPath);
+                    string stderr = stderrBuilder.ToString();
 
                     this.BeginInvoke((MethodInvoker)delegate
                     {
@@ -2126,7 +2162,7 @@ namespace DataManager.UserControls
                                 : "(출력 없음)";
                             ReportLog("경고", $"tflite 변환 실패. 원인: {errorSummary}");
                             if (!string.IsNullOrWhiteSpace(stderr))
-                                ReportLog("경고", $"전체 오류:\n{stderr.Trim()}");
+                                ReportLog("경고", $"전체 오류: {stderr.Trim()}");
                         }
 
                         btnTrain.Text = "▶ 훈련 시작";
