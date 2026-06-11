@@ -1,5 +1,4 @@
-﻿
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Drawing.Interop;
 using System.IO;
 using System.Text;
@@ -44,6 +43,10 @@ namespace DataManager.UserControls
 
         // ⭐ [추가] 현재 돌고 있는 진짜 모델 이름을 기억할 변수
         private string currentTrainingModelName = "";
+
+        // ⭐ 훈련 중 정지 시 tflite 변환에 필요한 정보 보관용
+        private string _currentMycarPath = "";
+        private string _currentSelectedType = "";
 
         private Chart mainTrainChart;
 
@@ -553,6 +556,12 @@ namespace DataManager.UserControls
                         }).WaitForExit();
                     }
                     catch { }
+
+                    // ⭐ 강제 중지 후 tflite 변환 수동 실행 (백그라운드)
+                    _ = Task.Run(() => ConvertToTfliteAfterStop(
+                        currentTrainingModelName,
+                        _currentMycarPath,
+                        _currentSelectedType));
                 }
                 return; // 정지 로직만 실행하고 함수를 빠져나갑니다.
             }
@@ -808,6 +817,8 @@ namespace DataManager.UserControls
             }
 
             currentTrainingModelName = modelName;
+            _currentMycarPath = mycarPath;       // ⭐ 정지 시 tflite 변환에 필요
+            _currentSelectedType = selectedType; // ⭐ 정지 시 tflite 변환에 필요
 
             // ==============================================================
             // 🧹 새 훈련 시작 시 메인 차트에 그려진 선(점)들 싹 지우기!
@@ -2029,6 +2040,114 @@ namespace DataManager.UserControls
 
             // 3. 싹 다 모은 설명들을 하나의 팝업창으로 시원하게 띄워줍니다!
             MessageBox.Show(helpMessage.ToString(), "전체 설정 도움말", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        /// <summary>
+        /// 훈련 강제 중지 후 SavedModel → tflite 변환을 직접 실행합니다.
+        /// 임시 Python 스크립트 파일을 생성해서 TFLiteConverter를 호출합니다.
+        /// </summary>
+        private void ConvertToTfliteAfterStop(string modelName, string mycarPath, string selectedType)
+        {
+            string tempScriptPath = "";
+            try
+            {
+                // 변환 대상 SavedModel 경로 확인
+                string savedModelPath = Path.Combine(mycarPath, "models", modelName, modelName);
+                if (!Directory.Exists(savedModelPath))
+                {
+                    this.BeginInvoke((MethodInvoker)delegate
+                    {
+                        ReportLog("경고", $"중지된 시점에 저장된 모델이 없어 tflite 변환을 건너뜁니다.");
+                        ReportLog("경고", $"(탐색 경로: {savedModelPath})");
+                        btnTrain.Text = "▶ 훈련 시작";
+                        btnTrain.ForeColor = Color.White;
+                    });
+                    return;
+                }
+
+                this.BeginInvoke((MethodInvoker)delegate
+                {
+                    btnTrain.Text = "변환 중...";
+                    ReportLog("알림", "훈련 중지 완료. SavedModel → tflite 변환을 시작합니다...");
+                });
+
+                string pythonExe = Path.GetFullPath(Path.Combine(mycarPath, "..", "env", "Scripts", "python.exe"));
+                string tfliteOutputPath = Path.Combine(mycarPath, "models", modelName, modelName + ".tflite");
+
+                // ── 임시 Python 스크립트 파일 생성 ──────────────────────────
+                // 경로에 역슬래시가 있어도 raw string(r"...")으로 쓰면 안전
+                tempScriptPath = Path.Combine(Path.GetTempPath(), $"tflite_convert_{modelName}.py");
+
+                string scriptContent =
+                    "import tensorflow as tf\n" +
+                    $"saved_model_dir = r\"{savedModelPath}\"\n" +
+                    $"output_path     = r\"{tfliteOutputPath}\"\n" +
+                    "converter = tf.lite.TFLiteConverter.from_saved_model(saved_model_dir)\n" +
+                    "tflite_model = converter.convert()\n" +
+                    "with open(output_path, 'wb') as f:\n" +
+                    "    f.write(tflite_model)\n" +
+                    "print('TFLITE_CONVERT_OK')\n";
+
+                File.WriteAllText(tempScriptPath, scriptContent, System.Text.Encoding.UTF8);
+                // ─────────────────────────────────────────────────────────────
+
+                var psi = new ProcessStartInfo
+                {
+                    FileName = pythonExe,
+                    Arguments = $"\"{tempScriptPath}\"",
+                    WorkingDirectory = mycarPath,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                };
+
+                using (var convertProcess = new Process { StartInfo = psi })
+                {
+                    convertProcess.Start();
+                    string stdout = convertProcess.StandardOutput.ReadToEnd();
+                    string stderr = convertProcess.StandardError.ReadToEnd();
+                    convertProcess.WaitForExit();
+
+                    bool success = File.Exists(tfliteOutputPath);
+
+                    this.BeginInvoke((MethodInvoker)delegate
+                    {
+                        if (success)
+                        {
+                            ReportLog("성공", $"tflite 변환 완료: {modelName}.tflite 생성됨");
+                        }
+                        else
+                        {
+                            // stderr 마지막 줄만 요약해서 표시
+                            string[] errLines = stderr.Trim().Split('\n');
+                            string errorSummary = errLines.Length > 0
+                                ? errLines[errLines.Length - 1].Trim()
+                                : "(출력 없음)";
+                            ReportLog("경고", $"tflite 변환 실패. 원인: {errorSummary}");
+                            if (!string.IsNullOrWhiteSpace(stderr))
+                                ReportLog("경고", $"전체 오류:\n{stderr.Trim()}");
+                        }
+
+                        btnTrain.Text = "▶ 훈련 시작";
+                        btnTrain.ForeColor = Color.White;
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                this.BeginInvoke((MethodInvoker)delegate
+                {
+                    ReportLog("오류", $"tflite 변환 중 예외 발생: {ex.Message}");
+                    btnTrain.Text = "▶ 훈련 시작";
+                    btnTrain.ForeColor = Color.White;
+                });
+            }
+            finally
+            {
+                // 임시 스크립트 파일 정리
+                try { if (File.Exists(tempScriptPath)) File.Delete(tempScriptPath); } catch { }
+            }
         }
 
         private void CreateAndSaveGraph(string savePath)
